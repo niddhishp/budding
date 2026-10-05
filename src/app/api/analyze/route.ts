@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getEntitlement } from '@/lib/billing';
 import { classifySafety, decodeBehavior, DecodeError, DECODE_MODEL, safetyNotice } from '@/lib/ai/decode';
-import { CHILD_COLUMNS, childFromRow, DECODE_COLUMNS, decodeFromRow, type ChildRow, type DecodeRow } from '@/lib/mappers';
+import { DECODE_COLUMNS, decodeFromRow, type DecodeRow } from '@/lib/mappers';
+import { loadDecodeContext } from '@/lib/decodeContext';
 import type { DecodeStreamEvent } from '@/types';
 
 export const maxDuration = 60;
@@ -45,26 +46,13 @@ export async function POST(req: Request) {
   }
 
   // RLS guarantees the child belongs to this parent; a foreign id simply returns nothing.
-  const [childRes, logsRes, decodesRes] = await Promise.all([
-    supabase.from('children').select(CHILD_COLUMNS).eq('id', childId).maybeSingle<ChildRow>(),
-    supabase.from('context_logs').select('content, log_type, created_at')
-      .eq('child_id', childId).order('created_at', { ascending: false }).limit(15),
-    supabase.from('decodes').select('scenario, analysis, outcome, created_at')
-      .eq('child_id', childId).not('outcome', 'is', null).order('created_at', { ascending: false }).limit(8),
-  ]);
-  if (childRes.error) return dbError(childRes.error);
-  if (!childRes.data) return NextResponse.json({ error: 'Child not found.' }, { status: 404 });
-
-  const context = {
-    child: childFromRow(childRes.data),
-    recentLogs: logsRes.data ?? [],
-    pastDecodes: (decodesRes.data ?? []).map((d) => ({
-      scenario: d.scenario as string,
-      say_this: (d.analysis as { sayThis?: string } | null)?.sayThis ?? null,
-      outcome: d.outcome as string | null,
-      created_at: d.created_at as string,
-    })),
-  };
+  let context;
+  try {
+    context = await loadDecodeContext(supabase, childId);
+  } catch (error) {
+    return dbError(error as { message: string });
+  }
+  if (!context) return NextResponse.json({ error: 'Child not found.' }, { status: 404 });
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({

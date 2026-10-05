@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { useAppStore } from '@/stores/appStore';
+import { WhatsAppSheet } from '@/components/WhatsAppSheet';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, LogOut, Plus, Sprout, Check, Sparkles, Shield, Trash2, Stethoscope } from 'lucide-react';
+import { ChevronDown, LogOut, Plus, Sprout, Check, Sparkles, Shield, Trash2, Stethoscope, MessageCircle } from 'lucide-react';
 
 export function TopBar() {
   const { selectedChildId, children, selectChild, setAddingChild, userEmail, signOut, entitlement, openPaywall, openExpert } = useAppStore();
   const isPlus = entitlement?.plan === 'plus';
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false);
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
   return (
@@ -66,6 +69,9 @@ export function TopBar() {
           <DropdownMenuItem onSelect={() => openPaywall()}>
             <Sparkles className="w-4 h-4" /> {isPlus ? 'Budding Plus · Manage' : 'Upgrade to Plus'}
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setWhatsAppOpen(true)}>
+            <MessageCircle className="w-4 h-4" /> Connect WhatsApp
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => openExpert('menu')}>
             <Stethoscope className="w-4 h-4" /> Talk to a child psychologist
           </DropdownMenuItem>
@@ -81,6 +87,7 @@ export function TopBar() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {whatsAppOpen && <WhatsAppSheet onClose={() => setWhatsAppOpen(false)} />}
     </header>
   );
 }
