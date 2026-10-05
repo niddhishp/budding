@@ -1,0 +1,23 @@
+{
+  "name": "budding-explainer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Budding.live explainer video, rendered from code with Remotion",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Explainer out/budding-explainer.mp4 --codec h264 --crf 18",
+    "render:vertical": "remotion render src/index.ts ExplainerVertical out/budding-explainer-vertical.mp4 --codec h264 --crf 18",
+    "still": "remotion still src/index.ts Explainer out/still.png --frame"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.533",
+    "@remotion/google-fonts": "^4.0.533",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.533"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "5.9"
+  }
+}

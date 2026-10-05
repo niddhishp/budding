@@ -1,0 +1,18 @@
+/* Same tokens as the app (src/index.css), so the video and site never drift. */
+:root {
+  --paper: 96.8% 0.014 82;
+  --paper-deep: 93.5% 0.02 78;
+  --surface: 99.2% 0.005 82;
+  --clay: 55% 0.135 38;
+  --clay-deep: 46% 0.12 36;
+  --leaf: 51% 0.085 152;
+  --turmeric: 80% 0.145 80;
+  --night: 27% 0.055 268;
+  --night-soft: 36% 0.07 268;
+}
+.fill-clay { fill: oklch(var(--clay)); }
+.fill-clay-deep { fill: oklch(var(--clay-deep)); }
+.fill-leaf { fill: oklch(var(--leaf)); }
+.fill-turmeric { fill: oklch(var(--turmeric)); }
+.fill-night { fill: oklch(var(--night)); }
+.fill-night-soft { fill: oklch(var(--night-soft)); }

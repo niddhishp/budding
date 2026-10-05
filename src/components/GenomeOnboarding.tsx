@@ -11,14 +11,24 @@ import {
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
+const DUE_DATE_KEY = 'budding.dueDate';
+function readSavedDueDate(): string | null {
+  try {
+    const v = localStorage.getItem(DUE_DATE_KEY);
+    return v && v >= todayISO() ? v : null;
+  } catch { return null; }
+}
+
 export function GenomeOnboarding() {
   const { addChild, setAddingChild, children } = useAppStore();
   const canClose = children.length > 0;
 
   const [step, setStep] = useState(1);
   const [name, setName] = useState(() => loadQuizResult()?.name ?? '');
-  const [born, setBorn] = useState(true);
-  const [date, setDate] = useState('');
+  // A due date carried over from the public due date calculator starts an "Expecting" profile.
+  const [savedDue] = useState(readSavedDueDate);
+  const [born, setBorn] = useState(!savedDue);
+  const [date, setDate] = useState(savedDue ?? '');
   // Answers carried over from the public quiz, if the parent took it before signing up.
   const [answers, setAnswers] = useState<Answers>(() => loadQuizResult()?.answers ?? {});
   const [saving, setSaving] = useState(false);
@@ -42,6 +52,7 @@ export function GenomeOnboarding() {
         temperament,
       });
       clearQuizResult();
+      try { localStorage.removeItem(DUE_DATE_KEY); } catch { /* storage unavailable */ }
     } catch (err) {
       console.error(err);
       setError('We could not save this profile. Check your connection and try again.');

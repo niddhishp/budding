@@ -17,6 +17,13 @@ const TYPES = [
   'The Big-Hearted Storm', 'The Quiet Noticer', 'The Bold Firecracker', 'The Steady Planner',
   'The Determined Explorer', 'The Social Spark', 'The Easy Breeze', 'The Balanced Builder',
 ];
+const STAGES = [
+  { name: 'Pregnancy', age: 'Week by week', moment: 'Is this tiredness normal at week 9?', color: 'oklch(var(--turmeric))' },
+  { name: 'Baby', age: '0–2 years', moment: 'She cries every time I put her down.', color: 'oklch(var(--leaf))' },
+  { name: 'Little ones', age: '3–6 years', moment: 'He hits his sister when she takes his toys.', color: 'oklch(var(--clay))' },
+  { name: 'School years', age: '7–12 years', moment: 'Every evening ends in a homework meltdown.', color: 'oklch(var(--night-soft))' },
+  { name: 'Teens', age: '13–18 years', moment: 'She slammed the door and won’t talk to me.', color: 'oklch(var(--clay-deep))' },
+];
 const TILT = [-1.5, 1, -0.5, 1.5, -1, 0.5, -1.2, 0.8];
 // Coloured paper tags: turmeric, clay, leaf and plain paper tints.
 const TAG_TINTS = ['oklch(90% 0.07 82)', 'oklch(89% 0.05 40)', 'oklch(90% 0.045 150)', 'oklch(99% 0.005 82)'];
@@ -58,6 +65,28 @@ export default function LandingPage() {
             </div>
             <SayThisSlip className="absolute -bottom-10 left-4 right-10 sm:left-8 sm:right-auto sm:max-w-sm" />
           </Reveal>
+        </div>
+      </section>
+
+      {/* ── All eighteen years ─────────────────────────────────────────── */}
+      <section className="px-5 sm:px-8 py-16 md:py-20 border-y border-slate-200/70">
+        <div className="max-w-6xl mx-auto">
+          <Reveal>
+            <h2 className="font-heading text-[clamp(1.8rem,3.4vw,2.6rem)] leading-[1.1] text-slate-900 max-w-3xl">
+              Most parenting apps go quiet after the first birthday. Budding stays for all eighteen years.
+            </h2>
+          </Reveal>
+          <ol className="mt-12 grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-10">
+            {STAGES.map((st, i) => (
+              <li key={st.name} className="reveal relative pt-7">
+                <span className="absolute top-0 left-0 w-3 h-3 rounded-full" style={{ background: st.color }} aria-hidden />
+                {i < STAGES.length - 1 && <span className="hidden md:block absolute top-[5px] left-5 right-[-1.5rem] h-px bg-slate-300" aria-hidden />}
+                <p className="font-heading text-xl text-slate-900">{st.name}</p>
+                <p className="mt-1 text-sm text-slate-500">{st.age}</p>
+                <p className="mt-3 text-[15px] leading-relaxed text-slate-600">&ldquo;{st.moment}&rdquo;</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
@@ -152,9 +181,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Quiz teaser ─────────────────────────────────────────────────── */}
+      {/* ── Free tools ──────────────────────────────────────────────────── */}
       <section className="px-5 sm:px-8 py-20 md:py-28">
         <div className="max-w-6xl mx-auto">
+          <p className="reveal text-sm font-semibold text-clay tracking-wide mb-4">Free, no sign-up</p>
           <Reveal className="max-w-2xl">
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.08] text-slate-900">
               What&rsquo;s your child&rsquo;s temperament type?
@@ -173,6 +203,17 @@ export default function LandingPage() {
             </ul>
             <Link href="/quiz" className="mt-10 inline-flex items-center gap-2 h-12 px-7 rounded-full bg-slate-850 text-white font-semibold transition-colors hover:bg-slate-700">
               Take the free quiz <ArrowRight className="w-4 h-4" />
+            </Link>
+          </Reveal>
+          <Reveal className="mt-16">
+            <Link href="/tools/due-date" className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[2rem] bg-paper-deep px-7 py-7 sm:px-10 transition-colors hover:bg-[oklch(91%_0.025_78)]">
+              <div>
+                <p className="font-heading text-2xl text-slate-900">Expecting? Work out your due date.</p>
+                <p className="mt-1 text-slate-600">From your last period, conception or IVF transfer, with what usually comes next.</p>
+              </div>
+              <span className="inline-flex items-center gap-2 font-semibold text-clay whitespace-nowrap">
+                Due date calculator <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </span>
             </Link>
           </Reveal>
         </div>
@@ -225,7 +266,7 @@ export default function LandingPage() {
           {[
             ['Grounded, not guessed', 'Every answer draws on developmental psychology and attachment research, then on what has worked for your child.'],
             ['Safety comes first', 'If something sounds serious, Budding says so plainly and puts Childline 1098, Tele-MANAS 14416 and 112 one tap away.'],
-            ['Private by design', "Your family's details are never sold or used for ads. Delete everything, anytime, in one step."],
+            ['No ads. Ever.', "Budding is paid for by parents, not advertisers. Your family's details are never sold, and you can delete everything in one step."],
           ].map(([title, body], i) => (
             <Reveal key={title} delay={i * 0.08}>
               <div className="pt-6 border-t border-slate-300">
@@ -259,6 +300,7 @@ export default function LandingPage() {
           <span>© {new Date().getFullYear()} Budding.live · General guidance, not medical advice.</span>
           <nav className="flex gap-6">
             <Link href="/quiz" className="hover:text-slate-900">Temperament quiz</Link>
+            <Link href="/tools/due-date" className="hover:text-slate-900">Due date calculator</Link>
             <Link href="/privacy" className="hover:text-slate-900">Privacy</Link>
             <Link href="/terms" className="hover:text-slate-900">Terms</Link>
           </nav>
@@ -292,7 +334,7 @@ function Step({ n, title, body, children }: { n: string; title: string; body: st
     <li>
       <Reveal className="grid md:grid-cols-[1fr_1.1fr] gap-8 md:gap-16 items-center">
         <div className="flex gap-6">
-          <span className="font-heading text-6xl leading-none text-clay/80" aria-hidden>{n}</span>
+          <span className="font-heading text-6xl leading-none text-clay/80 [font-variant-numeric:lining-nums]" aria-hidden>{n}</span>
           <div>
             <h3 className="font-heading text-2xl md:text-3xl text-slate-900">{title}</h3>
             <p className="mt-3 text-lg leading-relaxed text-slate-600 max-w-md">{body}</p>
