@@ -56,19 +56,19 @@ export function WellbeingPage() {
         <StatCard icon={Brain} label="Stress Level" value={`${stressLevel}/10`} color="bg-red-50 text-red-500" />
         <StatCard icon={Moon} label="Sleep Quality" value={`${sleepQuality}/10`} color="bg-purple-50 text-purple-600" />
         <StatCard icon={Heart} label="Check-ins" value={`${wellbeingEntries.length}`} color="bg-rose-50 text-rose-600" />
-        <StatCard icon={TrendingUp} label="Trend" value="Improving" color="bg-sage-light text-sage" />
+        <StatCard icon={TrendingUp} label="Trend" value="Improving" color="bg-clay/10 text-clay" />
       </div>
 
       {/* Daily Check-in */}
       <Card className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-sage" />
+            <Sparkles className="w-5 h-5 text-clay" />
             <h2 className="font-heading font-semibold text-lg text-slate-850">Daily Check-in</h2>
           </div>
           <Button
             size="sm"
-            className="bg-sage hover:bg-sage/90 text-white"
+            className="bg-clay hover:bg-clay/90 text-white"
             onClick={() => setShowCheckIn(!showCheckIn)}
           >
             {showCheckIn ? 'Close' : 'Start'}
@@ -127,7 +127,7 @@ export function WellbeingPage() {
 
             <Button
               onClick={handleSubmit}
-              className="w-full bg-sage hover:bg-sage/90 text-white"
+              className="w-full bg-clay hover:bg-clay/90 text-white"
             >
               Log Check-in
             </Button>
@@ -138,7 +138,7 @@ export function WellbeingPage() {
           <div className="space-y-2">
             {wellbeingEntries.slice(-3).map((entry) => (
               <div key={entry.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/40">
-                <CheckCircle2 className="w-5 h-5 text-sage flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-clay flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-slate-600">{entry.gratitudeNote}</p>
                   <p className="text-xs text-slate-400">
@@ -196,8 +196,8 @@ export function WellbeingPage() {
       </div>
 
       {/* Affirmation */}
-      <Card className="glass-card p-6 bg-sage-wash/30 text-center">
-        <Heart className="w-8 h-8 text-sage mx-auto mb-3" />
+      <Card className="glass-card p-6 bg-paper-deep text-center">
+        <Heart className="w-8 h-8 text-clay mx-auto mb-3" />
         <p className="font-heading font-medium text-lg text-slate-800 mb-2">
           You are enough. You are doing enough.
         </p>

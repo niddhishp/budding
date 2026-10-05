@@ -59,8 +59,8 @@ export function WeeklyReportCard({ child }: { child: Child }) {
     <section className="print-area mb-12 p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm">
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-sage/10 flex items-center justify-center">
-            <CalendarRange className="w-5 h-5 text-sage" />
+          <div className="w-10 h-10 rounded-full bg-clay/10 flex items-center justify-center">
+            <CalendarRange className="w-5 h-5 text-clay" />
           </div>
           <div>
             <h2 className="font-heading text-xl text-slate-850">{child.name}'s week</h2>
@@ -103,7 +103,7 @@ export function WeeklyReportCard({ child }: { child: Child }) {
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">What's working</h3>
               <ul className="space-y-2">
                 {report.report.whatsWorking.map((w) => (
-                  <li key={w} className="text-slate-700 leading-relaxed pl-4 border-l-2 border-sage">{w}</li>
+                  <li key={w} className="text-slate-700 leading-relaxed pl-4 border-l-2 border-clay">{w}</li>
                 ))}
               </ul>
             </div>
@@ -114,7 +114,7 @@ export function WeeklyReportCard({ child }: { child: Child }) {
             <ol className="space-y-2">
               {report.report.tryThisWeek.map((t, i) => (
                 <li key={t} className="flex gap-3 text-slate-700 leading-relaxed">
-                  <span className="w-6 h-6 flex-shrink-0 rounded-full bg-accent/10 text-accent text-xs font-semibold flex items-center justify-center mt-0.5">{i + 1}</span>
+                  <span className="w-6 h-6 flex-shrink-0 rounded-full bg-leaf/10 text-leaf text-xs font-semibold flex items-center justify-center mt-0.5">{i + 1}</span>
                   {t}
                 </li>
               ))}

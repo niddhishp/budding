@@ -51,7 +51,7 @@ function buildFeed(child: Child): FeedItem[] {
   }
 
   items.push({
-    id: 'theme', icon: <Brain className="w-6 h-6 text-sage" />, color: 'bg-sage/10 border-sage/20',
+    id: 'theme', icon: <Brain className="w-6 h-6 text-clay" />, color: 'bg-clay/10 border-clay/20',
     title: `What ${age.label} is about`,
     content: `Right now ${name} is working on ${stage.keyThemes.slice(0, 3).join(', ').toLowerCase()}. Much of the friction you see is that work in progress.`,
   });
@@ -68,7 +68,7 @@ function buildFeed(child: Child): FeedItem[] {
   }
 
   items.push({
-    id: 'ritual', icon: <Heart className="w-6 h-6 text-accent" />, color: 'bg-accent/10 border-accent/20',
+    id: 'ritual', icon: <Heart className="w-6 h-6 text-leaf" />, color: 'bg-leaf/10 border-leaf/20',
     title: 'Tonight: Rose and Thorn',
     content: `At dinner, ask ${name} for their "rose" (best part of the day) and "thorn" (hardest part). It builds emotional vocabulary and makes bad moments speakable.`,
   });
@@ -99,7 +99,7 @@ export function DashboardPage() {
         transition={SPRING_TRANSITION}
         className="mb-10 text-center"
       >
-        <p className="text-sm font-medium text-sage mb-4 tracking-widest uppercase">
+        <p className="text-sm font-medium text-clay mb-4 tracking-widest uppercase">
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
         <h1 className="font-heading text-4xl md:text-5xl text-slate-850 leading-[1.1] mb-4">
@@ -119,7 +119,7 @@ export function DashboardPage() {
           className="w-full mb-10 p-6 rounded-[2rem] bg-slate-850 text-left text-white flex items-center gap-4 shadow-lg hover:bg-slate-800 transition-colors"
         >
           <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-6 h-6 text-sage" />
+            <Sparkles className="w-6 h-6 text-clay" />
           </div>
           <div className="flex-1">
             <p className="font-heading text-xl">Hard moment right now?</p>

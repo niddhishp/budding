@@ -26,8 +26,8 @@ export function ConsentGate() {
   return (
     <div className="fixed inset-0 z-[70] bg-canvas/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-6">
       <div role="dialog" aria-modal="true" aria-labelledby="consent-title" className="bg-white w-full max-w-lg rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl border border-slate-200/50 p-6 sm:p-10">
-        <div className="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center mb-6">
-          <Shield className="w-6 h-6 text-sage" />
+        <div className="w-12 h-12 rounded-full bg-clay/10 flex items-center justify-center mb-6">
+          <Shield className="w-6 h-6 text-clay" />
         </div>
         <h2 id="consent-title" className="font-heading text-3xl text-slate-850 mb-3">Your family's data, your call.</h2>
         <ul className="text-slate-600 leading-relaxed space-y-2 mb-6 text-[15px]">
@@ -41,7 +41,7 @@ export function ConsentGate() {
             type="checkbox"
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
-            className="mt-1 w-4 h-4 accent-sage"
+            className="mt-1 w-4 h-4 accent-clay"
           />
           <span className="text-sm text-slate-700 leading-relaxed">
             I am the parent or legal guardian, and I agree to the{' '}

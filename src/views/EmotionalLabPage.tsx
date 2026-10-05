@@ -63,7 +63,7 @@ export function EmotionalLabPage() {
               onClick={() => setActiveCategory(cat.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 activeCategory === cat.id
-                  ? 'bg-sage text-white'
+                  ? 'bg-clay text-white'
                   : 'bg-white/60 text-slate-500 hover:bg-white'
               }`}
             >
@@ -76,12 +76,12 @@ export function EmotionalLabPage() {
 
       {/* Active Exercise */}
       {activeEx && (
-        <Card className="glass-card p-6 bg-sage-wash/30 border-sage/20">
+        <Card className="glass-card p-6 bg-paper-deep border-clay/20">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-heading font-semibold text-lg text-slate-850">{activeEx.title}</h3>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary" className="bg-sage-light text-sage border-0 text-[10px]">
+                <Badge variant="secondary" className="bg-clay/10 text-clay border-0 text-[10px]">
                   {activeEx.category}
                 </Badge>
                 <span className="text-xs text-slate-500 flex items-center gap-1">
@@ -104,17 +104,17 @@ export function EmotionalLabPage() {
                   key={i}
                   onClick={() => handleStepComplete(activeEx.id, i)}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-                    isCompleted ? 'bg-sage/10' : 'bg-white/60 hover:bg-white/80'
+                    isCompleted ? 'bg-clay/10' : 'bg-white/60 hover:bg-white/80'
                   }`}
                 >
                   {isCompleted ? (
-                    <CheckCircle2 className="w-5 h-5 text-sage flex-shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-clay flex-shrink-0" />
                   ) : (
                     <div className="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center flex-shrink-0">
                       <span className="text-[10px] text-slate-400">{i + 1}</span>
                     </div>
                   )}
-                  <span className={`text-sm ${isCompleted ? 'text-sage font-medium' : 'text-slate-700'}`}>
+                  <span className={`text-sm ${isCompleted ? 'text-clay font-medium' : 'text-slate-700'}`}>
                     {step}
                   </span>
                 </button>
@@ -138,7 +138,7 @@ export function EmotionalLabPage() {
           return (
             <Card
               key={exercise.id}
-              className={`glass-card p-5 hover-lift cursor-pointer transition-all ${isActive ? 'ring-2 ring-sage' : ''}`}
+              className={`glass-card p-5 hover-lift cursor-pointer transition-all ${isActive ? 'ring-2 ring-clay' : ''}`}
               onClick={() => !isActive && handleStart(exercise.id)}
             >
               <div className="flex items-start justify-between mb-3">
@@ -169,7 +169,7 @@ export function EmotionalLabPage() {
               )}
               
               {progress === 0 && (
-                <div className="flex items-center gap-1 text-sage text-sm">
+                <div className="flex items-center gap-1 text-clay text-sm">
                   <Play className="w-4 h-4" />
                   Start Exercise
                 </div>

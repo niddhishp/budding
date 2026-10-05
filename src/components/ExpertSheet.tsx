@@ -60,14 +60,14 @@ export function ExpertSheet() {
 
         {done ? (
           <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto rounded-full bg-sage/10 flex items-center justify-center mb-5"><Check className="w-8 h-8 text-sage" /></div>
+            <div className="w-16 h-16 mx-auto rounded-full bg-clay/10 flex items-center justify-center mb-5"><Check className="w-8 h-8 text-clay" /></div>
             <h2 id="expert-title" className="font-heading text-3xl text-slate-850 mb-2">We'll call you.</h2>
             <p className="text-slate-500 mb-8">Expect a call within one working day to match you with a child psychologist and find a time.</p>
             <Button onClick={closeExpert} className="rounded-full bg-slate-850 text-white px-8 h-12">Done</Button>
           </div>
         ) : (
           <>
-            <div className="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center mb-5"><Stethoscope className="w-6 h-6 text-sage" /></div>
+            <div className="w-12 h-12 rounded-full bg-clay/10 flex items-center justify-center mb-5"><Stethoscope className="w-6 h-6 text-clay" /></div>
             <h2 id="expert-title" className="font-heading text-3xl text-slate-850 mb-2 pr-8">Talk to a child psychologist</h2>
             <p className="text-slate-500 mb-6">
               A {EXPERT_SESSION.minutes}-minute video session with a qualified child psychologist, from {EXPERT_SESSION.price}. We call you first to understand the concern and match the right expert.
@@ -79,7 +79,7 @@ export function ExpertSheet() {
               value={concern}
               onChange={(e) => setConcern(e.target.value)}
               maxLength={2000}
-              className="w-full h-28 p-4 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-sage resize-none mb-4"
+              className="w-full h-28 p-4 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-clay resize-none mb-4"
             />
             <label className="block text-sm font-medium text-slate-700 mb-2" htmlFor="expert-phone">Phone number</label>
             <input
@@ -89,7 +89,7 @@ export function ExpertSheet() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+91 98xxx xxxxx"
-              className="w-full h-12 px-4 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-sage mb-4"
+              className="w-full h-12 px-4 rounded-2xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-clay mb-4"
             />
             <div className="grid grid-cols-2 gap-3 mb-2">
               <label className="block">

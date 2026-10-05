@@ -1,5 +1,6 @@
 import { useAppStore } from '@/stores/appStore';
-import { Sprout, PanelLeft, PanelRight, Plus } from 'lucide-react';
+import { PanelLeft, PanelRight, Plus } from 'lucide-react';
+import { SproutMark } from '@/components/illustrations';
 import { navItems } from './navItems';
 
 export function Sidebar() {
@@ -13,11 +14,9 @@ export function Sidebar() {
           onClick={() => setPage('dashboard')}
           className={`flex items-center gap-2.5 ${!sidebarOpen && 'justify-center w-full'}`}
         >
-          <div className="w-8 h-8 rounded-lg bg-sage flex items-center justify-center flex-shrink-0">
-            <Sprout className="w-4.5 h-4.5 text-white" />
-          </div>
+          <SproutMark className="w-8 h-8 flex-shrink-0" />
           {sidebarOpen && (
-            <span className="font-heading font-semibold text-sm text-slate-850">Budding.live</span>
+            <span className="font-heading text-xl text-slate-900">budding</span>
           )}
         </button>
         {sidebarOpen && (
@@ -51,12 +50,12 @@ export function Sidebar() {
               aria-current={isActive ? 'page' : undefined}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
-                  ? 'bg-sage-light text-sage'
+                  ? 'bg-clay/10 text-clay'
                   : 'text-slate-550 hover:bg-slate-50 hover:text-slate-700'
               } ${!sidebarOpen && 'justify-center'}`}
               title={!sidebarOpen ? item.label : undefined}
             >
-              <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'text-sage' : ''}`} />
+              <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'text-clay' : ''}`} />
               {sidebarOpen && <span>{item.label}</span>}
             </button>
           );
@@ -88,7 +87,7 @@ function ChildSelector() {
           >
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
               selectedChildId === child.id
-                ? 'bg-sage text-white'
+                ? 'bg-clay text-white'
                 : 'bg-slate-200 text-slate-600'
             }`}>
               {child.name[0]}

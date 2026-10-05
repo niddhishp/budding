@@ -100,16 +100,16 @@ export function DevelopmentTimelinePage() {
               <button
                 key={m.id}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-                  m.completed ? 'bg-sage/10' : 'bg-white/40 hover:bg-white/60'
+                  m.completed ? 'bg-clay/10' : 'bg-white/40 hover:bg-white/60'
                 }`}
               >
                 {m.completed ? (
-                  <CheckCircle2 className="w-5 h-5 text-sage flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-clay flex-shrink-0" />
                 ) : (
                   <Circle className="w-5 h-5 text-slate-300 flex-shrink-0" />
                 )}
                 <div className="flex-1">
-                  <p className={`text-sm ${m.completed ? 'text-sage font-medium' : 'text-slate-700'}`}>
+                  <p className={`text-sm ${m.completed ? 'text-clay font-medium' : 'text-slate-700'}`}>
                     {m.title}
                   </p>
                 </div>
@@ -138,12 +138,12 @@ export function DevelopmentTimelinePage() {
               </ul>
             </div>
 
-            <div className="p-4 rounded-xl bg-sage-wash/50">
-              <p className="text-xs font-medium text-sage uppercase tracking-wide mb-2">Focus Areas</p>
+            <div className="p-4 rounded-xl bg-paper-deep">
+              <p className="text-xs font-medium text-clay uppercase tracking-wide mb-2">Focus Areas</p>
               <div className="grid grid-cols-2 gap-2">
                 {stage.keyThemes.slice(0, 4).map((theme, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <Clock className="w-3.5 h-3.5 text-sage" />
+                    <Clock className="w-3.5 h-3.5 text-clay" />
                     <span className="text-sm text-slate-700">{theme}</span>
                   </div>
                 ))}

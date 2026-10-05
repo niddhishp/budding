@@ -60,14 +60,14 @@ export function LifeSkillsPage() {
                 key={skill.id}
                 onClick={() => setSelectedSkill(skill)}
                 className={`w-full flex items-center gap-3 p-4 rounded-xl text-left transition-all ${
-                  isSelected ? 'bg-sage/10 ring-2 ring-sage' : 'glass-card hover-lift'
+                  isSelected ? 'bg-clay/10 ring-2 ring-clay' : 'glass-card hover-lift'
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl ${skillColor} flex items-center justify-center flex-shrink-0`}>
                   <SkillIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${isSelected ? 'text-sage' : 'text-slate-800'}`}>
+                  <p className={`text-sm font-medium ${isSelected ? 'text-clay' : 'text-slate-800'}`}>
                     {skill.title}
                   </p>
                   <p className="text-xs text-slate-400">{skill.ageRange}</p>
@@ -115,11 +115,11 @@ export function LifeSkillsPage() {
                     key={i}
                     onClick={() => toggleStep(selectedSkill.id, i)}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-                      isCompleted ? 'bg-sage/10' : 'bg-white/40 hover:bg-white/60'
+                      isCompleted ? 'bg-clay/10' : 'bg-white/40 hover:bg-white/60'
                     }`}
                   >
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      isCompleted ? 'bg-sage' : 'bg-slate-200'
+                      isCompleted ? 'bg-clay' : 'bg-slate-200'
                     }`}>
                       {isCompleted ? (
                         <CheckCircle2 className="w-4 h-4 text-white" />
@@ -127,10 +127,10 @@ export function LifeSkillsPage() {
                         <Lock className="w-3 h-3 text-slate-400" />
                       )}
                     </div>
-                    <span className={`text-sm ${isCompleted ? 'text-sage font-medium' : 'text-slate-700'}`}>
+                    <span className={`text-sm ${isCompleted ? 'text-clay font-medium' : 'text-slate-700'}`}>
                       {step}
                     </span>
-                    {isCompleted && <Unlock className="w-4 h-4 text-sage ml-auto" />}
+                    {isCompleted && <Unlock className="w-4 h-4 text-clay ml-auto" />}
                   </button>
                 );
               })}

@@ -70,7 +70,7 @@ export function GenomeOnboarding() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className={`h-2 rounded-full transition-all duration-500 ${step >= i ? 'w-12 bg-sage' : 'w-4 bg-slate-200'}`}
+                  className={`h-2 rounded-full transition-all duration-500 ${step >= i ? 'w-12 bg-clay' : 'w-4 bg-slate-200'}`}
                 />
               ))}
             </div>
@@ -90,7 +90,7 @@ export function GenomeOnboarding() {
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <div className="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-full bg-sage/10 text-sage">
+                <div className="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-full bg-clay/10 text-clay">
                   <Heart className="w-7 h-7" />
                 </div>
                 <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">Let's meet your child.</h2>
@@ -108,8 +108,8 @@ export function GenomeOnboarding() {
                       value={name}
                       maxLength={60}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-sage/50"
-                      placeholder={born ? 'e.g., Advika' : 'e.g., Little One'}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-clay/50"
+                      placeholder={born ? 'e.g., Ira' : 'e.g., Little One'}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100">
@@ -135,7 +135,7 @@ export function GenomeOnboarding() {
                       min={born ? undefined : todayISO()}
                       max={born ? todayISO() : undefined}
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-sage/50"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-clay/50"
                     />
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export function GenomeOnboarding() {
 
             {step === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <div className="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 text-accent">
+                <div className="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-full bg-leaf/10 text-leaf">
                   <Brain className="w-7 h-7" />
                 </div>
                 <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">How is {name.trim() || 'your child'} wired?</h2>
@@ -164,7 +164,7 @@ export function GenomeOnboarding() {
                               type="button"
                               onClick={() => setAnswers({ ...answers, [q.key]: OPTION_VALUES[i] })}
                               className={`min-h-12 px-2 py-2.5 rounded-xl border text-sm leading-tight transition-all ${
-                                selected ? 'border-sage bg-sage/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                                selected ? 'border-clay bg-clay/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
                               }`}
                             >
                               {label}
@@ -180,7 +180,7 @@ export function GenomeOnboarding() {
 
             {step === 3 && (
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center py-6">
-                <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-sage/10 text-sage">
+                <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-clay/10 text-clay">
                   <Sparkles className="w-10 h-10" />
                 </div>
                 <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">
@@ -192,7 +192,7 @@ export function GenomeOnboarding() {
                     : 'We will guide you week by week, and the profile grows with your child after birth.'}
                 </p>
                 <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full bg-slate-50 border border-slate-100 text-slate-600 text-sm font-medium">
-                  <Shield className="w-4 h-4 text-sage" />
+                  <Shield className="w-4 h-4 text-clay" />
                   Private to your account. Never sold or shared.
                 </div>
                 {error && <p className="mt-6 text-sm text-red-600">{error}</p>}

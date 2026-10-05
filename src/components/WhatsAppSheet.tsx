@@ -70,8 +70,8 @@ export function WhatsAppSheet({ onClose }: { onClose: () => void }) {
           <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
         ) : phone ? (
           <>
-            <p className="flex items-center gap-2 p-4 rounded-2xl bg-sage/10 text-slate-700 mb-4">
-              <Check className="w-5 h-5 text-sage" /> Connected to {phone}
+            <p className="flex items-center gap-2 p-4 rounded-2xl bg-clay/10 text-slate-700 mb-4">
+              <Check className="w-5 h-5 text-clay" /> Connected to {phone}
             </p>
             {digits && (
               <Button asChild className="w-full h-12 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white mb-3">

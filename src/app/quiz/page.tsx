@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SproutMark } from '@/components/illustrations';
 import { OPTION_VALUES, TRAIT_QUESTIONS, encodeAnswers, saveQuizResult, type Answers } from '@/lib/temperament';
 
 // Public, no sign-up: six taps → a shareable temperament type. The top of the funnel.
@@ -35,12 +36,15 @@ export default function QuizPage() {
   return (
     <main className="min-h-[100dvh] bg-canvas flex flex-col">
       <header className="flex items-center justify-between px-5 py-5 max-w-2xl w-full mx-auto">
-        <Link href="/" className="font-heading font-bold text-xl text-slate-900">Budding.</Link>
+        <Link href="/" className="flex items-center gap-2.5" aria-label="Budding home">
+          <SproutMark className="w-8 h-8" />
+          <span className="font-heading text-2xl text-slate-900">budding</span>
+        </Link>
         {step > 0 && <span className="text-sm text-slate-400">{step} / {total}</span>}
       </header>
 
       <div className="h-1 bg-slate-100 max-w-2xl w-full mx-auto rounded-full overflow-hidden">
-        <div className="h-full bg-sage transition-all duration-500" style={{ width: `${(step / total) * 100}%` }} />
+        <div className="h-full bg-clay transition-all duration-500" style={{ width: `${(step / total) * 100}%` }} />
       </div>
 
       <div className="flex-1 flex items-center px-5 py-10">
@@ -48,7 +52,7 @@ export default function QuizPage() {
           <AnimatePresence mode="wait">
             {step === 0 ? (
               <motion.div key="intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}>
-                <p className="text-sm font-semibold text-sage uppercase tracking-widest mb-4">Free · 60 seconds</p>
+                <p className="text-sm font-semibold text-clay tracking-wide mb-4">Free · 60 seconds</p>
                 <h1 className="font-heading text-4xl sm:text-5xl text-slate-900 leading-tight mb-4">
                   What's your child's temperament type?
                 </h1>
@@ -62,10 +66,10 @@ export default function QuizPage() {
                   maxLength={40}
                   onChange={(e) => setName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && setStep(1)}
-                  placeholder="e.g., Advika"
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-sage/50 mb-6"
+                  placeholder="e.g., Ira"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-clay/50 mb-6"
                 />
-                <Button onClick={() => setStep(1)} className="h-14 px-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-lg">
+                <Button onClick={() => setStep(1)} className="h-14 px-8 rounded-full bg-clay hover:bg-clay-deep text-white text-lg">
                   Start <ArrowRight className="w-5 h-5 ml-1" />
                 </Button>
               </motion.div>
@@ -81,7 +85,7 @@ export default function QuizPage() {
                         key={label}
                         onClick={() => answer(OPTION_VALUES[i])}
                         className={`w-full text-left px-6 py-5 rounded-2xl border-2 text-lg transition-all ${
-                          selected ? 'border-sage bg-sage/10' : 'border-slate-200 bg-white hover:border-slate-300'
+                          selected ? 'border-clay bg-clay/10' : 'border-slate-200 bg-surface hover:border-clay/50'
                         }`}
                       >
                         {label}

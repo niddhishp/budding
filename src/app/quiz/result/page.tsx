@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { archetypeFor, decodeAnswers } from '@/lib/temperament';
 import { ResultActions } from './ResultActions';
+import { SiteHeader } from '@/views/LandingPage';
 
 type SearchParams = Promise<{ t?: string; n?: string }>;
 
@@ -32,7 +33,7 @@ export default async function QuizResultPage({ searchParams }: { searchParams: S
     return (
       <main className="min-h-[100dvh] bg-canvas flex flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-slate-600">This result link is incomplete.</p>
-        <Link href="/quiz" className="text-sage font-medium underline">Take the quiz</Link>
+        <Link href="/quiz" className="text-clay font-medium underline">Take the quiz</Link>
       </main>
     );
   }
@@ -41,31 +42,36 @@ export default async function QuizResultPage({ searchParams }: { searchParams: S
   const childName = name ?? 'Your child';
 
   return (
-    <main className="min-h-[100dvh] bg-canvas px-5 py-8">
-      <div className="max-w-xl mx-auto">
-        <Link href="/" className="font-heading font-bold text-xl text-slate-900">Budding.</Link>
-
-        <div className="mt-8 p-8 sm:p-10 rounded-[2.5rem] bg-slate-900 text-white relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-sage/30 blur-3xl" />
-          <p className="relative text-sm font-semibold text-sage uppercase tracking-widest mb-4">{childName} is</p>
-          <h1 className="relative font-heading text-4xl sm:text-5xl leading-tight mb-3">
-            {archetype.name} <span aria-hidden>{archetype.emoji}</span>
+    <main className="min-h-[100dvh] bg-canvas">
+      <SiteHeader />
+      <div className="max-w-xl mx-auto px-5 pt-4 pb-16">
+        <div className="paper-grain relative overflow-hidden rounded-[2.5rem] bg-night text-[oklch(95%_0.015_82)] p-8 sm:p-10">
+          <svg viewBox="0 0 120 120" aria-hidden className="absolute -right-6 -top-6 w-36 h-36">
+            <circle cx="60" cy="60" r="52" className="fill-turmeric" />
+            <circle cx="88" cy="40" r="34" className="fill-night" />
+          </svg>
+          <p className="relative text-sm font-semibold text-turmeric tracking-wide mb-4">{childName} is</p>
+          <h1 className="relative font-heading text-4xl sm:text-5xl leading-[1.08] mb-4 max-w-[14ch]">
+            {archetype.name} <span aria-hidden className="font-sans">{archetype.emoji}</span>
           </h1>
-          <p className="relative text-xl text-white/70">{archetype.tagline}</p>
+          <p className="relative text-xl leading-relaxed text-[oklch(84%_0.025_82)]">{archetype.tagline}</p>
         </div>
 
-        <p className="mt-8 text-lg text-slate-700 leading-relaxed">{archetype.description}</p>
+        <p className="mt-10 text-lg text-slate-700 leading-relaxed">{archetype.description}</p>
 
-        <h2 className="mt-10 mb-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">What works with {name ?? 'them'}</h2>
-        <ul className="space-y-3">
-          {archetype.tips.map((tip) => (
-            <li key={tip} className="p-5 rounded-2xl bg-white border border-slate-200/60 text-slate-700 leading-relaxed">{tip}</li>
+        <h2 className="mt-12 mb-5 font-heading text-2xl text-slate-900">What works with {name ?? 'them'}</h2>
+        <ol className="space-y-5">
+          {archetype.tips.map((tip, i) => (
+            <li key={tip} className="flex gap-4 text-lg text-slate-700 leading-relaxed">
+              <span className="w-5 flex-shrink-0 font-heading text-2xl leading-none text-clay pt-0.5 [font-variant-numeric:lining-nums_tabular-nums]" aria-hidden>{i + 1}</span>
+              {tip}
+            </li>
           ))}
-        </ul>
+        </ol>
 
         <ResultActions code={code} name={name} archetypeName={archetype.name} emoji={archetype.emoji} />
 
-        <p className="mt-10 text-xs text-slate-400 leading-relaxed">
+        <p className="mt-10 text-sm text-slate-500 leading-relaxed">
           A playful snapshot based on your answers, not a psychological assessment. Temperament shifts with age and context.
         </p>
       </div>

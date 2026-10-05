@@ -25,7 +25,7 @@ export function FamilyHubPage() {
 
       {/* Progress Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={Check} label="Today's Routines" value={`${completedToday}/${dailyRoutines.length}`} color="bg-sage-light text-sage" />
+        <StatCard icon={Check} label="Today's Routines" value={`${completedToday}/${dailyRoutines.length}`} color="bg-clay/10 text-clay" />
         <StatCard icon={Flame} label="Longest Streak" value="15 days" color="bg-amber-50 text-amber-600" />
         <StatCard icon={Calendar} label="This Week" value="12/14" color="bg-blue-50 text-blue-600" />
         <StatCard icon={Users} label="Family Score" value="87" color="bg-purple-50 text-purple-600" />
@@ -47,11 +47,11 @@ export function FamilyHubPage() {
               key={routine.id}
               onClick={() => toggleRoutine(routine.id)}
               className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-                routine.completed ? 'bg-sage/10' : 'bg-white/40 hover:bg-white/60'
+                routine.completed ? 'bg-clay/10' : 'bg-white/40 hover:bg-white/60'
               }`}
             >
               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                routine.completed ? 'bg-sage' : 'border-2 border-slate-300'
+                routine.completed ? 'bg-clay' : 'border-2 border-slate-300'
               }`}>
                 {routine.completed && <Check className="w-3.5 h-3.5 text-white" />}
               </div>
@@ -84,11 +84,11 @@ export function FamilyHubPage() {
                 key={routine.id}
                 onClick={() => toggleRoutine(routine.id)}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all ${
-                  routine.completed ? 'bg-sage/10' : 'bg-white/40 hover:bg-white/60'
+                  routine.completed ? 'bg-clay/10' : 'bg-white/40 hover:bg-white/60'
                 }`}
               >
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  routine.completed ? 'bg-sage' : 'border-2 border-slate-300'
+                  routine.completed ? 'bg-clay' : 'border-2 border-slate-300'
                 }`}>
                   {routine.completed && <Check className="w-3.5 h-3.5 text-white" />}
                 </div>
@@ -126,7 +126,7 @@ export function FamilyHubPage() {
                   <p className="text-sm font-medium text-slate-700">{ritual.title}</p>
                   <p className="text-xs text-slate-400">{ritual.desc}</p>
                 </div>
-                <Button variant="outline" size="sm" className="text-xs border-sage text-sage hover:bg-sage-light">
+                <Button variant="outline" size="sm" className="text-xs border-clay text-clay hover:bg-clay/10">
                   Add
                 </Button>
               </div>

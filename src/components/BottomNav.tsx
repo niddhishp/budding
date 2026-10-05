@@ -18,7 +18,7 @@ export function BottomNav() {
               key={item.id}
               onClick={() => setPage(item.id)}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 py-3 text-[11px] font-medium ${isActive ? 'text-sage' : 'text-slate-500'}`}
+              className={`flex flex-col items-center gap-1 py-3 text-[11px] font-medium ${isActive ? 'text-clay' : 'text-slate-500'}`}
             >
               <Icon className="w-5 h-5" />
               {item.label}

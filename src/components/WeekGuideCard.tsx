@@ -20,16 +20,16 @@ export function WeekGuideCard({ week }: { week: number }) {
   }, [week]);
 
   return (
-    <section className="p-6 md:p-8 rounded-[2rem] bg-sage/10 border border-sage/20">
+    <section className="p-6 md:p-8 rounded-[2rem] bg-clay/10 border border-clay/20">
       <div className="flex items-center gap-3 mb-6">
-        <div className="bg-white/60 p-3 rounded-full"><Baby className="w-6 h-6 text-sage" /></div>
+        <div className="bg-white/60 p-3 rounded-full"><Baby className="w-6 h-6 text-clay" /></div>
         <div>
-          <p className="text-xs font-semibold text-sage uppercase tracking-wider">Week {week}</p>
+          <p className="text-xs font-semibold text-clay uppercase tracking-wider">Week {week}</p>
           {guide && <p className="font-heading text-xl text-slate-850">About the size of {guide.sizeComparison}</p>}
         </div>
       </div>
 
-      {!guide && !error && <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 text-sage animate-spin" /></div>}
+      {!guide && !error && <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 text-clay animate-spin" /></div>}
       {error && <p className="text-slate-600">{error}</p>}
 
       {guide && (

@@ -3,7 +3,8 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Sprout, Mail, Loader2, ArrowLeft } from 'lucide-react';
+import { Mail, Loader2, ArrowLeft } from 'lucide-react';
+import { SproutMark } from '@/components/illustrations';
 import { Button } from '@/components/ui/button';
 import { getSupabase } from '@/lib/supabase';
 
@@ -32,10 +33,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md bg-white rounded-[2rem] border border-slate-200/60 shadow-sm p-8 sm:p-10">
-      <div className="w-12 h-12 rounded-2xl bg-sage flex items-center justify-center mb-8">
-        <Sprout className="w-6 h-6 text-white" />
-      </div>
+    <div className="w-full max-w-md bg-surface rounded-[2rem] shadow-paper p-8 sm:p-10">
+      <SproutMark className="w-12 h-12 mb-8" />
 
       {status === 'sent' ? (
         <>
@@ -43,7 +42,7 @@ function LoginForm() {
           <p className="text-slate-500 leading-relaxed">
             We sent a sign-in link to <span className="font-medium text-slate-700">{email}</span>. Open it on this device to continue.
           </p>
-          <button onClick={() => setStatus('idle')} className="mt-8 text-sm font-medium text-sage hover:underline">
+          <button onClick={() => setStatus('idle')} className="mt-8 text-sm font-medium text-clay hover:underline">
             Use a different email
           </button>
         </>
@@ -64,7 +63,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-850 focus:outline-none focus:border-sage focus:ring-2 focus:ring-sage/20"
+                  className="w-full h-12 pl-11 pr-4 rounded-full border border-slate-200 bg-paper text-slate-850 focus:outline-none focus:border-clay focus:ring-2 focus:ring-clay/20"
                 />
               </div>
             </label>
@@ -72,7 +71,7 @@ function LoginForm() {
             <Button
               type="submit"
               disabled={status === 'sending' || !email.trim()}
-              className="w-full h-12 rounded-xl bg-slate-850 hover:bg-slate-800 text-white font-medium"
+              className="w-full h-12 rounded-full bg-clay hover:bg-clay-deep text-white font-semibold"
             >
               {status === 'sending' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Email me a sign-in link'}
             </Button>

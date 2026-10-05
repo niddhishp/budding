@@ -51,17 +51,17 @@ export function ResultActions({ code, name, archetypeName, emoji }: {
   return (
     <div className="mt-10 space-y-3">
       {isOwner ? (
-        <div className="p-6 rounded-[2rem] bg-sage/10 border border-sage/20">
+        <div className="p-7 rounded-[2rem] bg-paper-deep">
           <p className="font-heading text-xl text-slate-900 mb-2">Get scripts made for {name ?? 'your child'}.</p>
           <p className="text-slate-600 mb-5 leading-relaxed">
             Next meltdown, describe what's happening and Budding gives you the exact words to say, tuned to this temperament.
           </p>
-          <Button asChild className="w-full h-14 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-lg">
+          <Button asChild className="w-full h-14 rounded-full bg-clay hover:bg-clay-deep text-white text-lg">
             <Link href="/login?next=/app"><Sparkles className="w-5 h-5" /> Start free</Link>
           </Button>
         </div>
       ) : (
-        <Button asChild className="w-full h-14 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-lg">
+        <Button asChild className="w-full h-14 rounded-full bg-clay hover:bg-clay-deep text-white text-lg">
           <Link href="/quiz">Find your child's type</Link>
         </Button>
       )}

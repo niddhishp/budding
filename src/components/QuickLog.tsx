@@ -52,7 +52,7 @@ export function QuickLog() {
     <>
       <Button aria-label="Log a moment"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 md:bottom-6 right-4 md:right-6 w-14 h-14 rounded-full bg-accent hover:bg-accent/90 shadow-lg shadow-accent/25 flex items-center justify-center p-0 z-40 transition-transform hover:scale-105"
+        className="fixed bottom-24 md:bottom-6 right-4 md:right-6 w-14 h-14 rounded-full bg-leaf hover:bg-leaf/90 shadow-lg shadow-leaf/25 flex items-center justify-center p-0 z-40 transition-transform hover:scale-105"
       >
         <Plus className="w-6 h-6 text-white" />
       </Button>
@@ -77,8 +77,8 @@ export function QuickLog() {
             >
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-accent" />
+                  <div className="w-10 h-10 rounded-xl bg-leaf/10 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-leaf" />
                   </div>
                   <div>
                     <h3 className="font-heading font-semibold text-slate-850">Log a moment</h3>
@@ -96,7 +96,7 @@ export function QuickLog() {
               <div className="p-6">
                 {status === 'success' ? (
                   <div className="py-8 text-center flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 text-accent">
+                    <div className="w-16 h-16 rounded-full bg-leaf/10 flex items-center justify-center mb-4 text-leaf">
                       <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -110,7 +110,7 @@ export function QuickLog() {
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       placeholder="e.g., Had a meltdown at the park when we had to leave without warning."
-                      className="w-full h-32 p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-850 placeholder:text-slate-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 resize-none"
+                      className="w-full h-32 p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-850 placeholder:text-slate-400 focus:outline-none focus:border-leaf focus:ring-1 focus:ring-leaf/20 resize-none"
                       autoFocus
                     />
                     
@@ -121,7 +121,7 @@ export function QuickLog() {
                     <Button
                       type="submit"
                       disabled={!content.trim() || isSubmitting}
-                      className="w-full h-12 bg-accent hover:bg-accent/90 text-white font-medium rounded-xl transition-all"
+                      className="w-full h-12 bg-leaf hover:bg-leaf/90 text-white font-medium rounded-xl transition-all"
                     >
                       {isSubmitting ? (
                         <>

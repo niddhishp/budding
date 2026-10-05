@@ -101,7 +101,7 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
             <button
               key={a.value}
               onClick={() => { setAudience(a.value); setMessage(''); }}
-              className={`px-4 py-2 rounded-full text-sm border transition-colors ${audience === a.value ? 'border-sage bg-sage/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600'}`}
+              className={`px-4 py-2 rounded-full text-sm border transition-colors ${audience === a.value ? 'border-clay bg-clay/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600'}`}
             >
               {a.label}
             </button>
@@ -117,7 +117,7 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
                 key={l.value}
                 onClick={() => pickLanguage(l.value)}
                 className={`flex items-center gap-1 px-3 py-2 rounded-full text-sm border transition-colors ${
-                  language === l.value ? 'border-sage bg-sage/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600'
+                  language === l.value ? 'border-clay bg-clay/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600'
                 }`}
               >
                 {locked && <Lock className="w-3 h-3 text-slate-400" />} {l.label}
@@ -131,7 +131,7 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full min-h-40 p-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 leading-relaxed focus:outline-none focus:border-sage resize-none"
+              className="w-full min-h-40 p-4 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 leading-relaxed focus:outline-none focus:border-clay resize-none"
             />
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button onClick={copy} variant="outline" className="h-12 rounded-full">

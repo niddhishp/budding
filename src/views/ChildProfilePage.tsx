@@ -25,8 +25,8 @@ export function ChildProfilePage() {
         transition={SPRING_TRANSITION}
         className="mb-16 text-center"
       >
-        <div className="w-24 h-24 mx-auto rounded-full bg-sage/10 flex items-center justify-center mb-6">
-          <span className="font-heading text-4xl text-sage">{child.name.charAt(0)}</span>
+        <div className="w-24 h-24 mx-auto rounded-full bg-clay/10 flex items-center justify-center mb-6">
+          <span className="font-heading text-4xl text-clay">{child.name.charAt(0)}</span>
         </div>
         <h1 className="font-heading text-4xl md:text-5xl text-slate-850 leading-tight mb-3">
           {child.name}'s Journey
@@ -49,17 +49,17 @@ export function ChildProfilePage() {
           <div className="relative border-l border-slate-200/60 ml-4 md:ml-6 space-y-12 pb-12">
             
             <div className="relative pl-8 md:pl-12">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-canvas border-2 border-sage flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-sage" />
+              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-canvas border-2 border-clay flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-clay" />
               </div>
-              <p className="text-sm text-sage font-medium tracking-widest uppercase mb-2">Current Phase</p>
+              <p className="text-sm text-clay font-medium tracking-widest uppercase mb-2">Current Phase</p>
               <h2 className="text-2xl font-heading text-slate-850 mb-4">{stage?.title}</h2>
               <p className="text-slate-600 leading-relaxed mb-6">
                 {stage?.description}
               </p>
               <div className="flex flex-wrap gap-2">
                 {stage?.keyThemes.map((theme, i) => (
-                  <Badge key={i} variant="secondary" className="bg-sage/10 text-sage border-0 font-medium px-3 py-1">
+                  <Badge key={i} variant="secondary" className="bg-clay/10 text-clay border-0 font-medium px-3 py-1">
                     {theme}
                   </Badge>
                 ))}
@@ -81,13 +81,13 @@ export function ChildProfilePage() {
                     key={milestone.id}
                     className={`flex gap-4 p-5 rounded-[2rem] border transition-all ${
                       milestone.completed
-                        ? 'bg-sage/5 border-sage/20'
+                        ? 'bg-clay/5 border-clay/20'
                         : 'bg-white/50 border-slate-200/60 shadow-sm backdrop-blur-md'
                     }`}
                   >
                     <div className="mt-1">
                       {milestone.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-sage" />
+                        <CheckCircle2 className="w-5 h-5 text-clay" />
                       ) : (
                         <Circle className="w-5 h-5 text-slate-300" />
                       )}
@@ -115,8 +115,8 @@ export function ChildProfilePage() {
         >
           <div className="p-8 rounded-[2rem] border border-slate-200/60 bg-white/50 backdrop-blur-md shadow-sm">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                <Target className="w-5 h-5 text-accent" />
+              <div className="w-10 h-10 rounded-full bg-leaf/10 flex items-center justify-center">
+                <Target className="w-5 h-5 text-leaf" />
               </div>
               <h3 className="font-semibold text-slate-850 text-lg">Temperament DNA</h3>
             </div>
@@ -130,7 +130,7 @@ export function ChildProfilePage() {
                   </div>
                   <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-accent rounded-full opacity-80" 
+                      className="h-full bg-leaf rounded-full opacity-80" 
                       style={{ width: `${value}%` }} 
                     />
                   </div>
@@ -140,7 +140,7 @@ export function ChildProfilePage() {
 
             <div className="mt-8 pt-6 border-t border-slate-100">
               <div className="flex items-start gap-3">
-                <Sparkles className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                <Sparkles className="w-4 h-4 text-leaf mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-slate-600 leading-relaxed">
                   {child.name}'s high 
                   <span className="font-medium text-slate-850"> {Object.entries(child.temperament).sort((a, b) => b[1] - a[1])[0][0].replace(/([A-Z])/g, ' $1').trim()} </span> 

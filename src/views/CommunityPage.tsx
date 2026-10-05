@@ -45,7 +45,7 @@ export function CommunityPage() {
             onClick={() => setActiveTopic(topic)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               activeTopic === topic
-                ? 'bg-sage text-white'
+                ? 'bg-clay text-white'
                 : 'bg-white/60 text-slate-600 hover:bg-white'
             }`}
           >
@@ -74,7 +74,7 @@ export function CommunityPage() {
                   Insight
                 </Badge>
               </div>
-              <Button size="sm" className="bg-sage hover:bg-sage/90 text-white">
+              <Button size="sm" className="bg-clay hover:bg-clay/90 text-white">
                 Post
               </Button>
             </div>
@@ -88,14 +88,14 @@ export function CommunityPage() {
           <Card key={post.id} className="glass-card p-5 hover-lift">
             {/* Author */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-sage-light flex items-center justify-center">
-                <span className="font-medium text-sage">{post.avatar}</span>
+              <div className="w-10 h-10 rounded-full bg-clay/10 flex items-center justify-center">
+                <span className="font-medium text-clay">{post.avatar}</span>
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-slate-800 text-sm">{post.author}</span>
                   {post.verified && (
-                    <Badge variant="secondary" className="bg-sage-light text-sage border-0 text-[10px] flex items-center gap-1">
+                    <Badge variant="secondary" className="bg-clay/10 text-clay border-0 text-[10px] flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       Expert Verified
                     </Badge>
@@ -125,7 +125,7 @@ export function CommunityPage() {
               <button
                 onClick={() => toggleLike(post.id)}
                 className={`flex items-center gap-1.5 text-sm ${
-                  likedPosts.has(post.id) ? 'text-sage' : 'text-slate-400 hover:text-slate-600'
+                  likedPosts.has(post.id) ? 'text-clay' : 'text-slate-400 hover:text-slate-600'
                 }`}
               >
                 <ThumbsUp className="w-4 h-4" />
@@ -157,7 +157,7 @@ export function CommunityPage() {
                   placeholder="Share your experience or advice..."
                   className="min-h-[60px] rounded-xl border-slate-200 bg-white/80 resize-none"
                 />
-                <Button size="sm" className="bg-sage hover:bg-sage/90 text-white mt-1">
+                <Button size="sm" className="bg-clay hover:bg-clay/90 text-white mt-1">
                   Reply
                 </Button>
               </div>

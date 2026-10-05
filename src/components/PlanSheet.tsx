@@ -112,8 +112,8 @@ export function PlanSheet() {
 
         {success ? (
           <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto rounded-full bg-sage/10 flex items-center justify-center mb-5">
-              <Sparkles className="w-8 h-8 text-sage" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-clay/10 flex items-center justify-center mb-5">
+              <Sparkles className="w-8 h-8 text-clay" />
             </div>
             <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2">Welcome to Plus.</h2>
             <p className="text-slate-500 mb-8">Unlimited decodes and family sharing are on.</p>
@@ -137,7 +137,7 @@ export function PlanSheet() {
           </>
         ) : (
           <>
-            <p className="text-sm font-semibold text-sage uppercase tracking-wider mb-2">Budding Plus</p>
+            <p className="text-sm font-semibold text-clay uppercase tracking-wider mb-2">Budding Plus</p>
             <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2 pr-8">
               {paywall.reason ?? 'The right words, every time you need them.'}
             </h2>
@@ -152,10 +152,10 @@ export function PlanSheet() {
                     role="radio"
                     aria-checked={selected}
                     onClick={() => setBillingInterval(value)}
-                    className={`relative text-left p-4 rounded-2xl border-2 transition-colors ${selected ? 'border-sage bg-sage/5' : 'border-slate-200'}`}
+                    className={`relative text-left p-4 rounded-2xl border-2 transition-colors ${selected ? 'border-clay bg-clay/5' : 'border-slate-200'}`}
                   >
                     {value === 'yearly' && (
-                      <span className="absolute -top-2.5 right-3 text-[10px] font-bold uppercase tracking-wider bg-sage text-white px-2 py-0.5 rounded-full">Best value</span>
+                      <span className="absolute -top-2.5 right-3 text-[10px] font-bold uppercase tracking-wider bg-clay text-white px-2 py-0.5 rounded-full">Best value</span>
                     )}
                     <span className="block text-sm text-slate-500 capitalize">{value}</span>
                     <span className="block font-heading text-2xl text-slate-850">{PRICES[value].amount}</span>
@@ -190,7 +190,7 @@ function FeatureList({ items, muted = false }: { items: string[]; muted?: boolea
     <ul className="space-y-2.5">
       {items.map((item) => (
         <li key={item} className={`flex gap-3 text-sm leading-relaxed ${muted ? 'text-slate-500' : 'text-slate-700'}`}>
-          <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${muted ? 'text-slate-300' : 'text-sage'}`} />
+          <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${muted ? 'text-slate-300' : 'text-clay'}`} />
           {item}
         </li>
       ))}

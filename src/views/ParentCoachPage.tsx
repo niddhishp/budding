@@ -50,7 +50,7 @@ export function ParentCoachPage() {
             onClick={() => setSelectedSituation(sit)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               selectedSituation === sit
-                ? 'bg-sage text-white'
+                ? 'bg-clay text-white'
                 : 'bg-white/60 text-slate-600 hover:bg-white'
             }`}
           >
@@ -60,10 +60,10 @@ export function ParentCoachPage() {
       </div>
 
       {/* Script of the Day */}
-      <Card className="glass-card p-6 bg-sage-wash/30">
+      <Card className="glass-card p-6 bg-paper-deep">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <MessageCircleHeart className="w-5 h-5 text-sage" />
+            <MessageCircleHeart className="w-5 h-5 text-clay" />
             <h3 className="font-heading font-semibold text-slate-850">Communication Reframe</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -93,16 +93,16 @@ export function ParentCoachPage() {
           </div>
 
           {/* Say Instead */}
-          <div className="p-4 rounded-xl bg-sage/10 border border-sage/20">
+          <div className="p-4 rounded-xl bg-clay/10 border border-clay/20">
             <div className="flex items-center gap-2 mb-2">
-              <MessageCircleHeart className="w-4 h-4 text-sage" />
-              <p className="text-xs font-medium text-sage uppercase tracking-wide">Try saying</p>
+              <MessageCircleHeart className="w-4 h-4 text-clay" />
+              <p className="text-xs font-medium text-clay uppercase tracking-wide">Try saying</p>
             </div>
             <p className="text-sm text-slate-800 font-medium mb-3">"{selectedScript.sayInstead}"</p>
             <Button
               variant="outline"
               size="sm"
-              className="text-sage border-sage hover:bg-sage-light"
+              className="text-clay border-clay hover:bg-clay/10"
               onClick={() => handleCopy(selectedScript.sayInstead)}
             >
               {copied ? <Check className="w-3.5 h-3.5 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
@@ -124,7 +124,7 @@ export function ParentCoachPage() {
       {/* All Scripts */}
       <div>
         <h2 className="font-heading font-semibold text-lg text-slate-850 mb-4 flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-sage" />
+          <BookOpen className="w-5 h-5 text-clay" />
           Script Library
         </h2>
         <div className="space-y-3">

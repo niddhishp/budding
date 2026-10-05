@@ -30,7 +30,7 @@ function PlatformApp() {
   if (status === 'loading') {
     return (
       <div className="min-h-[100dvh] bg-canvas flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-sage animate-spin" />
+        <Loader2 className="w-6 h-6 text-clay animate-spin" />
       </div>
     );
   }

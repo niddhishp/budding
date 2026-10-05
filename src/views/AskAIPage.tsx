@@ -197,7 +197,7 @@ export function AskAIPage() {
               }}
               maxLength={2000}
               placeholder={`e.g., ${examples[0] ?? 'What happened, and what did you try?'}`}
-              className="w-full min-h-[140px] px-5 pt-4 pb-16 rounded-[2rem] border-slate-200 bg-white/70 backdrop-blur-md text-slate-800 text-lg placeholder:text-slate-400 focus:border-sage focus:ring-sage/20 resize-none shadow-sm"
+              className="w-full min-h-[140px] px-5 pt-4 pb-16 rounded-[2rem] border-slate-200 bg-white/70 backdrop-blur-md text-slate-800 text-lg placeholder:text-slate-400 focus:border-clay focus:ring-clay/20 resize-none shadow-sm"
             />
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
               {voiceSupported ? (
@@ -232,7 +232,7 @@ export function AskAIPage() {
               {entitlement.plan === 'free' ? (
                 <>
                   {Math.max(0, entitlement.limit - entitlement.used)} of {entitlement.limit} free decodes left this week ·{' '}
-                  <button onClick={() => openPaywall()} className="text-accent font-medium hover:underline">Go unlimited</button>
+                  <button onClick={() => openPaywall()} className="text-leaf font-medium hover:underline">Go unlimited</button>
                 </>
               ) : (
                 <>Budding Plus · unlimited decodes</>
@@ -266,7 +266,7 @@ export function AskAIPage() {
           {isAnalyzing && streamingSay && (
             <div className="mt-8 p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm" aria-live="polite">
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-accent" /> Say this
+                <MessageSquare className="w-4 h-4 text-leaf" /> Say this
               </h3>
               <p className="text-2xl md:text-3xl font-heading text-slate-850 leading-snug">"{streamingSay}"</p>
               <p className="mt-4 flex items-center gap-2 text-sm text-slate-400">
@@ -277,8 +277,8 @@ export function AskAIPage() {
 
           {isAnalyzing && !streamingSay && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-sage/10 flex items-center justify-center animate-pulse">
-                <Sparkles className="w-5 h-5 text-sage" />
+              <div className="w-12 h-12 rounded-full bg-clay/10 flex items-center justify-center animate-pulse">
+                <Sparkles className="w-5 h-5 text-clay" />
               </div>
               <div>
                 <p className="font-heading text-lg font-medium text-slate-850">Reading the moment…</p>
@@ -294,7 +294,7 @@ export function AskAIPage() {
               {/* Say this — first, biggest */}
               <div className="p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-accent" /> Say this
+                  <MessageSquare className="w-4 h-4 text-leaf" /> Say this
                 </h3>
                 <p className="text-2xl md:text-3xl font-heading text-slate-850 leading-snug">"{analysis.sayThis}"</p>
               </div>
@@ -304,7 +304,7 @@ export function AskAIPage() {
                 <ol className="space-y-2">
                   {analysis.doThis.map((step, i) => (
                     <li key={i} className="flex gap-3 text-slate-700 leading-relaxed">
-                      <span className="w-6 h-6 flex-shrink-0 rounded-full bg-sage/10 text-sage text-xs font-semibold flex items-center justify-center mt-0.5">{i + 1}</span>
+                      <span className="w-6 h-6 flex-shrink-0 rounded-full bg-clay/10 text-clay text-xs font-semibold flex items-center justify-center mt-0.5">{i + 1}</span>
                       {step}
                     </li>
                   ))}
@@ -318,12 +318,12 @@ export function AskAIPage() {
 
               <div>
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-sage" /> What's going on
+                  <Sparkles className="w-4 h-4 text-clay" /> What's going on
                 </h3>
                 <p className="text-lg text-slate-800 leading-relaxed">{analysis.interpretation}</p>
                 <p className="mt-3 text-slate-500 leading-relaxed">{analysis.developmentalContext}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-sage/5 border border-sage/10 text-sage text-sm font-medium">
+                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clay/5 border border-clay/10 text-clay text-sm font-medium">
                     <Heart className="w-4 h-4" /> Needs: {analysis.emotionalNeed}
                   </span>
                   <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-50 border border-slate-100 text-slate-600 text-sm font-medium">
@@ -370,7 +370,7 @@ export function AskAIPage() {
                   {d.analysis && <p className="font-heading text-lg text-slate-850 leading-snug mb-3">"{d.analysis.sayThis}"</p>}
                   {d.outcome ? (
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                      d.outcome === 'worked' ? 'bg-sage/10 text-sage' : d.outcome === 'partly' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500'
+                      d.outcome === 'worked' ? 'bg-clay/10 text-clay' : d.outcome === 'partly' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500'
                     }`}>
                       {OUTCOME_LABELS[d.outcome]}
                     </span>
@@ -441,7 +441,7 @@ function OutcomeBar({ decode, onSelect, compact = false }: {
               key={value}
               onClick={() => onSelect(decode, value)}
               className={`flex items-center gap-1.5 rounded-full border transition-colors ${compact ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'} ${
-                selected ? 'border-sage bg-sage/10 text-sage font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                selected ? 'border-clay bg-clay/10 text-clay font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
               }`}
             >
               <Icon className={compact ? 'w-3 h-3' : 'w-4 h-4'} /> {OUTCOME_LABELS[value]}
