@@ -57,7 +57,7 @@ export function PlanSheet() {
       new Razorpay({
         key: body.keyId,
         subscription_id: body.subscriptionId,
-        name: 'Budding Plus',
+        name: 'Kahiye Plus',
         description: `${PRICES[interval].amount} per ${PRICES[interval].per}`,
         prefill: { email: body.email },
         theme: { color: '#3ECF8B' },
@@ -85,7 +85,7 @@ export function PlanSheet() {
   };
 
   const cancel = async () => {
-    if (!window.confirm('Cancel Budding Plus? You keep access until the end of the period you have paid for.')) return;
+    if (!window.confirm('Cancel Kahiye Plus? You keep access until the end of the period you have paid for.')) return;
     setBusy(true);
     setError(null);
     const res = await fetch('/api/billing/cancel', { method: 'POST' });
@@ -121,7 +121,7 @@ export function PlanSheet() {
           </div>
         ) : isPlus ? (
           <>
-            <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2">Budding Plus</h2>
+            <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2">Kahiye Plus</h2>
             <p className="text-slate-500 mb-6">
               {entitlement?.cancelAtPeriodEnd
                 ? `Cancelled. Access continues until ${formatDate(entitlement.renewsAt)}.`
@@ -137,7 +137,7 @@ export function PlanSheet() {
           </>
         ) : (
           <>
-            <p className="text-sm font-semibold text-clay uppercase tracking-wider mb-2">Budding Plus</p>
+            <p className="text-sm font-semibold text-clay uppercase tracking-wider mb-2">Kahiye Plus</p>
             <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2 pr-8">
               {paywall.reason ?? 'The right words, every time you need them.'}
             </h2>

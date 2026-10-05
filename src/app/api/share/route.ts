@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     const entitlement = await getEntitlement(supabase, user.id);
     if (entitlement.plan !== 'plus') {
       return NextResponse.json(
-        { error: `Sharing in ${language} is part of Budding Plus.`, code: 'upgrade_required', entitlement },
+        { error: `Sharing in ${language} is part of Kahiye Plus.`, code: 'upgrade_required', entitlement },
         { status: 402 },
       );
     }

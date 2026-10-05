@@ -42,7 +42,7 @@ export default function LandingPage() {
               Your child isn&rsquo;t being difficult. They&rsquo;re telling you something.
             </h1>
             <p className="mt-7 text-lg md:text-xl leading-relaxed text-slate-600 max-w-[34rem]">
-              Describe the moment, in English, Hindi or Hinglish. Budding gives you the exact words to say, tuned to your
+              Describe the moment, in English, Hindi or Hinglish. Kahiye gives you the exact words to say, tuned to your
               child&rsquo;s age, temperament and what has worked before.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
@@ -73,7 +73,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <Reveal>
             <h2 className="font-heading text-[clamp(1.8rem,3.4vw,2.6rem)] leading-[1.1] text-slate-900 max-w-3xl">
-              Most parenting apps go quiet after the first birthday. Budding stays for all eighteen years.
+              Most parenting apps go quiet after the first birthday. Kahiye stays for all eighteen years.
             </h2>
           </Reveal>
           <ol className="mt-12 grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-10">
@@ -100,7 +100,7 @@ export default function LandingPage() {
           </Reveal>
 
           <ol className="mt-16 space-y-16 md:space-y-20">
-            <Step n="1" title="Tell Budding what’s happening" body="Type it or say it, the way you’d tell a friend. Budding already knows your child’s age and temperament.">
+            <Step n="1" title="Tell Kahiye what’s happening" body="Type it or say it, the way you’d tell a friend. Kahiye already knows your child’s age and temperament.">
               <div className="flex md:justify-end">
                 <div className="max-w-sm rounded-[1.5rem] rounded-br-md bg-surface shadow-paper px-5 py-4">
                   <p className="text-slate-800 leading-relaxed">Aarav hit his little sister when she took his blocks. He&rsquo;s still screaming.</p>
@@ -123,7 +123,7 @@ export default function LandingPage() {
                 </p>
               </div>
             </Step>
-            <Step n="3" title="Tell it what worked" body="One tap afterwards. Next time, Budding starts from what actually works for your child, not for children in general.">
+            <Step n="3" title="Tell it what worked" body="One tap afterwards. Next time, Kahiye starts from what actually works for your child, not for children in general.">
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-2 rounded-full bg-leaf text-white px-5 py-2.5 font-semibold"><ThumbsUp className="w-4 h-4" /> It worked</span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-slate-600"><Minus className="w-4 h-4" /> Partly</span>
@@ -169,7 +169,7 @@ export default function LandingPage() {
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.1]">Tonight, Aarav is the hero.</h2>
             <p className="mt-6 text-lg leading-[1.75] text-[oklch(82%_0.03_82)] max-w-lg">
               A story written for what&rsquo;s on his mind: a new school, a new sibling, the dark. The hero feels the same
-              worry and finds a small, brave way through. Read it yourself, or let Budding read it aloud.
+              worry and finds a small, brave way through. Read it yourself, or let Kahiye read it aloud.
             </p>
             <blockquote className="mt-8 font-heading text-xl leading-relaxed text-[oklch(90%_0.03_82)] max-w-md">
               &ldquo;Aarav put his bravest thing in his pocket, a small red pebble, and walked up to the big blue gate&hellip;&rdquo;
@@ -224,7 +224,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <Reveal>
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.08] text-slate-900">Less than a cup of chai a week.</h2>
-            <p className="mt-4 text-lg text-slate-600">Start free. Upgrade when Budding has earned it.</p>
+            <p className="mt-4 text-lg text-slate-600">Start free. Upgrade when Kahiye has earned it.</p>
           </Reveal>
           <Reveal delay={0.1}>
             <div className="mt-12 grid md:grid-cols-2 gap-5">
@@ -265,8 +265,8 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10">
           {[
             ['Grounded, not guessed', 'Every answer draws on developmental psychology and attachment research, then on what has worked for your child.'],
-            ['Safety comes first', 'If something sounds serious, Budding says so plainly and puts Childline 1098, Tele-MANAS 14416 and 112 one tap away.'],
-            ['No ads. Ever.', "Budding is paid for by parents, not advertisers. Your family's details are never sold, and you can delete everything in one step."],
+            ['Safety comes first', 'If something sounds serious, Kahiye says so plainly and puts Childline 1098, Tele-MANAS 14416 and 112 one tap away.'],
+            ['No ads. Ever.', "Kahiye is paid for by parents, not advertisers. Your family's details are never sold, and you can delete everything in one step."],
           ].map(([title, body], i) => (
             <Reveal key={title} delay={i * 0.08}>
               <div className="pt-6 border-t border-slate-300">
@@ -297,7 +297,9 @@ export default function LandingPage() {
 
       <footer className="px-5 sm:px-8 py-10 border-t border-slate-200 text-sm text-slate-500">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row gap-4 justify-between">
-          <span>© {new Date().getFullYear()} Budding.live · General guidance, not medical advice.</span>
+          <span>
+            © {new Date().getFullYear()} Kahiye · <span lang="hi">कहिए</span>, Hindi for &ldquo;please, say it&rdquo; · General guidance, not medical advice.
+          </span>
           <nav className="flex gap-6">
             <Link href="/quiz" className="hover:text-slate-900">Temperament quiz</Link>
             <Link href="/tools/due-date" className="hover:text-slate-900">Due date calculator</Link>
@@ -314,9 +316,9 @@ export function SiteHeader() {
   return (
     <header className="px-5 sm:px-8 py-5">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Budding home">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="Kahiye home">
           <SproutMark className="w-8 h-8" />
-          <span className="font-heading text-2xl text-slate-900">budding</span>
+          <span className="font-heading text-2xl text-slate-900">kahiye</span>
         </Link>
         <nav className="flex items-center gap-6 text-[15px]">
           <Link href="/quiz" className="hidden md:inline text-slate-600 hover:text-slate-900">Free quiz</Link>

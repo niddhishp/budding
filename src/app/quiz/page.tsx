@@ -36,9 +36,9 @@ export default function QuizPage() {
   return (
     <main className="min-h-[100dvh] bg-canvas flex flex-col">
       <header className="flex items-center justify-between px-5 py-5 max-w-2xl w-full mx-auto">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Budding home">
+        <Link href="/" className="flex items-center gap-2.5" aria-label="Kahiye home">
           <SproutMark className="w-8 h-8" />
-          <span className="font-heading text-2xl text-slate-900">budding</span>
+          <span className="font-heading text-2xl text-slate-900">kahiye</span>
         </Link>
         {step > 0 && <span className="text-sm text-slate-400">{step} / {total}</span>}
       </header>

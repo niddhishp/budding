@@ -16,7 +16,7 @@ export async function GET(req: Request) {
           padding: '72px 80px', background: '#0F172A', color: 'white', fontFamily: 'sans-serif',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, color: '#3ECF8B' }}>Budding.</div>
+        <div style={{ display: 'flex', fontSize: 36, fontWeight: 700, color: '#E39A6E' }}>kahiye</div>
         {archetype ? (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', fontSize: 34, color: '#3ECF8B', textTransform: 'uppercase', letterSpacing: 4 }}>
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
           <div style={{ display: 'flex', fontSize: 80, fontWeight: 700 }}>What's your child's temperament type?</div>
         )}
         <div style={{ display: 'flex', fontSize: 30, color: 'rgba(255,255,255,0.55)' }}>
-          Find your child's type in 60 seconds · budding.live/quiz
+          Find your child's type in 60 seconds · kahiye.app/quiz
         </div>
       </div>
     ),

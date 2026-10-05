@@ -4,7 +4,7 @@ import { getAdminSupabase } from '@/lib/supabase-admin';
 import { getRazorpay, hasAccess, type SubscriptionRow } from '@/lib/billing';
 
 // Right to erasure: cancels any running subscription, then deletes the auth user.
-// Every Budding table references auth.users with ON DELETE CASCADE, so all
+// Every Kahiye table references auth.users with ON DELETE CASCADE, so all
 // children, logs, decodes, consents and subscription rows go with it.
 export async function POST() {
   const supabase = await getServerSupabase();

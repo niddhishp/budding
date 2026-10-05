@@ -1,4 +1,4 @@
-# Budding.live — launch runbook
+# Kahiye — launch runbook
 
 Everything needed to take the app from this repo to paying users, in order.
 
@@ -22,9 +22,9 @@ npm run db:migrate   # applies every file below once, in order, each in a transa
 | `supabase/004_phase2.sql` | `stories`, `story-audio` bucket, `week_guides`, `expert_requests` |
 | `supabase/005_whatsapp.sql` | `whatsapp_links`, `whatsapp_link_codes`, `decodes.channel` |
 
-Then **Authentication → URL Configuration**: Site URL = production domain; add `https://<domain>/auth/callback` (and `http://localhost:3000/auth/callback` for dev) to Redirect URLs. **Authentication → Email Templates**: rebrand the magic-link email from Synaptix to Budding.
+Then **Authentication → URL Configuration**: Site URL = production domain; add `https://<domain>/auth/callback` (and `http://localhost:3000/auth/callback` for dev) to Redirect URLs. **Authentication → Email Templates**: rebrand the magic-link email from Synaptix to Kahiye.
 
-Note: existing Synaptix accounts share this auth pool and can sign in to Budding.
+Note: existing Synaptix accounts share this auth pool and can sign in to Kahiye.
 
 ## 2. Environment
 

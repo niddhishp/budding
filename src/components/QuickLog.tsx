@@ -82,7 +82,7 @@ export function QuickLog() {
                   </div>
                   <div>
                     <h3 className="font-heading font-semibold text-slate-850">Log a moment</h3>
-                    <p className="text-xs font-medium text-slate-500">Budding uses this next time you ask about {selectedChild?.name || 'your child'}</p>
+                    <p className="text-xs font-medium text-slate-500">Kahiye uses this next time you ask about {selectedChild?.name || 'your child'}</p>
                   </div>
                 </div>
                 <button 

@@ -151,7 +151,7 @@ export function DevelopmentTimelinePage() {
             </div>
 
             <div className="p-4 rounded-xl bg-amber-50/50">
-              <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-2">Budding.live Support</p>
+              <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-2">Kahiye Support</p>
               <p className="text-sm text-slate-600">
                 Our AI provides daily insights, communication scripts, and emotional intelligence 
                 exercises tailored to the {stage.title.toLowerCase()} stage. Check your dashboard 

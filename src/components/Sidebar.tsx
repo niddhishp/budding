@@ -16,7 +16,7 @@ export function Sidebar() {
         >
           <SproutMark className="w-8 h-8 flex-shrink-0" />
           {sidebarOpen && (
-            <span className="font-heading text-xl text-slate-900">budding</span>
+            <span className="font-heading text-xl text-slate-900">kahiye</span>
           )}
         </button>
         {sidebarOpen && (

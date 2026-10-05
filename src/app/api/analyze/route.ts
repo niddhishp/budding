@@ -109,14 +109,14 @@ function describeError(error: unknown): string {
     console.error('[analyze] decode failed', error.code, error.message);
     return 'We could not produce guidance for this one. Try rephrasing in a sentence or two.';
   }
-  if (error instanceof Anthropic.RateLimitError) return 'Budding is busy right now. Please try again in a moment.';
+  if (error instanceof Anthropic.RateLimitError) return 'Kahiye is busy right now. Please try again in a moment.';
   if (error instanceof Anthropic.AuthenticationError) {
     console.error('[analyze] ANTHROPIC_API_KEY is missing or invalid');
-    return 'Budding is not configured correctly. Please contact support.';
+    return 'Kahiye is not configured correctly. Please contact support.';
   }
   if (error instanceof Anthropic.APIError) {
     console.error('[analyze] API error', error.status, error.message);
-    return 'Budding could not respond. Please try again.';
+    return 'Kahiye could not respond. Please try again.';
   }
   if (error instanceof z.ZodError || error instanceof SyntaxError) {
     console.error('[analyze] malformed model output', error);

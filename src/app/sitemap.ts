@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://budding.live';
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.kahiye.app';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

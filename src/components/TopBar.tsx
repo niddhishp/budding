@@ -66,7 +66,7 @@ export function TopBar() {
           {userEmail && <DropdownMenuLabel className="font-normal text-slate-500 truncate">{userEmail}</DropdownMenuLabel>}
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => openPaywall()}>
-            <Sparkles className="w-4 h-4" /> {isPlus ? 'Budding Plus · Manage' : 'Upgrade to Plus'}
+            <Sparkles className="w-4 h-4" /> {isPlus ? 'Kahiye Plus · Manage' : 'Upgrade to Plus'}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setWhatsAppOpen(true)}>
             <MessageCircle className="w-4 h-4" /> Connect WhatsApp

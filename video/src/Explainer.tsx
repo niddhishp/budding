@@ -131,7 +131,7 @@ function Tell() {
   return (
     <Scene dur={SCENES.tell.dur} bg={C.paper}>
       <AbsoluteFill style={{ padding: 120 * u, justifyContent: 'center', gap: 70 * u }}>
-        <StepLabel n="1" text="Tell Budding what’s happening" at={4} />
+        <StepLabel n="1" text="Tell Kahiye what’s happening" at={4} />
         <Rise at={26} style={{ alignSelf: 'flex-end', maxWidth: 1000 * u }}>
           <div style={{ background: C.surface, boxShadow: SHADOW, borderRadius: `${40 * u}px ${40 * u}px ${10 * u}px ${40 * u}px`, padding: `${36 * u}px ${44 * u}px`, fontFamily: SANS, fontSize: 46 * u, lineHeight: 1.45, color: C.ink, minHeight: 150 * u }}>
             {typed}<span style={{ opacity: caret ? 1 : 0, color: C.clay }}>|</span>
@@ -217,7 +217,7 @@ function Worked() {
         </Rise>
         <Rise at={96}>
           <p style={{ fontFamily: SERIF, fontSize: 62 * u, lineHeight: 1.18, color: C.ink, margin: 0, maxWidth: 1300 * u }}>
-            Next time, Budding starts from <span style={{ color: C.clay }}>what works for Aarav.</span>
+            Next time, Kahiye starts from <span style={{ color: C.clay }}>what works for Aarav.</span>
           </p>
         </Rise>
       </AbsoluteFill>
@@ -288,7 +288,7 @@ function Close({ domain }: { domain?: string }) {
             <path d="M16.2 18 Q 11 13 7.5 15 Q 10 20 16.2 18.6 Z" fill={C.clay} />
             <path d="M16.4 15.2 Q 20.5 9.5 24.8 11.2 Q 22.6 16.6 16.6 16 Z" fill={C.clay} />
           </svg>
-          <span style={{ fontFamily: SERIF, fontSize: 132 * u, lineHeight: 1 }}>budding</span>
+          <span style={{ fontFamily: SERIF, fontSize: 132 * u, lineHeight: 1 }}>kahiye</span>
         </div>
         <Rise at={36}><p style={{ fontFamily: SERIF, fontSize: 64 * u, margin: 0 }}>The words to say, when it matters.</p></Rise>
         <Rise at={62}>

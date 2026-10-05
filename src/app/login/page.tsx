@@ -48,7 +48,7 @@ function LoginForm() {
         </>
       ) : (
         <>
-          <h1 className="font-heading text-3xl text-slate-850 mb-3">Sign in to Budding</h1>
+          <h1 className="font-heading text-3xl text-slate-850 mb-3">Sign in to Kahiye</h1>
           <p className="text-slate-500 leading-relaxed mb-8">No password. We'll email you a one-tap sign-in link.</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
@@ -77,7 +77,7 @@ function LoginForm() {
             </Button>
           </form>
           <p className="mt-6 text-xs text-slate-400 leading-relaxed">
-            Budding offers general guidance, not medical or psychological diagnosis. In an emergency in India, call 112.
+            Kahiye offers general guidance, not medical or psychological diagnosis. In an emergency in India, call 112.
           </p>
         </>
       )}
@@ -89,7 +89,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-[100dvh] bg-canvas flex flex-col items-center justify-center px-4 py-12">
       <Link href="/" className="mb-8 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800">
-        <ArrowLeft className="w-4 h-4" /> Budding.live
+        <ArrowLeft className="w-4 h-4" /> Kahiye
       </Link>
       <Suspense>
         <LoginForm />

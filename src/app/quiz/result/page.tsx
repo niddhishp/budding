@@ -14,12 +14,12 @@ function readParams({ t, n }: { t?: string; n?: string }) {
 
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
   const { temperament, name, code } = readParams(await searchParams);
-  if (!temperament) return { title: 'Temperament quiz — Budding' };
+  if (!temperament) return { title: 'Temperament quiz — Kahiye' };
   const archetype = archetypeFor(temperament);
   const title = `${name ?? 'My child'} is ${archetype.name} ${archetype.emoji}`;
   const og = `/api/og?t=${code}${name ? `&n=${encodeURIComponent(name)}` : ''}`;
   return {
-    title: `${title} — Budding`,
+    title: `${title} — Kahiye`,
     description: `${archetype.tagline} Find your child's temperament type in 60 seconds.`,
     openGraph: { title, description: archetype.tagline, images: [{ url: og, width: 1200, height: 630 }] },
     twitter: { card: 'summary_large_image', title, description: archetype.tagline, images: [og] },

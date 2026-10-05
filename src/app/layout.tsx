@@ -11,13 +11,13 @@ const body = Atkinson_Hyperlegible_Next({ subsets: ['latin'], variable: '--font-
 const deva = Mukta({ weight: ['400', '600'], subsets: ['devanagari'], variable: '--font-deva', display: 'swap' });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://budding.live'),
-  title: 'Budding — The words to say, when it matters',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.kahiye.app'),
+  title: 'Kahiye — The words to say, when it matters',
   description: 'Describe a hard moment with your child and get the exact words to say, tuned to their age, temperament and history. From pregnancy to 18.',
   openGraph: {
-    title: 'Budding — The words to say, when it matters',
+    title: 'Kahiye — The words to say, when it matters',
     description: 'Parenting guidance tuned to your child, not the average child.',
-    siteName: 'Budding.live',
+    siteName: 'Kahiye',
     type: 'website',
   },
 };

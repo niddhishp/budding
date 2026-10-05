@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const { interval } = parsed.data;
 
   const entitlement = await getEntitlement(supabase, user.id);
-  if (entitlement.plan === 'plus') return NextResponse.json({ error: 'You already have Budding Plus.' }, { status: 409 });
+  if (entitlement.plan === 'plus') return NextResponse.json({ error: 'You already have Kahiye Plus.' }, { status: 409 });
 
   try {
     const subscription = await getRazorpay().subscriptions.create({

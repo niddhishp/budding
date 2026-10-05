@@ -94,7 +94,7 @@ export function GenomeOnboarding() {
                 <X className="w-4 h-4" />
               </button>
             ) : (
-              <div className="font-heading font-bold text-xl text-slate-850">Budding.</div>
+              <div className="font-heading font-bold text-xl text-slate-850">kahiye</div>
             )}
           </div>
 
@@ -195,7 +195,7 @@ export function GenomeOnboarding() {
                   <Sparkles className="w-10 h-10" />
                 </div>
                 <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">
-                  {born ? `${name.trim()}'s profile is ready.` : 'Welcome to Budding.'}
+                  {born ? `${name.trim()}'s profile is ready.` : 'Welcome to Kahiye.'}
                 </h2>
                 <p className="text-base sm:text-lg text-slate-500 mb-8 leading-relaxed max-w-md mx-auto">
                   {born

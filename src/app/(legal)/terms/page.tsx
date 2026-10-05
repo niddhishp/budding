@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { POLICY_VERSION } from '@/lib/consent';
 import { FREE_DECODES_PER_WEEK, PLUS_DECODES_PER_DAY, PRICES } from '@/lib/plans';
 
-export const metadata: Metadata = { title: 'Terms — Budding' };
+export const metadata: Metadata = { title: 'Terms — Kahiye' };
 
 // DRAFT — have counsel review before launch. Replace every [bracketed] placeholder.
 export default function TermsPage() {
@@ -11,11 +11,11 @@ export default function TermsPage() {
       <h1>Terms of Use</h1>
       <p className="text-sm text-slate-500">Version {POLICY_VERSION}</p>
 
-      <p>These terms are an agreement between you and [Company legal name] for your use of Budding.</p>
+      <p>These terms are an agreement between you and [Company legal name] for your use of Kahiye.</p>
 
-      <h2>What Budding is, and isn&apos;t</h2>
+      <h2>What Kahiye is, and isn&apos;t</h2>
       <p>
-        Budding provides general parenting guidance generated with AI and grounded in developmental psychology. It is
+        Kahiye provides general parenting guidance generated with AI and grounded in developmental psychology. It is
         not medical, psychological or legal advice, does not diagnose any condition, and is no substitute for your
         pediatrician or a qualified professional. Use your judgement; you remain responsible for your child&apos;s
         care. If anyone is in danger, call 112.
@@ -40,7 +40,7 @@ export default function TermsPage() {
 
       <h2>Liability</h2>
       <p>
-        Budding is provided &ldquo;as is&rdquo;. To the extent the law allows, our total liability is limited to the
+        Kahiye is provided &ldquo;as is&rdquo;. To the extent the law allows, our total liability is limited to the
         amount you paid us in the 12 months before the claim.
       </p>
 

@@ -31,7 +31,7 @@ export function ConsentGate() {
         </div>
         <h2 id="consent-title" className="font-heading text-3xl text-slate-850 mb-3">Your family's data, your call.</h2>
         <ul className="text-slate-600 leading-relaxed space-y-2 mb-6 text-[15px]">
-          <li>• You share details about your child so Budding can tailor its guidance.</li>
+          <li>• You share details about your child so Kahiye can tailor its guidance.</li>
           <li>• It is stored securely, used only to help you, and never sold or used for ads.</li>
           <li>• Your messages are processed by our AI provider to generate guidance.</li>
           <li>• You can delete everything, anytime, from your account menu.</li>

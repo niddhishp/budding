@@ -68,7 +68,7 @@ async function notifyOps(r: {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'Budding <alerts@budding.live>',
+        from: process.env.RESEND_FROM || 'Kahiye <alerts@kahiye.app>',
         to,
         subject: `${r.source === 'safety' ? '⚠️ Safety-flagged ' : ''}Expert request · ${r.preferredLanguage}`,
         text: [

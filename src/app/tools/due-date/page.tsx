@@ -3,7 +3,7 @@ import { SiteHeader } from '@/views/LandingPage';
 import { DueDateCalculator } from './DueDateCalculator';
 
 export const metadata: Metadata = {
-  title: 'Due date calculator — when is my baby due? | Budding',
+  title: 'Due date calculator — when is my baby due? | Kahiye',
   description: 'Work out your due date from your last period, conception date or IVF transfer. See how many weeks pregnant you are, your trimester, and what usually happens next.',
   alternates: { canonical: '/tools/due-date' },
 };

@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   const entitlement = await getEntitlement(supabase, user.id);
   if (entitlement.plan !== 'plus') {
     return NextResponse.json(
-      { error: 'Weekly pattern reports are part of Budding Plus.', code: 'upgrade_required', entitlement },
+      { error: 'Weekly pattern reports are part of Kahiye Plus.', code: 'upgrade_required', entitlement },
       { status: 402 },
     );
   }

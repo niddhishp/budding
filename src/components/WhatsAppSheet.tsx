@@ -4,7 +4,7 @@ import { Check, Loader2, MessageCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Connect a WhatsApp number: the app issues a one-time code, and the parent sends it from
-// WhatsApp (prefilled via a wa.me link) so Budding knows the number is theirs.
+// WhatsApp (prefilled via a wa.me link) so Kahiye knows the number is theirs.
 export function WhatsAppSheet({ onClose }: { onClose: () => void }) {
   const [phone, setPhone] = useState<string | null>(null);
   const [number, setNumber] = useState<string | null>(null);
@@ -63,8 +63,8 @@ export function WhatsAppSheet({ onClose }: { onClose: () => void }) {
         <div className="w-12 h-12 rounded-full bg-[#25D366]/15 flex items-center justify-center mb-5">
           <MessageCircle className="w-6 h-6 text-[#128C4B]" />
         </div>
-        <h2 id="wa-title" className="font-heading text-3xl text-slate-850 mb-2 pr-8">Budding on WhatsApp</h2>
-        <p className="text-slate-500 mb-6">Message Budding like a friend in the middle of a hard moment. Same guidance, no app to open.</p>
+        <h2 id="wa-title" className="font-heading text-3xl text-slate-850 mb-2 pr-8">Kahiye on WhatsApp</h2>
+        <p className="text-slate-500 mb-6">Message Kahiye like a friend in the middle of a hard moment. Same guidance, no app to open.</p>
 
         {loading ? (
           <div className="py-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>

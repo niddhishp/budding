@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
   if (!plus && language !== 'English') {
     return NextResponse.json(
-      { error: `Stories in ${language} are part of Budding Plus.`, code: 'upgrade_required', entitlement },
+      { error: `Stories in ${language} are part of Kahiye Plus.`, code: 'upgrade_required', entitlement },
       { status: 402 },
     );
   }
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
   if (!plus && used >= FREE_STORIES_LIFETIME) {
     return NextResponse.json(
-      { error: 'Make a new story every night with Budding Plus.', code: 'upgrade_required', entitlement },
+      { error: 'Make a new story every night with Kahiye Plus.', code: 'upgrade_required', entitlement },
       { status: 402 },
     );
   }

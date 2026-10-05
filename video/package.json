@@ -1,12 +1,12 @@
 {
-  "name": "budding-explainer",
+  "name": "kahiye-explainer",
   "private": true,
   "version": "1.0.0",
-  "description": "Budding.live explainer video, rendered from code with Remotion",
+  "description": "Kahiye explainer video, rendered from code with Remotion",
   "scripts": {
     "studio": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts Explainer out/budding-explainer.mp4 --codec h264 --crf 18",
-    "render:vertical": "remotion render src/index.ts ExplainerVertical out/budding-explainer-vertical.mp4 --codec h264 --crf 18",
+    "render": "remotion render src/index.ts Explainer out/kahiye-explainer.mp4 --codec h264 --crf 18",
+    "render:vertical": "remotion render src/index.ts ExplainerVertical out/kahiye-explainer-vertical.mp4 --codec h264 --crf 18",
     "still": "remotion still src/index.ts Explainer out/still.png --frame"
   },
   "dependencies": {

@@ -1,8 +1,8 @@
 import { Composition } from 'remotion';
 import { Explainer, TOTAL_FRAMES } from './Explainer';
 
-// `domain` is shown on the closing card; set it once the new domain is bought.
-const defaultProps = { domain: '' };
+// `domain` is shown on the closing card.
+const defaultProps = { domain: 'kahiye.app' };
 
 export function Root() {
   return (

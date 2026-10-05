@@ -53,7 +53,7 @@ export function formatDecode(childName: string, analysis: AgentAnalysis, safety:
 }
 
 export const WHATSAPP_HELP = [
-  '*Budding on WhatsApp* 🌱',
+  '*Kahiye on WhatsApp* 🌱',
   'Describe what is happening with your child and I will reply with the words to say.',
   'With more than one child, start with their name, e.g. _Aarav: won\'t brush his teeth_.',
   'After trying it, reply *1*, *2* or *3* to tell me if it worked.',

@@ -38,7 +38,7 @@ const REPORT_JSON_SCHEMA = {
   },
 } as const;
 
-const REPORT_SYSTEM = `You write a weekly pattern report for a parent, from their own notes about one child, the situations they asked Budding about, and whether the suggested approach worked.
+const REPORT_SYSTEM = `You write a weekly pattern report for a parent, from their own notes about one child, the situations they asked Kahiye about, and whether the suggested approach worked.
 
 Rules:
 - Only report patterns the entries actually support. Cite frequency ("3 of 5 evenings"). Never invent detail. With few entries, say less, not more.

@@ -235,7 +235,7 @@ export function AskAIPage() {
                   <button onClick={() => openPaywall()} className="text-leaf font-medium hover:underline">Go unlimited</button>
                 </>
               ) : (
-                <>Budding Plus · unlimited decodes</>
+                <>Kahiye Plus · unlimited decodes</>
               )}
             </p>
           )}
@@ -360,7 +360,7 @@ export function AskAIPage() {
           <h3 className="text-sm font-medium text-slate-500 tracking-wider uppercase mb-4">Recent decodes</h3>
           {history.length === 0 ? (
             <p className="text-sm text-slate-400 leading-relaxed">
-              Your decodes for {selectedChild?.name} will appear here. Mark whether each one worked, and Budding learns what fits {selectedChild?.name}.
+              Your decodes for {selectedChild?.name} will appear here. Mark whether each one worked, and Kahiye learns what fits {selectedChild?.name}.
             </p>
           ) : (
             <div className="space-y-3">

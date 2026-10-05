@@ -8,11 +8,11 @@ import { formatDecode, isValidTwilioRequest, sendWhatsApp, WHATSAPP_HELP } from 
 export const maxDuration = 60;
 
 const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
-const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://budding.live').replace(/\/$/, '');
+const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.kahiye.app').replace(/\/$/, '');
 const OUTCOMES = { '1': 'worked', '2': 'partly', '3': 'did_not_work' } as const;
 
 /**
- * Twilio → Budding. Twilio waits at most 15 s, while a decode can take longer, so we
+ * Twilio → Kahiye. Twilio waits at most 15 s, while a decode can take longer, so we
  * acknowledge with empty TwiML at once and reply through the REST API from `after()`.
  */
 export async function POST(req: Request) {
@@ -75,7 +75,7 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
     .maybeSingle();
 
   if (!link) {
-    await sendWhatsApp(from, `Hi! I'm Budding 🌱 To use me here, open ${SITE}/app, tap your profile menu → *Connect WhatsApp*, and send the code it shows.`);
+    await sendWhatsApp(from, `Hi! I'm Kahiye 🌱 To use me here, open ${SITE}/app, tap your profile menu → *Connect WhatsApp*, and send the code it shows.`);
     return;
   }
   const userId: string = link.user_id;
@@ -147,7 +147,7 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
   const entitlement = await getEntitlement(admin, userId);
   if (entitlement.used >= entitlement.limit) {
     await sendWhatsApp(from, entitlement.plan === 'free'
-      ? `You've used your ${entitlement.limit} free decodes this week. Go unlimited with Budding Plus: ${SITE}/app`
+      ? `You've used your ${entitlement.limit} free decodes this week. Go unlimited with Kahiye Plus: ${SITE}/app`
       : `You've reached today's limit of ${entitlement.limit} decodes. It resets within 24 hours.`);
     return;
   }
