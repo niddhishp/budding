@@ -15,7 +15,7 @@ export function MomentResultActions({ band, answers }: { band: IntakeBand; answe
   };
   return <div className="mt-8 border-t border-slate-200 pt-7 space-y-4">
     <Link href="/app" className="inline-block rounded-full bg-clay text-white px-6 py-4">Get help with a real moment</Link>
-    <p className="text-sm text-slate-600">Keep these choices for your profile if you want. You can also start fresh.</p>
+    <p className="text-sm text-slate-600">A profile starts with the basics. Adding everyday moments is always optional.</p>
     <button onClick={share} className="py-3 text-leaf underline underline-offset-4">Copy a link to these ideas</button>
     <p className="text-xs text-slate-600">Anyone with the link can see the age group and choices. Your child’s name is left out.</p>
     <p role="status" className="text-sm text-slate-600 break-all">{message}</p>

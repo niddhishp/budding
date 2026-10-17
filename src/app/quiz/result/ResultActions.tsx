@@ -62,7 +62,7 @@ export function ResultActions({ code, name, archetypeName, emoji }: {
         </div>
       ) : (
         <Button asChild className="w-full h-14 rounded-full bg-clay hover:bg-clay-deep text-white text-lg">
-          <Link href="/quiz">Find your child's type</Link>
+          <Link href="/quiz">Try your own four moments</Link>
         </Button>
       )}
       <div className="grid grid-cols-2 gap-2">
