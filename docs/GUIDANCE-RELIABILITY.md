@@ -31,10 +31,21 @@ Subsequent approved work: optional one-scene-at-a-time quiz and quick first help
 - Local browser adapter: real Next routes and database/RLS with synthetic auth and deterministic AI. Verified ordinary checked/saved output, feedback saving/saved, classifier outage, emergency without AI, rejected output, explicit save failure/retry, late-response child separation, and story persistence. No real family records or messages used.
 - Run `scripts/test-guidance-browser.mjs` only against the named local disposable database. Its synthetic provider is test infrastructure; these checks are not a live-model quality evaluation or clinician review.
 
+## Production release evidence
+
+- Code commit: `a1fb9bcfb67c93a30434cf6b5b9f7555746070ae`, released through `main`.
+- [GitHub verification](https://github.com/niddhishp/budding/actions/runs/39061914769): all steps passed for that exact commit.
+- Vercel production deployment: `dpl_FYMnMLXaG9dSiTw8xWHqk7yHF5s8`, [deployment URL](https://budding-ix0rml2ie-reactic.vercel.app), Ready and aliased to `www.kahiye.app` and `kahiye.app`.
+- Migration applied and recorded in the application ledger. Initial connector request expired without applying anything; a read-only check confirmed absence before retry. The retry succeeded.
+- Before/after preservation: one child, one consent, one staff membership; child-record fingerprint unchanged. Existing generated content, expert records and consultations were empty and remained empty. No real-parent generation or consultation test was submitted.
+- Live `/help-now` and `/login` return 200; signed-out `/app` and `/admin` redirect to login; `/api/admin/overview` and `/api/me` return 401. Browser confirmed the public help page and no console errors.
+- Production permissions verified: parent cannot call generation reservation RPC, read receipts, or directly insert generated decodes; service role can reserve and parent can submit feedback.
+- Security advisor: no error-level finding. Intentional no-policy RLS tables are server-only. Existing warnings remain for [extensions in public](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public) and [disabled leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). These are not represented as resolved by this release.
+
 ## Release and rollback
 
 Production migration: `012_guidance_reliability.sql`. Additive tables/columns and access restrictions; no existing Kahiye data is deleted. Apply only after disposable-database verification, record it in `_budding_migrations`, then deploy the matching server code. Existing counts are checked before and after migration.
 
 Do not roll the app back to a release that inserts generated records directly without also planning the matching database permissions. Prefer a forward fix; keep reviewed migration history. Never drop family tables to roll back.
 
-Status: release verification in progress. Engineering verification is not clinical validation or market readiness. Pending: live-model regression evaluation, clinician sign-off, publication review UI, scheduled job recovery/alerts, durable WhatsApp delivery, and the subsequent phases above.
+Status: deployed and live-verified on 18 October 2026. Engineering verification is not clinical validation or market readiness. Pending: live-model regression evaluation, clinician sign-off, publication review UI, scheduled job recovery/alerts, durable WhatsApp delivery, and the subsequent phases above.
