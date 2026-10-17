@@ -1,3 +1,5 @@
+import { decodeMomentShare } from '@/lib/moments';
+import { MomentResult } from './MomentResult';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { archetypeFor, decodeAnswers } from '@/lib/temperament';
@@ -14,12 +16,13 @@ function readParams({ t, n }: { t?: string; n?: string }) {
 
 export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
   const { temperament, name, code } = readParams(await searchParams);
-  if (!temperament) return { title: 'Temperament quiz — Kahiye' };
+  if (!temperament) return { title: 'Everyday moments — Kahiye', robots: { index: false, follow: false }, description: 'A few small ideas for everyday parenting moments.' };
   const archetype = archetypeFor(temperament);
   const title = `${name ? `${name}'s` : "My child's"} pattern this season: ${archetype.name} ${archetype.emoji}`;
   const og = `/api/og?t=${code}${name ? `&n=${encodeURIComponent(name)}` : ''}`;
   return {
     title: `${title} — Kahiye`,
+    robots: { index: false, follow: false },
     description: `${archetype.tagline} Find your child's pattern in 60 seconds, matched to their age.`,
     openGraph: { title, description: archetype.tagline, images: [{ url: og, width: 1200, height: 630 }] },
     twitter: { card: 'summary_large_image', title, description: archetype.tagline, images: [og] },
@@ -27,7 +30,11 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
 }
 
 export default async function QuizResultPage({ searchParams }: { searchParams: SearchParams }) {
-  const { temperament, name, code } = readParams(await searchParams);
+  const params = await searchParams;
+  const shared = decodeMomentShare(params.t);
+  if (shared) return <MomentResult shared={shared} />;
+  if (!params.t) return <MomentResult />;
+  const { temperament, name, code } = readParams(params);
 
   if (!temperament) {
     return (

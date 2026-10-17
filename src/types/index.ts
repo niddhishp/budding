@@ -19,6 +19,8 @@ export interface Child {
   profileNotes: string | null;
   /** Stage band the temperament answers were given for; null for legacy toddler-only intake. */
   intakeBand: string | null;
+  /** Null means legacy intake; [] means no observations supplied. */
+  intakeAnswered?: (keyof TemperamentProfile)[] | null;
 }
 
 export type MemoryKind = 'fact' | 'observation' | 'pattern' | 'what_worked' | 'what_didnt' | 'preference' | 'milestone' | 'joy';

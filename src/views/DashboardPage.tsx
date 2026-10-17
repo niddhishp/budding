@@ -1,3 +1,4 @@
+import { observedPatterns } from '@/lib/moments';
 import type { ReactNode } from 'react';
 import { useAppStore } from '@/stores/appStore';
 import { stageInfo } from '@/data/developmentalData';
@@ -22,6 +23,7 @@ interface FeedItem {
 function buildFeed(child: Child): FeedItem[] {
   const { temperament: t, name, age } = child;
   const stage = stageInfo[age.stage];
+  const known = new Set(observedPatterns(child).map(p => p.key));
 
   if (age.stage === 'pregnancy') {
     // The week-by-week guide renders separately (WeekGuideCard); this is the reflection beneath it.
@@ -36,7 +38,7 @@ function buildFeed(child: Child): FeedItem[] {
 
   const items: FeedItem[] = [];
 
-  if (t.sensitivity >= 65) {
+  if (known.has('sensitivity') && t.sensitivity >= 65) {
     items.push({
       id: 'sensitivity', icon: <Sunrise className="w-6 h-6 text-amber-500" />, color: 'bg-amber-50 border-amber-100',
       title: 'A deep feeler',
@@ -56,11 +58,11 @@ function buildFeed(child: Child): FeedItem[] {
     content: `Right now ${name} is working on ${stage.keyThemes.slice(0, 3).join(', ').toLowerCase()}. Much of the friction you see is that work in progress.`,
   });
 
-  if (t.flexibility <= 40 || t.emotionalIntensity >= 65) {
+  if ((known.has('flexibility') && t.flexibility <= 40) || (known.has('emotionalIntensity') && t.emotionalIntensity >= 65)) {
     items.push({
       id: 'flashpoint', icon: <Flame className="w-6 h-6 text-rose-500" />, color: 'bg-rose-50 border-rose-100',
       title: 'Likely flashpoint: transitions',
-      content: `With ${t.flexibility <= 40 ? 'a need for predictability' : 'big emotional reactions'}, sudden switches (leaving, screens off, bedtime) are where things tend to break down. A countdown and a choice keep ${name} in control.`,
+      content: `With ${known.has('flexibility') && t.flexibility <= 40 ? 'a need for predictability' : 'big emotional reactions'}, sudden switches (leaving, screens off, bedtime) are where things tend to break down. A countdown and a choice keep ${name} in control.`,
       microScript: age.years < 7
         ? 'Instead of: "We are leaving right now!"\nTry: "Two more minutes, then shoes. Do you want to hop to the door or march?"'
         : 'Instead of: "Turn it off now!"\nTry: "Ten minutes left. Do you want to finish this level or stop at a save point?"',
@@ -106,7 +108,7 @@ export function DashboardPage() {
           Today with {selectedChild.name}
         </h1>
         <p className="text-slate-500 text-lg max-w-md mx-auto">
-          Tuned to {selectedChild.name}'s age and temperament.
+          Shaped around {selectedChild.name}'s age and what you share.
         </p>
       </motion.div>
 

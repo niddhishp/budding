@@ -217,7 +217,7 @@ export function AskAIPage() {
           What's happening with {selectedChild?.name}?
         </h1>
         <p className="text-slate-500 text-lg max-w-xl">
-          Describe the moment. You'll get the exact words to say, tuned to {selectedChild?.name}'s temperament.
+          Describe the moment. You'll get the exact words to say, shaped around {selectedChild?.name}'s age and what you share.
         </p>
       </motion.div>
 

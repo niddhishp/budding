@@ -25,6 +25,7 @@ const ident=s=>{if(!/^[a-z_]+$/.test(s))throw new Error('Invalid test identifier
 const backend=http.createServer(async(req,res)=>{
   res.setHeader('Content-Type','application/json'); res.setHeader('Access-Control-Allow-Origin','http://127.0.0.1:3011');
   res.setHeader('Access-Control-Allow-Headers','*'); res.setHeader('Access-Control-Expose-Headers','Content-Range');
+  res.setHeader('Access-Control-Allow-Methods','GET,HEAD,POST,PATCH,OPTIONS');
   if(req.method==='OPTIONS'){res.end();return;}
   const u=new URL(req.url,'http://127.0.0.1');
   const chunks=[];for await(const c of req)chunks.push(c);const body=JSON.parse(Buffer.concat(chunks).toString()||'{}');
@@ -66,6 +67,7 @@ const backend=http.createServer(async(req,res)=>{
           for(const[p,sql]of [['eq.','='],['gte.','>=']])if(v.startsWith(p)){op=sql;raw=v.slice(p.length);}
           if(!op)throw new Error('Unsupported test filter');values.push(raw);where.push(`${col}${op}$${values.length}`);
         }
+        if(mode==='profile-save-failure' && table==='children' && ['POST','PATCH'].includes(req.method))throw new Error('Synthetic profile save failure');
         if(req.method==='PATCH'){
           const updates=Object.entries(body).map(([k,v])=>{values.push(v);return `${ident(k)}=$${values.length}`;});
           result=(await db.query(`update public.${ident(table)} set ${updates.join(',')} ${where.length?'where '+where.join(' and '):''} returning *`,values)).rows;
@@ -81,6 +83,7 @@ const backend=http.createServer(async(req,res)=>{
           if(req.headers.accept?.includes('application/vnd.pgrst.object+json'))result=result[0]??null;
         }
       }
+      if(req.headers.accept?.includes('application/vnd.pgrst.object+json') && Array.isArray(result))result=result[0]??null;
       await db.query('reset role');await db.query('release savepoint request');res.end(req.method==='HEAD'?'':JSON.stringify(result));
     }catch(e){await db.query('rollback to savepoint request');res.statusCode=503;res.end(JSON.stringify({code:e.code,message:e.message}));}
   });

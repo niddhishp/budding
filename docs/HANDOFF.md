@@ -1,11 +1,17 @@
 # Kahiye — engineering handoff (living document)
 
 Read this first when resuming work. Update it at the end of every working session.
-Last updated: 2026-10-17.
+Last updated: 2026-10-18.
 
-**Password sign-in:** [Implementation and verification record](PASSWORD-SIGNIN.md). Routine sign-in now uses the existing email address as username plus a password. Explicit signup and password recovery retain one-time verification links. Account identities, family data, team roles and admin MFA are preserved; no credential was changed by an operator. See the linked record for deployment status.
+**Current work:** [Phase 3 — playful onboarding](PLAYFUL-ONBOARDING.md). Optional four-scene quiz, quick first help, explicit unanswered observations, preserved edits and anonymous new share links. Release verification is recorded there; until its production release entry is complete, production remains the phase 2 release below.
 
-**Current execution record:** [Phases 0 and 1 — security foundation](SECURITY-FOUNDATION.md). Database migrations 006–010 are applied and recorded. Legacy public users/sessions/mindmaps and their 20 records were removed with preservation checks; Kahiye identities/data remain intact. Release `bdc62e3` is deployed on `www.kahiye.app` from `main`, including preserved agents-v2 work, consent enforcement, privacy controls, owner/MFA/admin access, audit and security tests. GitHub CI and live protection checks passed. Owner MFA enrollment is still a personal onboarding step at `/admin`. Treat the older infrastructure/work notes below as historical where they differ from that record.
+**Current deployed baseline:** [Phase 2 — guidance reliability](GUIDANCE-RELIABILITY.md), code `a1fb9bc`, migration 012. The security foundation (006–010), full admin/expert/consultation workspace (011), password sign-in, consent, account privacy and admin MFA are already deployed. Legacy application records were removed in phases 0/1; existing Kahiye records remain preserved. Follow the linked release records for actual verification and limitations.
+
+**Sign-in:** existing email address as username plus password. Signup and recovery use one-time verification links. Admin access still requires MFA.
+
+**Next after phase 3:** memory correction/expiry and situation continuity (phase 4); expert capacity, overdue handling and delivery operations (phase 5); billing/webhook reconciliation, SMTP, WhatsApp delivery and launch gates (phase 6). Human expert roster, clinical/content review, legal identity/contact details and provider activation need real operational inputs. Never invent them.
+
+The infrastructure/work notes below are historical. In particular, statements that agents-v2 is uncommitted or migration 006 is unapplied are superseded by the release records above.
 
 ## 1. What this is
 

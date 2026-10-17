@@ -14,8 +14,8 @@ export type IntakeBand = 'infant' | 'toddler' | 'preschool' | 'middle' | 'teen';
 
 export const INTAKE_BANDS: { id: IntakeBand; label: string }[] = [
   { id: 'infant', label: 'Under 1' },
-  { id: 'toddler', label: '1–3 years' },
-  { id: 'preschool', label: '3–6 years' },
+  { id: 'toddler', label: '1–2 years' },
+  { id: 'preschool', label: '3–5 years' },
   { id: 'middle', label: '6–12 years' },
   { id: 'teen', label: '13–18 years' },
 ];
@@ -186,14 +186,33 @@ export function archetypeFor(t: TemperamentProfile): Archetype {
 /** Quiz answers carried into onboarding after sign-up. */
 export const QUIZ_STORAGE_KEY = 'budding.quiz';
 export function saveQuizResult(name: string, answers: Answers, band: IntakeBand = 'toddler') {
-  try { localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({ name, answers, band })); } catch { /* storage unavailable */ }
+  try { localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({ name, answers, band, version: 2, updatedAt: Date.now() })); } catch { /* storage unavailable */ }
 }
-export function loadQuizResult(): { name: string; answers: Answers; band?: IntakeBand } | null {
+export function loadQuizResult(): SavedMoments | null {
   try {
     const raw = localStorage.getItem(QUIZ_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return parseSavedMoments(raw);
   } catch { return null; }
 }
 export function clearQuizResult() {
   try { localStorage.removeItem(QUIZ_STORAGE_KEY); } catch { /* storage unavailable */ }
+}
+
+export type SavedMoments = { name: string; answers: Answers; band: IntakeBand; version?: number; updatedAt?: number };
+export function parseSavedMoments(raw: string | null, now = Date.now()): SavedMoments | null {
+  if (!raw || raw.length > 4000) return null;
+  try {
+    const value = JSON.parse(raw);
+    if (!value || typeof value.name !== 'string' || !value.answers || typeof value.answers !== 'object' || Array.isArray(value.answers)) return null;
+    const band = value.band ?? 'toddler';
+    if (!INTAKE_BANDS.some(b => b.id === band)) return null;
+    if (value.version !== undefined && value.version !== 2) return null;
+    if (value.version === 2 && (!Number.isFinite(value.updatedAt) || value.updatedAt > now + 60000 || now - value.updatedAt > 7 * 86400000)) return null;
+    const answers: Answers = {};
+    for (const [key, answer] of Object.entries(value.answers)) {
+      if (!TRAIT_QUESTIONS.some(q => q.key === key) || !OPTION_VALUES.includes(answer as 20 | 50 | 80)) return null;
+      answers[key as TraitKey] = answer as number;
+    }
+    return { name: value.name.trim().slice(0, 60), band, answers, version: value.version, updatedAt: value.updatedAt };
+  } catch { return null; }
 }

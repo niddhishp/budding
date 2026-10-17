@@ -1,3 +1,4 @@
+import { describePatterns } from '@/lib/moments';
 import 'server-only';
 import { z } from 'zod';
 import { FAST_MODEL, MODEL } from '@/lib/ai/llm';
@@ -81,10 +82,6 @@ export interface DecodeContext {
   memories?: Pick<Memory, 'kind' | 'content' | 'source' | 'confidence'>[];
 }
 
-function band(value: number) {
-  return value >= 70 ? 'high' : value <= 30 ? 'low' : 'moderate';
-}
-
 const PROVENANCE: Record<string, string> = {
   parent_said: 'parent said',
   decode_outcome: 'parent reported outcome',
@@ -94,7 +91,6 @@ const PROVENANCE: Record<string, string> = {
 
 function composeUserTurn(scenario: string, ctx: DecodeContext, route: Route) {
   const { child, recentLogs, pastDecodes, memories = [] } = ctx;
-  const t = child.temperament;
   const stageBand = stageBandFor(child.age);
   const stage = STAGES[stageBand];
   const age = child.age.stage === 'pregnancy'
@@ -128,7 +124,7 @@ function composeUserTurn(scenario: string, ctx: DecodeContext, route: Route) {
   lines.push(`<child>`,
     `Name: ${child.name}`,
     `Age: ${age}`,
-    child.age.stage === 'pregnancy' ? '' : `Current patterns (parent-reported, changeable — not labels): reactivity/sensitivity ${band(t.sensitivity)}, intensity of reactions ${band(t.emotionalIntensity)}, flexibility with change ${band(t.flexibility)}, persistence ${band(t.persistence)}, sociability ${band(t.sociability)}, curiosity/approach ${band(t.curiosity)}.`,
+    describePatterns(child),
     child.focusAreas.length ? `What the parent wants help with lately: ${child.focusAreas.join(', ')}.` : '',
     child.household.length ? `Household / caregivers: ${child.household.join(', ')}.` : '',
     child.homeLanguages.length ? `Languages at home: ${child.homeLanguages.join(', ')}.` : '',

@@ -1,3 +1,4 @@
+import { describePatterns } from '@/lib/moments';
 import 'server-only';
 import { z } from 'zod';
 import { checkedCall } from '@/lib/ai/checked-content';
@@ -38,12 +39,11 @@ function targetLength(child: Child) {
 
 export async function writeStory(opts: { child: Child; theme: string; language: string; signal?: AbortSignal }) {
   const { child, theme, language } = opts;
-  const t = child.temperament;
   return checkedCall({
     system: STORY_SYSTEM,
     user: [
       `<child name="${child.name}" age="${child.age.label}">`,
-      `Temperament (0-100): sensitivity ${t.sensitivity}, emotional intensity ${t.emotionalIntensity}, flexibility ${t.flexibility}, persistence ${t.persistence}, sociability ${t.sociability}, curiosity ${t.curiosity}`,
+      describePatterns(child),
       `</child>`,
       `<theme>${theme}</theme>`,
       `<language>${language}</language>`,

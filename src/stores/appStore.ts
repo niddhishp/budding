@@ -20,6 +20,7 @@ export interface NewChildInput {
   profileNotes?: string | null;
   /** Age band the temperament answers were given for (null for pregnancy). */
   intakeBand?: string | null;
+  intakeAnswered?: (keyof TemperamentProfile)[] | null;
 }
 
 function profileToRow(input: NewChildInput) {
@@ -33,6 +34,7 @@ function profileToRow(input: NewChildInput) {
     home_languages: input.homeLanguages ?? [],
     profile_notes: input.profileNotes?.trim() || null,
     intake_band: input.intakeBand ?? null,
+    ...(input.intakeAnswered !== undefined ? { intake_answered: input.intakeAnswered } : {}),
     intake_at: new Date().toISOString(),
   };
 }

@@ -1,31 +1,32 @@
+import { observedPatterns } from '@/lib/moments';
 import { useAppStore } from '@/stores/appStore';
 import { milestones as allMilestones, stageInfo } from '@/data/developmentalData';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import { Star, CheckCircle2, Circle, Target, Sparkles, RefreshCw } from 'lucide-react';
+import { Star, Circle, Target, RefreshCw } from 'lucide-react';
 import { WeeklyReportCard } from '@/components/WeeklyReportCard';
 import { MemoryPanel } from '@/components/MemoryPanel';
-import { archetypeFor, intakeBandForAge } from '@/lib/temperament';
+import { intakeBandForAge } from '@/lib/temperament';
 
 const SPRING_TRANSITION = { type: 'spring', stiffness: 100, damping: 20 } as const;
 
 export function ChildProfilePage() {
   const { selectedChildId, children, setEditingChild } = useAppStore();
   const child = children.find((c) => c.id === selectedChildId);
-  
+
   if (!child) return <div className="p-8 text-center text-slate-500">Select a child</div>;
 
   const stage = stageInfo[child.age.stage];
   const childMilestones = allMilestones.filter((m) => m.stage === child.age.stage);
-  const completedCount = childMilestones.filter((m) => m.completed).length;
-  const pattern = archetypeFor(child.temperament);
+
+  const patterns = observedPatterns(child);
   // Legacy (toddler-only) intake, or answers given for an earlier age band.
   const outdated = child.age.stage !== 'pregnancy'
     && child.intakeBand !== intakeBandForAge(child.age.years, child.age.months);
 
   return (
     <div className="max-w-4xl mx-auto pt-12 pb-24 px-4 sm:px-6">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={SPRING_TRANSITION}
@@ -46,14 +47,14 @@ export function ChildProfilePage() {
 
       <div className="grid md:grid-cols-12 gap-12">
         {/* Left Column - The Memory Timeline */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...SPRING_TRANSITION, delay: 0.1 }}
           className="md:col-span-8"
         >
           <div className="relative border-l border-slate-200/60 ml-4 md:ml-6 space-y-12 pb-12">
-            
+
             <div className="relative pl-8 md:pl-12">
               <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-canvas border-2 border-clay flex items-center justify-center">
                 <div className="w-2 h-2 rounded-full bg-clay" />
@@ -77,29 +78,20 @@ export function ChildProfilePage() {
                 <Star className="w-3 h-3 text-slate-400" />
               </div>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-heading text-slate-850">Active Milestones</h3>
-                <span className="text-sm font-medium text-slate-400">{completedCount}/{childMilestones.length}</span>
+                <h3 className="text-xl font-heading text-slate-850">Things you may notice</h3>
+
               </div>
-              
+
+              <p className="text-sm text-slate-500 mb-4">General stage examples, not a record of your child’s progress.</p>
               <div className="space-y-4">
                 {childMilestones.map((milestone) => (
                   <div
                     key={milestone.id}
-                    className={`flex gap-4 p-5 rounded-[2rem] border transition-all ${
-                      milestone.completed
-                        ? 'bg-clay/5 border-clay/20'
-                        : 'bg-white/50 border-slate-200/60 shadow-sm backdrop-blur-md'
-                    }`}
+                    className="flex gap-4 p-5 rounded-[2rem] border bg-white/50 border-slate-200/60"
                   >
-                    <div className="mt-1">
-                      {milestone.completed ? (
-                        <CheckCircle2 className="w-5 h-5 text-clay" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-slate-300" />
-                      )}
-                    </div>
+                    <Circle className="w-5 h-5 text-slate-300 shrink-0 mt-1" />
                     <div>
-                      <p className={`text-base mb-1 ${milestone.completed ? 'text-slate-850 font-medium' : 'text-slate-700'}`}>
+                      <p className="text-base mb-1 text-slate-700">
                         {milestone.title}
                       </p>
                       <p className="text-xs text-slate-500 uppercase tracking-wider">{milestone.ageRange}</p>
@@ -112,8 +104,8 @@ export function ChildProfilePage() {
           </div>
         </motion.div>
 
-        {/* Right Sidebar - Immutable Traits */}
-        <motion.div 
+        {/* Right Sidebar - Parent observations */}
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...SPRING_TRANSITION, delay: 0.2 }}
@@ -126,38 +118,18 @@ export function ChildProfilePage() {
               </div>
               <h3 className="font-semibold text-slate-850 text-lg">This season's patterns</h3>
             </div>
-            
-            <div className="space-y-6">
-              {Object.entries(child.temperament).map(([trait, value]) => (
-                <div key={trait}>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700 capitalize">{trait.replace(/([A-Z])/g, ' $1').trim()}</span>
-                    <span className="text-sm font-medium text-slate-400">{value}%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-leaf rounded-full opacity-80" 
-                      style={{ width: `${value}%` }} 
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
 
-            {child.age.stage !== 'pregnancy' && (
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <div className="flex items-start gap-3">
-                  <Sparkles className="w-4 h-4 text-leaf mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    This season, {child.name}'s pattern looks like <span className="font-medium text-slate-850">{pattern.name.replace(/^The /, 'the ')}</span>: {pattern.tagline.toLowerCase()} A snapshot, not a label.
-                  </p>
-                </div>
-              </div>
-            )}
+            <div className="space-y-5">
+              {patterns.length ? patterns.map(p => <div key={p.key}>
+                <p className="text-sm font-medium text-slate-800">{p.situation}</p>
+                <p className="text-sm text-slate-600 mt-1">{p.answer}</p>
+              </div>) : <p className="text-sm text-slate-600">{child.age.stage === 'pregnancy' ? 'There will be time to notice their little patterns after they arrive.' : 'No current moments added. You can get help without answering any questions.'}</p>}
+              <p className="text-xs text-slate-500">Your observations can change with the day. They are not a score or a fixed type.</p>
+            </div>
 
             {outdated && (
               <p className="mt-6 text-sm text-clay leading-relaxed">
-                These answers were given for a younger age. A quick update makes the guidance fit {child.name} now.
+                Any earlier answers are kept. Add current moments whenever you are ready.
               </p>
             )}
             <button

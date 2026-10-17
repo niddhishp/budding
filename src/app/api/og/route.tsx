@@ -28,10 +28,10 @@ export async function GET(req: Request) {
             <div style={{ display: 'flex', fontSize: 40, color: 'rgba(255,255,255,0.7)', marginTop: 20 }}>{archetype.tagline}</div>
           </div>
         ) : (
-          <div style={{ display: 'flex', fontSize: 80, fontWeight: 700 }}>What's your child's temperament type?</div>
+          <div style={{ display: 'flex', fontSize: 80, fontWeight: 700 }}>Four little moments. A little more understanding.</div>
         )}
         <div style={{ display: 'flex', fontSize: 30, color: 'rgba(255,255,255,0.55)' }}>
-          Find your child's type in 60 seconds · kahiye.app/quiz
+          Everyday moments, at your pace · kahiye.app/quiz
         </div>
       </div>
     ),

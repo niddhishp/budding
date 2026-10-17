@@ -53,7 +53,7 @@ export default function LandingPage() {
                 Start free <ArrowRight className="w-5 h-5" />
               </Link>
               <Link href="/quiz" className="text-lg font-semibold text-slate-800 underline decoration-clay/40 decoration-2 underline-offset-[6px] hover:decoration-clay">
-                Find your child&rsquo;s type
+                Try four little moments
               </Link>
             </div>
             <p className="mt-6 text-sm text-slate-500">Free to start. No card needed. Private by design.</p>
@@ -100,7 +100,7 @@ export default function LandingPage() {
           </Reveal>
 
           <ol className="mt-16 space-y-16 md:space-y-20">
-            <Step n="1" title="Tell Kahiye what’s happening" body="Type it or say it, the way you’d tell a friend. Kahiye already knows your child’s age and temperament.">
+            <Step n="1" title="Tell Kahiye what’s happening" body="Type it or say it, the way you’d tell a friend. Kahiye uses their age and the details you choose to share.">
               <div className="flex md:justify-end">
                 <div className="max-w-sm rounded-[1.5rem] rounded-br-md bg-surface shadow-paper px-5 py-4">
                   <p className="text-slate-800 leading-relaxed">Aarav hit his little sister when she took his blocks. He&rsquo;s still screaming.</p>
@@ -187,10 +187,10 @@ export default function LandingPage() {
           <p className="reveal text-sm font-semibold text-clay tracking-wide mb-4">Free, no sign-up</p>
           <Reveal className="max-w-2xl">
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.08] text-slate-900">
-              What&rsquo;s your child&rsquo;s temperament type?
+              Everyday moments. A little more understanding.
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-slate-600">
-              Six questions, sixty seconds, free. Find out why they react the way they do, and what tends to work.
+              Four everyday scenes, matched to their age. Choose what feels familiar and take away a small idea. No score, no right answers.
             </p>
           </Reveal>
           <Reveal delay={0.1}>

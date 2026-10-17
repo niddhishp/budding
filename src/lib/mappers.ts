@@ -17,6 +17,7 @@ export interface ChildRow {
   home_languages?: string[] | null;
   profile_notes?: string | null;
   intake_band?: string | null;
+  intake_answered?: (keyof TemperamentProfile)[] | null;
 }
 
 export interface DecodeRow {
@@ -30,7 +31,7 @@ export interface DecodeRow {
 }
 
 export const CHILD_COLUMNS =
-  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band';
+  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band, intake_answered';
 export const DECODE_COLUMNS = 'id, child_id, scenario, analysis, risk_level, outcome, created_at';
 
 export function childFromRow(row: ChildRow): Child {
@@ -53,6 +54,7 @@ export function childFromRow(row: ChildRow): Child {
     homeLanguages: row.home_languages ?? [],
     profileNotes: row.profile_notes ?? null,
     intakeBand: row.intake_band ?? null,
+    intakeAnswered: row.intake_answered ?? null,
   };
 }
 

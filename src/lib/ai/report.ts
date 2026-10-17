@@ -1,3 +1,4 @@
+import { describePatterns } from '@/lib/moments';
 import 'server-only';
 import { z } from 'zod';
 import { checkedCall } from '@/lib/ai/checked-content';
@@ -62,11 +63,10 @@ function formatDay(iso: string) {
 
 export async function writeWeeklyReport(input: ReportInput, signal?: AbortSignal): Promise<WeeklyReport> {
   const { child } = input;
-  const t = child.temperament;
   const lines = [
     `<child>`,
     `Name: ${child.name}; age: ${child.age.label} (${child.age.stage.replace('-', ' ')})`,
-    `Temperament (0-100, parent-reported): sensitivity ${t.sensitivity}, emotional intensity ${t.emotionalIntensity}, flexibility ${t.flexibility}, persistence ${t.persistence}, sociability ${t.sociability}, curiosity ${t.curiosity}`,
+    describePatterns(child),
     `</child>`,
     `<period>${formatDay(input.periodStart)} to ${formatDay(input.periodEnd)}</period>`,
     `<parent_notes count="${input.logs.length}">`,
