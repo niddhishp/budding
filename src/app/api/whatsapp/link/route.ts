@@ -1,3 +1,4 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { randomInt } from 'node:crypto';
 import { getServerSupabase } from '@/lib/supabase-server';
@@ -17,9 +18,9 @@ export async function GET() {
 
 /** Issue a one-time code; the parent sends "LINK <code>" from WhatsApp to prove the number is theirs. */
 export async function POST() {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { user } = access;
 
   const admin = getAdminSupabase();
   for (let attempt = 0; attempt < 5; attempt++) {

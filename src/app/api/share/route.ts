@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getEntitlement } from '@/lib/billing';
 import { SHARE_LANGUAGES, writeShareMessage } from '@/lib/ai/decode';
 import type { AgentAnalysis } from '@/types';
@@ -16,9 +16,9 @@ const bodySchema = z.object({
 // Rewrites a decode as a WhatsApp-ready message for another caregiver.
 // English is free; other languages are a Plus feature.
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase, user } = access;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Choose a language and who it is for.' }, { status: 400 });

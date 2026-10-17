@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useAppStore } from '@/stores/appStore';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Heart, Sparkles, ArrowRight, ArrowLeft, Shield, X, Loader2 } from 'lucide-react';
-import type { TemperamentProfile } from '@/types';
+import { Brain, Heart, Sparkles, ArrowRight, ArrowLeft, Shield, X, Loader2, Compass } from 'lucide-react';
+import { computeAge } from '@/lib/age';
+import type { Child, TemperamentProfile } from '@/types';
 
 import {
-  TRAIT_QUESTIONS, OPTION_VALUES, loadQuizResult, clearQuizResult, type Answers,
+  QUESTION_BANKS, OPTION_VALUES, FOCUS_AREAS, HOUSEHOLD_OPTIONS, HOME_LANGUAGES,
+  intakeBandForAge, loadQuizResult, clearQuizResult, type Answers, type IntakeBand,
 } from '@/lib/temperament';
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -19,40 +21,86 @@ function readSavedDueDate(): string | null {
   } catch { return null; }
 }
 
-export function GenomeOnboarding() {
-  const { addChild, setAddingChild, children } = useAppStore();
-  const canClose = children.length > 0;
+const STEPS = 4;
+
+function bandFor(born: boolean, date: string): IntakeBand | null {
+  if (!born || !date) return null;
+  const age = computeAge(date, null);
+  return intakeBandForAge(age.years, age.months);
+}
+
+/** Starting answers: the child's own (edit) or the public quiz's, but only if given for the same age band. */
+function initialAnswers(editChild: Child | undefined): { band: IntakeBand | null; answers: Answers } {
+  if (editChild) {
+    return editChild.intakeBand
+      ? { band: editChild.intakeBand as IntakeBand, answers: { ...editChild.temperament } }
+      : { band: null, answers: {} };
+  }
+  const quiz = loadQuizResult();
+  return quiz ? { band: quiz.band ?? 'toddler', answers: quiz.answers } : { band: null, answers: {} };
+}
+
+/**
+ * Child intake, and retake when `editChild` is given. Age-banded: an 11-year-old is asked about
+ * homework and friendships, not textures and new objects. Answers describe this season's patterns.
+ */
+export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
+  const { addChild, updateChild, setAddingChild, setEditingChild, children } = useAppStore();
+  const editing = !!editChild;
+  const canClose = editing || children.length > 0;
+  const close = () => (editing ? setEditingChild(null) : setAddingChild(false));
 
   const [step, setStep] = useState(1);
-  const [name, setName] = useState(() => loadQuizResult()?.name ?? '');
+  const [name, setName] = useState(() => editChild?.name ?? loadQuizResult()?.name ?? '');
   // A due date carried over from the public due date calculator starts an "Expecting" profile.
-  const [savedDue] = useState(readSavedDueDate);
-  const [born, setBorn] = useState(!savedDue);
-  const [date, setDate] = useState(savedDue ?? '');
-  // Answers carried over from the public quiz, if the parent took it before signing up.
-  const [answers, setAnswers] = useState<Answers>(() => loadQuizResult()?.answers ?? {});
+  const [savedDue] = useState(() => (editChild ? null : readSavedDueDate()));
+  const [born, setBorn] = useState(() => (editChild ? !!editChild.dateOfBirth : !savedDue));
+  const [date, setDate] = useState(() => editChild?.dateOfBirth ?? editChild?.dueDate ?? savedDue ?? '');
+  const [answerState, setAnswerState] = useState(() => initialAnswers(editChild));
+  const [focusAreas, setFocusAreas] = useState<string[]>(editChild?.focusAreas ?? []);
+  const [household, setHousehold] = useState<string[]>(editChild?.household ?? []);
+  const [languages, setLanguages] = useState<string[]>(editChild?.homeLanguages ?? []);
+  const [notes, setNotes] = useState(editChild?.profileNotes ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const dateValid = !!date && (born ? date <= todayISO() : date >= todayISO());
-  const allAnswered = TRAIT_QUESTIONS.every((q) => answers[q.key] !== undefined);
-  const canContinue = step === 1 ? !!name.trim() && dateValid : step === 2 ? (allAnswered || !born) : true;
+  const band = dateValid ? bandFor(born, date) : null;
+  const questions = band ? QUESTION_BANKS[band] : [];
+  // Answers given for a different age band are not carried over.
+  const answers = answerState.band === band ? answerState.answers : {};
+  const allAnswered = questions.every((q) => answers[q.key] !== undefined);
+  const focusOptions = FOCUS_AREAS[band ?? 'pregnancy'];
+  const displayName = name.trim() || 'your child';
+
+  const canContinue = step === 1 ? !!name.trim() && dateValid : step === 2 ? allAnswered : true;
 
   const handleComplete = async () => {
     setSaving(true);
     setError(null);
     const temperament = Object.fromEntries(
-      TRAIT_QUESTIONS.map((q) => [q.key, answers[q.key] ?? 50]),
+      QUESTION_BANKS.toddler.map((q) => [q.key, answers[q.key] ?? 50]),
     ) as unknown as TemperamentProfile;
+    const input = {
+      name,
+      dateOfBirth: born ? date : null,
+      dueDate: born ? null : date,
+      temperament,
+      // Chips from another stage (e.g. after a date correction) are dropped.
+      focusAreas: focusAreas.filter((f) => focusOptions.includes(f)),
+      household,
+      homeLanguages: languages,
+      profileNotes: notes,
+      intakeBand: band,
+    };
     try {
-      await addChild({
-        name,
-        dateOfBirth: born ? date : null,
-        dueDate: born ? null : date,
-        temperament,
-      });
-      clearQuizResult();
-      try { localStorage.removeItem(DUE_DATE_KEY); } catch { /* storage unavailable */ }
+      if (editChild) {
+        await updateChild(editChild.id, input);
+      } else {
+        await addChild(input);
+        clearQuizResult();
+        try { localStorage.removeItem(DUE_DATE_KEY); } catch { /* storage unavailable */ }
+      }
     } catch (err) {
       console.error(err);
       setError('We could not save this profile. Check your connection and try again.');
@@ -60,13 +108,16 @@ export function GenomeOnboarding() {
     }
   };
 
+  // Expecting parents skip the temperament step; there is nothing to observe yet.
   const handleNext = () => {
-    // Expecting parents skip the temperament step; there is nothing to observe yet.
     if (step === 1 && !born) setStep(3);
-    else if (step < 3) setStep(step + 1);
+    else if (step < STEPS) setStep(step + 1);
     else handleComplete();
   };
   const handleBack = () => setStep(step === 3 && !born ? 1 : step - 1);
+
+  const toggle = (list: string[], set: (v: string[]) => void, value: string) =>
+    set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
   return (
     <div className="fixed inset-0 z-50 bg-canvas/80 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-6">
@@ -78,16 +129,16 @@ export function GenomeOnboarding() {
         <div className="p-6 sm:p-12">
           <div className="flex justify-between items-center mb-8 sm:mb-12">
             <div className="flex gap-2">
-              {[1, 2, 3].map((i) => (
+              {Array.from({ length: STEPS }, (_, i) => i + 1).map((i) => (
                 <div
                   key={i}
-                  className={`h-2 rounded-full transition-all duration-500 ${step >= i ? 'w-12 bg-clay' : 'w-4 bg-slate-200'}`}
+                  className={`h-2 rounded-full transition-all duration-500 ${step >= i ? 'w-10 bg-clay' : 'w-4 bg-slate-200'}`}
                 />
               ))}
             </div>
             {canClose ? (
               <button
-                onClick={() => setAddingChild(false)}
+                onClick={close}
                 className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200"
                 aria-label="Close"
               >
@@ -104,9 +155,13 @@ export function GenomeOnboarding() {
                 <div className="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-full bg-clay/10 text-clay">
                   <Heart className="w-7 h-7" />
                 </div>
-                <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">Let's meet your child.</h2>
+                <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">
+                  {editing ? `Update ${editChild.name}'s profile.` : "Let's meet your child."}
+                </h2>
                 <p className="text-base sm:text-lg text-slate-500 mb-8 leading-relaxed">
-                  Guidance changes with age, so we start with the basics.
+                  {editing
+                    ? 'Children change. A fresh look every few months keeps the guidance accurate.'
+                    : 'Guidance changes with age, so we start with the basics.'}
                 </p>
                 <div className="space-y-6">
                   <div>
@@ -158,12 +213,12 @@ export function GenomeOnboarding() {
                 <div className="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-full bg-leaf/10 text-leaf">
                   <Brain className="w-7 h-7" />
                 </div>
-                <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">How is {name.trim() || 'your child'} wired?</h2>
+                <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">How is {displayName} these days?</h2>
                 <p className="text-base sm:text-lg text-slate-500 mb-8 leading-relaxed">
-                  Six quick taps. No wrong answers — this tunes every script to their temperament.
+                  Six quick taps about the last few weeks. Patterns change with age and season; this is a snapshot, not a label.
                 </p>
                 <div className="space-y-6">
-                  {TRAIT_QUESTIONS.map((q) => (
+                  {questions.map((q) => (
                     <fieldset key={q.key}>
                       <legend className="font-medium text-slate-850 mb-3">{q.question}</legend>
                       <div className="grid grid-cols-3 gap-2">
@@ -173,7 +228,8 @@ export function GenomeOnboarding() {
                             <button
                               key={label}
                               type="button"
-                              onClick={() => setAnswers({ ...answers, [q.key]: OPTION_VALUES[i] })}
+                              aria-pressed={selected}
+                              onClick={() => setAnswerState({ band, answers: { ...answers, [q.key]: OPTION_VALUES[i] } })}
                               className={`min-h-12 px-2 py-2.5 rounded-xl border text-sm leading-tight transition-all ${
                                 selected ? 'border-clay bg-clay/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
                               }`}
@@ -190,12 +246,45 @@ export function GenomeOnboarding() {
             )}
 
             {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center py-6">
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <div className="mb-6 inline-flex items-center justify-center w-14 h-14 rounded-full bg-clay/10 text-clay">
+                  <Compass className="w-7 h-7" />
+                </div>
+                <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">
+                  {born ? `What would help most with ${displayName}?` : 'What is on your mind?'}
+                </h2>
+                <p className="text-base sm:text-lg text-slate-500 mb-8 leading-relaxed">
+                  All optional. Each answer makes the advice fit your home, not a textbook one.
+                </p>
+                <div className="space-y-7">
+                  <ChipGroup label="Right now I want help with" options={focusOptions} value={focusAreas} onToggle={(v) => toggle(focusAreas, setFocusAreas, v)} />
+                  <ChipGroup label="At home" options={HOUSEHOLD_OPTIONS} value={household} onToggle={(v) => toggle(household, setHousehold, v)} />
+                  <ChipGroup label="Languages spoken at home" options={HOME_LANGUAGES} value={languages} onToggle={(v) => toggle(languages, setLanguages, v)} />
+                  <div>
+                    <label htmlFor="child-notes" className="block text-sm font-medium text-slate-700 mb-2">
+                      Anything else we should know?
+                    </label>
+                    <textarea
+                      id="child-notes"
+                      value={notes}
+                      maxLength={500}
+                      rows={3}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder={born ? 'e.g., Loves cricket. New school this year. Gets anxious before tests.' : 'e.g., First baby. My mother-in-law will help after birth.'}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-base focus:outline-none focus:ring-2 focus:ring-clay/50"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center py-6">
                 <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-clay/10 text-clay">
                   <Sparkles className="w-10 h-10" />
                 </div>
                 <h2 className="font-heading text-3xl sm:text-4xl text-slate-850 mb-3">
-                  {born ? `${name.trim()}'s profile is ready.` : 'Welcome to Kahiye.'}
+                  {editing ? 'Ready to save.' : born ? `${name.trim()}'s profile is ready.` : 'Welcome to Kahiye.'}
                 </h2>
                 <p className="text-base sm:text-lg text-slate-500 mb-8 leading-relaxed max-w-md mx-auto">
                   {born
@@ -223,12 +312,40 @@ export function GenomeOnboarding() {
               className="h-14 px-8 bg-slate-850 hover:bg-slate-800 text-white rounded-full text-lg shadow-lg"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                <>{step === 3 ? 'Start' : 'Continue'} <ArrowRight className="w-5 h-5 ml-2" /></>
+                <>{step === STEPS ? (editing ? 'Save' : 'Start') : 'Continue'} <ArrowRight className="w-5 h-5 ml-2" /></>
               )}
             </Button>
           </div>
         </div>
       </motion.div>
     </div>
+  );
+}
+
+function ChipGroup({ label, options, value, onToggle }: {
+  label: string; options: string[]; value: string[]; onToggle: (v: string) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="font-medium text-slate-850 mb-3">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = value.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onToggle(option)}
+              className={`px-4 py-2 rounded-full border text-sm transition-all ${
+                selected ? 'border-clay bg-clay/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              }`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }

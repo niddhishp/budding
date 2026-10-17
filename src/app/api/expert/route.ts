@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { STORY_LANGUAGES } from '@/lib/plans';
 
 const bodySchema = z.object({
@@ -14,15 +14,21 @@ const bodySchema = z.object({
 
 // Concierge expert consultations: saved for the ops team, who call back to schedule and take payment.
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase, user } = access;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: 'Add a short description and a phone number we can call.' }, { status: 400 });
   }
   const { concern, phone, preferredLanguage, preferredTime, childId, source } = parsed.data;
+
+  if (childId) {
+    const { data: child, error } = await supabase.from('children').select('id').eq('id', childId).eq('user_id', user.id).maybeSingle();
+    if (error) return NextResponse.json({ error: 'Could not check the child profile. Please try again.' }, { status: 503 });
+    if (!child) return NextResponse.json({ error: 'Child profile not found.' }, { status: 404 });
+  }
 
   // One open request at a time keeps the queue honest.
   const { count } = await supabase

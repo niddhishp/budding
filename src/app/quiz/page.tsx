@@ -7,17 +7,23 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SproutMark } from '@/components/illustrations';
-import { OPTION_VALUES, TRAIT_QUESTIONS, encodeAnswers, saveQuizResult, type Answers } from '@/lib/temperament';
+import {
+  INTAKE_BANDS, OPTION_VALUES, QUESTION_BANKS, encodeAnswers, saveQuizResult, type Answers, type IntakeBand,
+} from '@/lib/temperament';
 
-// Public, no sign-up: six taps → a shareable temperament type. The top of the funnel.
+// Public, no sign-up: age band + six taps → a shareable "this season" pattern. The top of the funnel.
+// Questions are asked in situations that fit the child's age (a teen is not asked about textures).
 export default function QuizPage() {
   const router = useRouter();
   const [step, setStep] = useState(0); // 0 = name, 1..6 = questions
   const [name, setName] = useState('');
+  const [band, setBand] = useState<IntakeBand | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
 
-  const total = TRAIT_QUESTIONS.length;
-  const question = TRAIT_QUESTIONS[step - 1];
+  const questions = QUESTION_BANKS[band ?? 'toddler'];
+  const total = questions.length;
+  const question = questions[step - 1];
+  const start = () => band && setStep(1);
   const childName = name.trim() || 'your child';
 
   const answer = (value: number) => {
@@ -27,7 +33,7 @@ export default function QuizPage() {
       setStep(step + 1);
       return;
     }
-    saveQuizResult(name.trim(), next);
+    saveQuizResult(name.trim(), next, band ?? 'toddler');
     const params = new URLSearchParams({ t: encodeAnswers(next) });
     if (name.trim()) params.set('n', name.trim());
     router.push(`/quiz/result?${params}`);
@@ -54,10 +60,10 @@ export default function QuizPage() {
               <motion.div key="intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}>
                 <p className="text-sm font-semibold text-clay tracking-wide mb-4">Free · 60 seconds</p>
                 <h1 className="font-heading text-4xl sm:text-5xl text-slate-900 leading-tight mb-4">
-                  What's your child's temperament type?
+                  What's your child's pattern right now?
                 </h1>
                 <p className="text-lg text-slate-500 mb-10 leading-relaxed">
-                  Six quick questions. Find out why they react the way they do, and what actually works with them.
+                  Six quick questions, matched to their age. Find out why they react the way they do this season, and what works with them now.
                 </p>
                 <label htmlFor="quiz-name" className="block text-sm font-medium text-slate-700 mb-2">Child's first name (optional)</label>
                 <input
@@ -65,11 +71,29 @@ export default function QuizPage() {
                   value={name}
                   maxLength={40}
                   onChange={(e) => setName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && setStep(1)}
+                  onKeyDown={(e) => e.key === 'Enter' && start()}
                   placeholder="e.g., Ira"
                   className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-lg focus:outline-none focus:ring-2 focus:ring-clay/50 mb-6"
                 />
-                <Button onClick={() => setStep(1)} className="h-14 px-8 rounded-full bg-clay hover:bg-clay-deep text-white text-lg">
+                <fieldset className="mb-8">
+                  <legend className="block text-sm font-medium text-slate-700 mb-2">How old are they?</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {INTAKE_BANDS.map((b) => (
+                      <button
+                        key={b.id}
+                        type="button"
+                        aria-pressed={band === b.id}
+                        onClick={() => { setBand(b.id); setAnswers({}); }}
+                        className={`px-4 py-2.5 rounded-full border-2 text-base transition-all ${
+                          band === b.id ? 'border-clay bg-clay/10 text-slate-900' : 'border-slate-200 bg-surface text-slate-600 hover:border-clay/50'
+                        }`}
+                      >
+                        {b.label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <Button onClick={start} disabled={!band} className="h-14 px-8 rounded-full bg-clay hover:bg-clay-deep text-white text-lg">
                   Start <ArrowRight className="w-5 h-5 ml-1" />
                 </Button>
               </motion.div>

@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 
 const bodySchema = z.object({
   childId: z.string().uuid(),
@@ -9,9 +9,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase, user } = access;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Write a short note (up to 2000 characters).' }, { status: 400 });

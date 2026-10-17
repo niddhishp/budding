@@ -20,7 +20,7 @@ export async function GET(req: Request) {
         {archetype ? (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', fontSize: 34, color: '#3ECF8B', textTransform: 'uppercase', letterSpacing: 4 }}>
-              {`${name} is`}
+              {`This season, ${name}'s pattern`}
             </div>
             <div style={{ display: 'flex', fontSize: 84, fontWeight: 700, lineHeight: 1.05, marginTop: 16 }}>
               {`${archetype.name} ${archetype.emoji}`}

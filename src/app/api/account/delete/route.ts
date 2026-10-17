@@ -11,6 +11,15 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
 
+  // Do this before cancelling billing or deleting files. Owner handover belongs
+  // in the MFA-protected admin flow, not the parent's account-erasure endpoint.
+  const { data: membership, error: membershipError } = await supabase.from('admin_memberships')
+    .select('role, active').eq('user_id', user.id).maybeSingle();
+  if (membershipError) return NextResponse.json({ error: 'We could not check account access. Nothing was deleted.' }, { status: 503 });
+  if (membership?.role === 'owner' && membership.active) {
+    return NextResponse.json({ error: 'Transfer ownership and pause your owner access in the team space before deleting this account.' }, { status: 409 });
+  }
+
   const { data: sub } = await supabase
     .from('subscriptions')
     .select('status, interval, current_period_end, cancel_at_period_end, razorpay_subscription_id')

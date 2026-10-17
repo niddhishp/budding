@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getEntitlement } from '@/lib/billing';
 import { DECODE_MODEL } from '@/lib/ai/decode';
 import { writeWeeklyReport } from '@/lib/ai/report';
@@ -39,9 +39,9 @@ const childIdSchema = z.string().uuid();
 
 /** Latest report for a child (any plan — it is the parent's own data). */
 export async function GET(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase } = access;
 
   const childId = childIdSchema.safeParse(new URL(req.url).searchParams.get('childId'));
   if (!childId.success) return NextResponse.json({ error: 'Missing child.' }, { status: 400 });
@@ -59,9 +59,9 @@ export async function GET(req: Request) {
 
 /** Generate this week's report (Plus). */
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase, user } = access;
 
   const body = z.object({ childId: childIdSchema }).safeParse(await req.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: 'Missing child.' }, { status: 400 });

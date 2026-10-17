@@ -11,6 +11,29 @@ export interface Child {
   dueDate: string | null;
   age: AgeInfo;
   temperament: TemperamentProfile;
+  /** What the parent most wants help with right now (age-banded chips). */
+  focusAreas: string[];
+  /** Who shares the child's care / home (grandparents, helper, siblings…). */
+  household: string[];
+  homeLanguages: string[];
+  profileNotes: string | null;
+  /** Stage band the temperament answers were given for; null for legacy toddler-only intake. */
+  intakeBand: string | null;
+}
+
+export type MemoryKind = 'fact' | 'observation' | 'pattern' | 'what_worked' | 'what_didnt' | 'preference' | 'milestone' | 'joy';
+export type MemorySource = 'parent_said' | 'decode_outcome' | 'log' | 'ai_inferred';
+
+/** One thing Kahiye remembers about a child: typed, attributed, confidence-scored, deletable. */
+export interface Memory {
+  id: string;
+  childId: string;
+  kind: MemoryKind;
+  content: string;
+  source: MemorySource;
+  confidence: number;
+  sensitive: boolean;
+  createdAt: string;
 }
 
 export interface AgeInfo {
@@ -85,31 +108,81 @@ export interface DailyFeedItem {
 }
 
 /** Structured output of one decode, as returned by /api/analyze. */
+export type EvidenceTierName = 'strong' | 'moderate' | 'consensus' | 'mixed' | 'heuristic';
+
+/** A cited evidence card, resolved server-side from the curated card set. */
+export interface EvidenceRef {
+  id: string;
+  tier: EvidenceTierName;
+  label: string;
+  claim: string;
+  source: string;
+}
+
+export interface Hypothesis {
+  text: string;
+  likelihood: 'most likely' | 'possible' | 'less likely';
+}
+
+/** Structured output of one decode. v2 fields are optional so older stored decodes still render. */
 export interface AgentAnalysis {
-  /** The exact words to say right now — 1 to 3 short sentences. */
+  /** Single calm instruction for this second when the moment is happening now; empty otherwise. */
+  rightNow?: string;
+  /** The exact words to say — 1 to 3 short sentences. */
   sayThis: string;
-  /** What the behavior most likely means, in plain language. */
-  interpretation: string;
-  /** The need underneath the behavior. */
-  emotionalNeed: string;
   /** 2–4 concrete steps for the next few minutes. */
   doThis: string[];
   /** The single most likely mistake to avoid with this child. */
   avoid: string;
-  /** What to do later, once everyone is calm. */
+  /** Ranked possibilities for what is going on (v2). */
+  hypotheses?: Hypothesis[];
+  /** Short synthesis of what the behaviour most likely means (derived from hypotheses in v2). */
+  interpretation: string;
+  /** The need underneath the behaviour. */
+  emotionalNeed: string;
+  /** What to do or teach later, once everyone is calm. */
   afterwards: string;
+  /** What to watch over the coming days (v2). */
+  watchFor?: string;
+  /** When to talk to a professional, concretely (v2). */
+  seekHelpIf?: string;
   /** The skill this moment is building. */
   skillBeingBuilt: string;
   /** Why this is developmentally expected at this age. */
   developmentalContext: string;
+  /** Why the suggested approach works, in plain language (v2). */
+  whyItWorks?: string;
+  /** Evidence behind the approach, resolved from cited card ids (v2). */
+  evidence?: EvidenceRef[];
+  /** One question whose answer would materially change the advice (v2). */
+  clarify?: { question: string; options: string[] } | null;
+  /** Doctrine modules the router selected (v2, for analytics/eval). */
+  modules?: string[];
 }
 
 export type RiskLevel = 'none' | 'low' | 'elevated' | 'urgent';
 export type DecodeOutcome = 'worked' | 'partly' | 'did_not_work';
 
+export type SafetyCategory =
+  | 'none'
+  | 'parent_distress'
+  | 'parent_harm_risk'
+  | 'child_self_harm'
+  | 'abuse'
+  | 'medical'
+  | 'violence'
+  | 'missing_child'
+  | 'exam_distress'
+  | 'wellbeing_concern';
+
 export interface SafetyNotice {
   level: RiskLevel;
+  category: SafetyCategory;
+  /** 1 = parent distress, 2 = risk to the child, 3 = imminent danger. */
+  tier: 1 | 2 | 3;
   message: string;
+  /** Protocol steps specific to the category, shown before any other guidance. */
+  steps: string[];
   helplines: { name: string; number: string; note: string }[];
 }
 

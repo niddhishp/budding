@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { getEntitlement, getRazorpay, planIdFor } from '@/lib/billing';
 
@@ -8,9 +8,9 @@ const bodySchema = z.object({ interval: z.enum(['monthly', 'yearly']) });
 
 // Creates a Razorpay subscription; the client then opens Checkout with the returned id.
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase, user } = access;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Choose monthly or yearly.' }, { status: 400 });

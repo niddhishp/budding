@@ -14,6 +14,27 @@ export interface NewChildInput {
   dateOfBirth: string | null;
   dueDate: string | null;
   temperament: TemperamentProfile;
+  focusAreas?: string[];
+  household?: string[];
+  homeLanguages?: string[];
+  profileNotes?: string | null;
+  /** Age band the temperament answers were given for (null for pregnancy). */
+  intakeBand?: string | null;
+}
+
+function profileToRow(input: NewChildInput) {
+  return {
+    name: input.name.trim(),
+    dob: input.dateOfBirth,
+    due_date: input.dueDate,
+    ...temperamentToRow(input.temperament),
+    focus_areas: input.focusAreas ?? [],
+    household: input.household ?? [],
+    home_languages: input.homeLanguages ?? [],
+    profile_notes: input.profileNotes?.trim() || null,
+    intake_band: input.intakeBand ?? null,
+    intake_at: new Date().toISOString(),
+  };
 }
 
 interface AppState {
@@ -52,10 +73,14 @@ interface AppState {
   selectedChildId: string | null;
   selectChild: (id: string) => void;
   addChild: (input: NewChildInput) => Promise<Child>;
+  updateChild: (id: string, input: NewChildInput) => Promise<Child>;
 
   // Onboarding: shown automatically when a parent has no children, or on demand.
   addingChild: boolean;
   setAddingChild: (val: boolean) => void;
+  /** Child whose profile is being updated (retake), or null. */
+  editingChildId: string | null;
+  setEditingChild: (id: string | null) => void;
 
   // Local-only modules (not yet persisted)
   routines: FamilyRoutine[];
@@ -143,13 +168,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   consentNeeded: false,
   giveConsent: async () => {
-    const supabase = getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not signed in');
-    const { error } = await supabase
-      .from('consents')
-      .upsert({ user_id: user.id, policy_version: POLICY_VERSION, agreed_at: new Date().toISOString() });
-    if (error) throw error;
+    const response = await fetch('/api/consent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ policyVersion: POLICY_VERSION, accepted: true }),
+    });
+    if (!response.ok) throw new Error('Your privacy choice could not be saved. Please try again.');
     set({ consentNeeded: false });
   },
 
@@ -167,12 +190,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   addChild: async (input) => {
     const { data, error } = await getSupabase()
       .from('children')
-      .insert({
-        name: input.name.trim(),
-        dob: input.dateOfBirth,
-        due_date: input.dueDate,
-        ...temperamentToRow(input.temperament),
-      })
+      .insert(profileToRow(input))
       .select(CHILD_COLUMNS)
       .single<ChildRow>();
     if (error) throw error;
@@ -183,8 +201,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     return child;
   },
 
+  updateChild: async (id, input) => {
+    const { data, error } = await getSupabase()
+      .from('children')
+      .update(profileToRow(input))
+      .eq('id', id)
+      .select(CHILD_COLUMNS)
+      .single<ChildRow>();
+    if (error) throw error;
+
+    const child = childFromRow(data);
+    set({ children: get().children.map((c) => c.id === id ? child : c), editingChildId: null });
+    return child;
+  },
+
   addingChild: false,
   setAddingChild: (val) => set({ addingChild: val }),
+  editingChildId: null,
+  setEditingChild: (id) => set({ editingChildId: id }),
 
   routines: defaultRoutines,
   toggleRoutine: (id) => set((s) => ({

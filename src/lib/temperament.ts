@@ -2,16 +2,94 @@ import type { TemperamentProfile } from '@/types';
 
 export type TraitKey = keyof TemperamentProfile;
 
-// Three plain-language answers per trait, mapped to the 0–100 scale stored in the profile.
-// Order matters: it defines the compact share-URL encoding below.
-export const TRAIT_QUESTIONS: { key: TraitKey; question: string; options: [string, string, string] }[] = [
-  { key: 'sensitivity', question: 'Noise, textures, a sharp tone of voice…', options: ['Barely notices', 'Sometimes bothered', 'Deeply affected'] },
-  { key: 'emotionalIntensity', question: 'When upset, their reaction is…', options: ['Quiet, brief', 'Clear but manageable', 'Big and loud'] },
-  { key: 'flexibility', question: 'Sudden change of plan…', options: ['Struggles a lot', 'Needs a warning', 'Rolls with it'] },
-  { key: 'persistence', question: 'When something is hard, they…', options: ['Give up quickly', 'Try a few times', 'Keep at it'] },
-  { key: 'sociability', question: 'With new people, they…', options: ['Hang back', 'Warm up slowly', 'Dive right in'] },
-  { key: 'curiosity', question: 'New places and objects…', options: ['Prefer the familiar', 'Explore with you', 'Must touch everything'] },
+export type TraitQuestion = { key: TraitKey; question: string; options: [string, string, string] };
+
+/**
+ * Age-banded question banks: the same six dimensions at every age, asked in situations that
+ * fit the age. Three plain-language answers per trait map to the 0–100 profile scale.
+ * Every bank keeps the same key order: it defines the compact share-URL encoding below.
+ * Answers describe current patterns, not who the child is.
+ */
+export type IntakeBand = 'infant' | 'toddler' | 'preschool' | 'middle' | 'teen';
+
+export const INTAKE_BANDS: { id: IntakeBand; label: string }[] = [
+  { id: 'infant', label: 'Under 1' },
+  { id: 'toddler', label: '1–3 years' },
+  { id: 'preschool', label: '3–6 years' },
+  { id: 'middle', label: '6–12 years' },
+  { id: 'teen', label: '13–18 years' },
 ];
+
+export const QUESTION_BANKS: Record<IntakeBand, TraitQuestion[]> = {
+  infant: [
+    { key: 'sensitivity', question: 'Noise, bright light, being passed between people…', options: ['Barely notices', 'Sometimes unsettled', 'Easily overwhelmed'] },
+    { key: 'emotionalIntensity', question: 'When upset, the crying is…', options: ['Soft, settles fast', 'Loud, but settles', 'Intense, hard to settle'] },
+    { key: 'flexibility', question: 'Travel, visitors or a missed nap…', options: ['Throw them off a lot', 'Take a day to adjust', 'Barely matter'] },
+    { key: 'persistence', question: 'Reaching for something just out of reach…', options: ['Gives up quickly', 'Tries a few times', 'Keeps trying'] },
+    { key: 'sociability', question: 'With new faces…', options: ['Turns away or cries', 'Watches, then warms up', 'Smiles right away'] },
+    { key: 'curiosity', question: 'New toys, sounds and textures…', options: ['Prefers the familiar', 'Explores with you close', 'Reaches for everything'] },
+  ],
+  toddler: [
+    { key: 'sensitivity', question: 'Noise, textures, a sharp tone of voice…', options: ['Barely notices', 'Sometimes bothered', 'Deeply affected'] },
+    { key: 'emotionalIntensity', question: 'When upset, their reaction is…', options: ['Quiet, brief', 'Clear but manageable', 'Big and loud'] },
+    { key: 'flexibility', question: 'Sudden change of plan…', options: ['Struggles a lot', 'Needs a warning', 'Rolls with it'] },
+    { key: 'persistence', question: 'When something is hard, they…', options: ['Give up quickly', 'Try a few times', 'Keep at it'] },
+    { key: 'sociability', question: 'With new people, they…', options: ['Hang back', 'Warm up slowly', 'Dive right in'] },
+    { key: 'curiosity', question: 'New places and objects…', options: ['Prefer the familiar', 'Explore with you', 'Must touch everything'] },
+  ],
+  preschool: [
+    { key: 'sensitivity', question: 'Loud places, scratchy clothes, a sharp tone…', options: ['Barely notices', 'Sometimes bothered', 'Deeply affected'] },
+    { key: 'emotionalIntensity', question: 'When something goes wrong, the reaction is…', options: ['Quiet, brief', 'Clear but manageable', 'Big and loud'] },
+    { key: 'flexibility', question: 'When plans change suddenly…', options: ['Struggles a lot', 'Needs a warning', 'Rolls with it'] },
+    { key: 'persistence', question: 'A tricky puzzle or a new skill…', options: ['Gives up quickly', 'Tries a few times', 'Keeps at it'] },
+    { key: 'sociability', question: 'At a party or a new class…', options: ['Stays close to you', 'Warms up slowly', 'Joins right in'] },
+    { key: 'curiosity', question: 'Questions and exploring…', options: ['Prefers what they know', 'Curious with company', 'Endless “why?”'] },
+  ],
+  middle: [
+    { key: 'sensitivity', question: 'Criticism, teasing or a sharp tone…', options: ['Shrugs it off', 'Stings for a while', 'Hurts deeply'] },
+    { key: 'emotionalIntensity', question: 'Losing a game or getting a bad mark…', options: ['Takes it in stride', 'Upset, then recovers', 'Big reaction, hard to calm'] },
+    { key: 'flexibility', question: 'When screen time ends or plans change…', options: ['Big struggle', 'Okay with a warning', 'Moves on easily'] },
+    { key: 'persistence', question: 'Homework or practice that is hard…', options: ['Avoids or gives up', 'Sticks with it, with help', 'Sticks with it alone'] },
+    { key: 'sociability', question: 'Friendships and new groups…', options: ['One close friend, slow to join', 'A few friends, joins in time', 'Many friends, joins easily'] },
+    { key: 'curiosity', question: 'New activities and ideas…', options: ['Prefers the familiar', 'Open when encouraged', 'Always wants to try'] },
+  ],
+  teen: [
+    { key: 'sensitivity', question: 'Feedback, comparison, what others think…', options: ['Rarely bothered', 'Affected sometimes', 'Deeply affected'] },
+    { key: 'emotionalIntensity', question: 'When upset, they…', options: ['Go quiet, it passes', 'Show it, then settle', 'Explode or shut down hard'] },
+    { key: 'flexibility', question: 'When rules or plans change…', options: ['Strong resistance', 'Argue, then adjust', 'Adapt easily'] },
+    { key: 'persistence', question: 'Long goals: exams, practice, projects…', options: ['Struggle to keep going', 'Keep going with support', 'Self-driven'] },
+    { key: 'sociability', question: 'Socially, they prefer…', options: ['Time alone or one friend', 'A small group', 'Always being with friends'] },
+    { key: 'curiosity', question: 'New experiences and ideas…', options: ['Cautious', 'Selective', 'Seek them out'] },
+  ],
+};
+
+/** Default bank; its key order is the share-URL encoding (identical across banks). */
+export const TRAIT_QUESTIONS: TraitQuestion[] = QUESTION_BANKS.toddler;
+
+export function intakeBandForAge(years: number, months: number): IntakeBand {
+  if (years * 12 + months < 12) return 'infant';
+  if (years < 3) return 'toddler';
+  if (years < 6) return 'preschool';
+  if (years < 13) return 'middle';
+  return 'teen';
+}
+
+/** What parents most often want help with, by stage (multi-select in onboarding). */
+export const FOCUS_AREAS: Record<IntakeBand | 'pregnancy', string[]> = {
+  pregnancy: ['Birth worries', 'Family expectations', 'Partner support', 'Sleep and body', 'Work and leave', 'Preparing an older sibling'],
+  infant: ['Sleep', 'Crying and settling', 'Feeding', 'My own exhaustion', 'Bonding', 'Too much family advice'],
+  toddler: ['Tantrums', 'Hitting or biting', 'Sleep', 'Eating', 'Toilet learning', 'Not listening', 'Screens'],
+  preschool: ['Meltdowns', 'Listening and cooperation', 'Sibling fights', 'Fears', 'Starting school', 'Screens', 'Eating'],
+  middle: ['Homework and study', 'Screens and gaming', 'Anger and meltdowns', 'Friendships', 'Confidence', 'Lying', 'Chores and responsibility', 'Worry'],
+  teen: ['Talking to me', 'Phone and social media', 'Exam pressure', 'Mood', 'Privacy and trust', 'Friends and relationships', 'Respect and rules'],
+};
+
+export const HOUSEHOLD_OPTIONS = [
+  'Both parents at home', 'Single parent', 'Parents live apart', 'Grandparents live with us',
+  'Grandparents help often', 'A nanny or helper', 'Older siblings', 'Younger siblings',
+];
+
+export const HOME_LANGUAGES = ['English', 'Hindi', 'Malayalam', 'Tamil', 'Marathi', 'Bengali', 'Telugu', 'Kannada', 'Gujarati', 'Other'];
 export const OPTION_VALUES = [20, 50, 80] as const;
 
 export type Answers = Partial<Record<TraitKey, number>>;
@@ -107,10 +185,10 @@ export function archetypeFor(t: TemperamentProfile): Archetype {
 
 /** Quiz answers carried into onboarding after sign-up. */
 export const QUIZ_STORAGE_KEY = 'budding.quiz';
-export function saveQuizResult(name: string, answers: Answers) {
-  try { localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({ name, answers })); } catch { /* storage unavailable */ }
+export function saveQuizResult(name: string, answers: Answers, band: IntakeBand = 'toddler') {
+  try { localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify({ name, answers, band })); } catch { /* storage unavailable */ }
 }
-export function loadQuizResult(): { name: string; answers: Answers } | null {
+export function loadQuizResult(): { name: string; answers: Answers; band?: IntakeBand } | null {
   try {
     const raw = localStorage.getItem(QUIZ_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;

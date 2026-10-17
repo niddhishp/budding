@@ -16,11 +16,11 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   const { temperament, name, code } = readParams(await searchParams);
   if (!temperament) return { title: 'Temperament quiz — Kahiye' };
   const archetype = archetypeFor(temperament);
-  const title = `${name ?? 'My child'} is ${archetype.name} ${archetype.emoji}`;
+  const title = `${name ? `${name}'s` : "My child's"} pattern this season: ${archetype.name} ${archetype.emoji}`;
   const og = `/api/og?t=${code}${name ? `&n=${encodeURIComponent(name)}` : ''}`;
   return {
     title: `${title} — Kahiye`,
-    description: `${archetype.tagline} Find your child's temperament type in 60 seconds.`,
+    description: `${archetype.tagline} Find your child's pattern in 60 seconds, matched to their age.`,
     openGraph: { title, description: archetype.tagline, images: [{ url: og, width: 1200, height: 630 }] },
     twitter: { card: 'summary_large_image', title, description: archetype.tagline, images: [og] },
   };
@@ -39,7 +39,7 @@ export default async function QuizResultPage({ searchParams }: { searchParams: S
   }
 
   const archetype = archetypeFor(temperament);
-  const childName = name ?? 'Your child';
+  const childName = name ? `${name}'s` : "Your child's";
 
   return (
     <main className="min-h-[100dvh] bg-canvas">
@@ -50,7 +50,7 @@ export default async function QuizResultPage({ searchParams }: { searchParams: S
             <circle cx="60" cy="60" r="52" className="fill-turmeric" />
             <circle cx="88" cy="40" r="34" className="fill-night" />
           </svg>
-          <p className="relative text-sm font-semibold text-turmeric tracking-wide mb-4">{childName} is</p>
+          <p className="relative text-sm font-semibold text-turmeric tracking-wide mb-4">This season, {childName} pattern looks like</p>
           <h1 className="relative font-heading text-4xl sm:text-5xl leading-[1.08] mb-4 max-w-[14ch]">
             {archetype.name} <span aria-hidden className="font-sans">{archetype.emoji}</span>
           </h1>

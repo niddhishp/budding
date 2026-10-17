@@ -21,7 +21,8 @@ import { PlanSheet } from '@/components/PlanSheet';
 import { ExpertSheet } from '@/components/ExpertSheet';
 
 function PlatformApp() {
-  const { status, error, load, currentPage, addingChild, children, consentNeeded, expert } = useAppStore();
+  const { status, error, load, currentPage, addingChild, editingChildId, children, consentNeeded, expert } = useAppStore();
+  const editChild = children.find((c) => c.id === editingChildId);
 
   useEffect(() => {
     load();
@@ -64,7 +65,7 @@ function PlatformApp() {
 
   return (
     <div className="relative min-h-[100dvh] bg-canvas">
-      {consentNeeded ? <ConsentGate /> : addingChild && <GenomeOnboarding />}
+      {consentNeeded ? <ConsentGate /> : editChild ? <GenomeOnboarding key={editChild.id} editChild={editChild} /> : addingChild && <GenomeOnboarding />}
       <PlanSheet />
       {expert.open && <ExpertSheet key={expert.concern ?? 'blank'} />}
       <div className="grain-overlay" />

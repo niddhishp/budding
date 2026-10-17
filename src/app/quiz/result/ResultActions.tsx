@@ -31,7 +31,7 @@ export function ResultActions({ code, name, archetypeName, emoji }: {
     return `${window.location.origin}/quiz/result?${params}`;
   };
   const shareText = () =>
-    `${name ?? 'My child'} is ${archetypeName} ${emoji}\nWhat's your child's temperament type? 60-second quiz:`;
+    `This season ${name ?? 'my child'} is ${archetypeName} ${emoji}\nWhat's your child's pattern right now? 60-second quiz, matched to their age:`;
 
   const shareWhatsApp = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText()} ${shareUrl()}`)}`, '_blank', 'noopener');
@@ -54,7 +54,7 @@ export function ResultActions({ code, name, archetypeName, emoji }: {
         <div className="p-7 rounded-[2rem] bg-paper-deep">
           <p className="font-heading text-xl text-slate-900 mb-2">Get scripts made for {name ?? 'your child'}.</p>
           <p className="text-slate-600 mb-5 leading-relaxed">
-            Next meltdown, describe what's happening and Kahiye gives you the exact words to say, tuned to this temperament.
+            Next meltdown, describe what's happening and Kahiye gives you the exact words to say, tuned to this pattern.
           </p>
           <Button asChild className="w-full h-14 rounded-full bg-clay hover:bg-clay-deep text-white text-lg">
             <Link href="/login?next=/app"><Sparkles className="w-5 h-5" /> Start free</Link>

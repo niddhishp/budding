@@ -1,9 +1,15 @@
 import { after } from 'next/server';
+import { checkUserConsent } from '@/lib/access';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { getEntitlement } from '@/lib/billing';
 import { loadDecodeContext } from '@/lib/decodeContext';
-import { classifySafety, decodeBehavior, DECODE_MODEL, safetyNotice } from '@/lib/ai/decode';
-import { formatDecode, isValidTwilioRequest, sendWhatsApp, WHATSAPP_HELP } from '@/lib/whatsapp';
+import { decodeBehavior, DECODE_MODEL } from '@/lib/ai/decode';
+import { bypassesPaywall, classifySafety, needsReview, safetyNotice } from '@/lib/ai/safety';
+import { routeMessage } from '@/lib/ai/router';
+import { rememberFromDecode, rememberOutcome } from '@/lib/ai/memory';
+import { stageBandFor } from '@/lib/ai/doctrine/stages';
+import type { AgentAnalysis } from '@/types';
+import { formatDecode, formatSafety, isValidTwilioRequest, sendWhatsApp, WHATSAPP_HELP } from '@/lib/whatsapp';
 
 export const maxDuration = 60;
 
@@ -56,6 +62,10 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
       await sendWhatsApp(from, `That code has expired. Open ${SITE}/app → menu → *Connect WhatsApp* for a new one.`);
       return;
     }
+    if (!await checkUserConsent(admin, code.user_id)) {
+      await sendWhatsApp(from, `Please review the current privacy notice at ${SITE}/app before connecting WhatsApp.`);
+      return;
+    }
     // A number belongs to one account: move it if it was linked elsewhere.
     await admin.from('whatsapp_links').delete().eq('phone', phone);
     const { error } = await admin.from('whatsapp_links').upsert({ user_id: code.user_id, phone, linked_at: new Date().toISOString() });
@@ -90,6 +100,10 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
     await sendWhatsApp(from, WHATSAPP_HELP);
     return;
   }
+  if (!await checkUserConsent(admin, userId)) {
+    await sendWhatsApp(from, `Please review the current privacy notice at ${SITE}/app before continuing. You can still send STOP to disconnect.`);
+    return;
+  }
   if (command in OUTCOMES) {
     const { data: last } = await admin
       .from('decodes')
@@ -104,9 +118,15 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
       await sendWhatsApp(from, 'Thanks! There\'s no recent suggestion waiting for feedback.');
       return;
     }
-    await admin.from('decodes')
-      .update({ outcome: OUTCOMES[command as keyof typeof OUTCOMES], outcome_at: new Date().toISOString() })
-      .eq('id', last.id);
+    const outcome = OUTCOMES[command as keyof typeof OUTCOMES];
+    const { data: rated } = await admin.from('decodes')
+      .update({ outcome, outcome_at: new Date().toISOString() })
+      .eq('id', last.id)
+      .select('id, child_id, scenario, analysis')
+      .maybeSingle<{ id: string; child_id: string; scenario: string; analysis: AgentAnalysis | null }>();
+    if (rated) {
+      await rememberOutcome(admin, { userId, childId: rated.child_id, decodeId: rated.id, scenario: rated.scenario, analysis: rated.analysis, outcome });
+    }
     await sendWhatsApp(from, command === '1'
       ? 'Wonderful. I\'ll remember what works. 🌱'
       : 'Thanks for telling me. Next time I\'ll suggest something different.');
@@ -144,8 +164,13 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
     scenario = prefix[2].trim();
   }
 
+  // Safety first, for every plan. Urgent help goes out before anything else is generated.
+  const safety = await classifySafety(scenario);
+  const notice = safetyNotice(safety);
+  if (notice && notice.tier >= 2) await sendWhatsApp(from, formatSafety(notice));
+
   const entitlement = await getEntitlement(admin, userId);
-  if (entitlement.used >= entitlement.limit) {
+  if (entitlement.used >= entitlement.limit && !bypassesPaywall(safety)) {
     await sendWhatsApp(from, entitlement.plan === 'free'
       ? `You've used your ${entitlement.limit} free decodes this week. Go unlimited with Kahiye Plus: ${SITE}/app`
       : `You've reached today's limit of ${entitlement.limit} decodes. It resets within 24 hours.`);
@@ -155,22 +180,35 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
   const context = await loadDecodeContext(admin, child.id, userId);
   if (!context) return;
 
-  const [safety, analysis] = await Promise.all([classifySafety(scenario), decodeBehavior(scenario, context)]);
+  const route = await routeMessage(scenario, stageBandFor(context.child.age), context.child.name);
+  const { analysis } = await decodeBehavior(scenario, context, route);
 
-  const { error } = await admin.from('decodes').insert({
+  const { data: row, error } = await admin.from('decodes').insert({
     child_id: child.id,
     user_id: userId,
     scenario,
     analysis,
     risk_level: safety.level,
+    safety_category: safety.category,
     model: DECODE_MODEL,
     channel: 'whatsapp',
-  });
+  }).select('id').single();
   if (error) throw error;
   await admin.from('whatsapp_links').update({ last_child_id: child.id }).eq('user_id', userId);
 
   const switchHint = kids.length > 1 && !named
-    ? `\n\n_(About ${child.name}. Start with a name to switch, e.g. "${kids.find((k) => k.id !== child.id)?.name}: …")_`
+    ? `
+
+_(About ${child.name}. Start with a name to switch, e.g. "${kids.find((k) => k.id !== child.id)?.name}: …")_`
     : '';
-  await sendWhatsApp(from, formatDecode(child.name, analysis, safetyNotice(safety.level)) + switchHint);
+  // Tier 2/3 notices were already sent; tier 1 (parent distress) rides along with the answer.
+  await sendWhatsApp(from, formatDecode(child.name, analysis, notice && notice.tier === 1 ? notice : null) + switchHint);
+
+  if (needsReview(safety)) {
+    await admin.from('safety_events').insert({
+      user_id: userId, child_id: child.id, decode_id: row.id, channel: 'whatsapp',
+      level: safety.level, category: safety.category, reason: safety.reason,
+    });
+  }
+  await rememberFromDecode(admin, { userId, childId: child.id, childName: child.name, decodeId: row.id, message: scenario });
 }

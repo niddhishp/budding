@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { DECODE_MODEL } from '@/lib/ai/decode';
 import { weekGuideSchema, writeWeekGuide } from '@/lib/ai/weekGuide';
@@ -15,9 +15,9 @@ const querySchema = z.object({
 
 // Shared cache: each (week, language) is written once by the server and read by every parent.
 export async function GET(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase } = access;
 
   const params = new URL(req.url).searchParams;
   const parsed = querySchema.safeParse({ week: params.get('week'), language: params.get('language') ?? undefined });

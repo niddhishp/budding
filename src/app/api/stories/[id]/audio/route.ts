@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { getEntitlement } from '@/lib/billing';
 import { narrate, narrationAvailable } from '@/lib/narration';
@@ -15,9 +15,9 @@ const SIGNED_URL_SECONDS = 60 * 60;
  * Responds `{ fallback: 'device' }` when narration isn't available so the client reads aloud itself.
  */
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase, user } = access;
 
   const id = z.string().uuid().safeParse((await params).id);
   if (!id.success) return NextResponse.json({ error: 'Story not found.' }, { status: 404 });

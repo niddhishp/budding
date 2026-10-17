@@ -4,7 +4,7 @@ import { Loader2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/stores/appStore';
 
-// DPDP Act 2023: explicit, recorded consent before processing information about a child.
+// Explicit, recorded consent before new processing of information about a child.
 export function ConsentGate() {
   const giveConsent = useAppStore((s) => s.giveConsent);
   const signOut = useAppStore((s) => s.signOut);
@@ -56,6 +56,7 @@ export function ConsentGate() {
         <button onClick={() => signOut()} className="mt-4 w-full text-sm text-slate-500 hover:text-slate-800">
           Not now, sign out
         </button>
+        <Link href="/app/privacy" className="block mt-3 text-center text-sm text-clay underline">Manage privacy choices</Link>
       </div>
     </div>
   );

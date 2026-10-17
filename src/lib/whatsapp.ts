@@ -36,20 +36,33 @@ export async function sendWhatsApp(to: string, body: string) {
   await getTwilio().messages.create({ from, to: to.startsWith('whatsapp:') ? to : `whatsapp:${to}`, body: text });
 }
 
+/** Safety protocol as its own message, sent before any guidance. */
+export function formatSafety(notice: SafetyNotice) {
+  return [
+    `⚠️ *${notice.message}*`,
+    notice.steps.length ? notice.steps.map((s, i) => `${i + 1}. ${s}`).join(NL) : '',
+    notice.helplines.map((h) => `📞 ${h.name}: *${h.number}* — ${h.note}`).join(NL),
+  ].filter(Boolean).join(NL + NL);
+}
+
+const NL = '\n';
+
 /** WhatsApp-native formatting: *bold*, _italic_, short numbered steps, outcome prompt last. */
 export function formatDecode(childName: string, analysis: AgentAnalysis, safety: SafetyNotice | null) {
   const parts: string[] = [];
-  if (safety) {
-    parts.push(`⚠️ *${safety.message}*`);
-    parts.push(safety.helplines.map((h) => `📞 ${h.name}: *${h.number}*`).join('\n'));
-  }
-  parts.push(`*Say this to ${childName}*\n_“${analysis.sayThis}”_`);
-  parts.push(`*Do this now*\n${analysis.doThis.map((s, i) => `${i + 1}. ${s}`).join('\n')}`);
+  if (safety) parts.push(formatSafety(safety));
+  if (analysis.rightNow) parts.push(`*Right now:* ${analysis.rightNow}`);
+  parts.push(`*Say this to ${childName}*${NL}_“${analysis.sayThis}”_`);
+  parts.push(`*Do this now*${NL}${analysis.doThis.map((s, i) => `${i + 1}. ${s}`).join(NL)}`);
   parts.push(`*Avoid:* ${analysis.avoid}`);
-  parts.push(`*What's going on:* ${analysis.interpretation}`);
+  const why = analysis.hypotheses?.length
+    ? analysis.hypotheses.slice(0, 2).map((h) => `• ${h.text}`).join(NL)
+    : analysis.interpretation;
+  parts.push(`*What may be going on*${NL}${why}`);
   parts.push(`*Later, when calm:* ${analysis.afterwards}`);
-  parts.push('Did it work? Reply *1* worked · *2* partly · *3* didn\'t');
-  return parts.join('\n\n');
+  if (analysis.seekHelpIf) parts.push(`*Talk to a professional if:* ${analysis.seekHelpIf}`);
+  parts.push("Did it work? Reply *1* worked · *2* partly · *3* didn't");
+  return parts.join(NL + NL);
 }
 
 export const WHATSAPP_HELP = [

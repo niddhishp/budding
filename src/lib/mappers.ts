@@ -1,5 +1,5 @@
 import { computeAge } from '@/lib/age';
-import type { AgentAnalysis, Child, Decode, DecodeOutcome, RiskLevel, Story, TemperamentProfile } from '@/types';
+import type { AgentAnalysis, Child, Decode, DecodeOutcome, Memory, MemoryKind, MemorySource, RiskLevel, Story, TemperamentProfile } from '@/types';
 
 export interface ChildRow {
   id: string;
@@ -12,6 +12,11 @@ export interface ChildRow {
   sociability: number;
   emotional_intensity: number;
   flexibility: number;
+  focus_areas?: string[] | null;
+  household?: string[] | null;
+  home_languages?: string[] | null;
+  profile_notes?: string | null;
+  intake_band?: string | null;
 }
 
 export interface DecodeRow {
@@ -25,7 +30,7 @@ export interface DecodeRow {
 }
 
 export const CHILD_COLUMNS =
-  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility';
+  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band';
 export const DECODE_COLUMNS = 'id, child_id, scenario, analysis, risk_level, outcome, created_at';
 
 export function childFromRow(row: ChildRow): Child {
@@ -43,6 +48,11 @@ export function childFromRow(row: ChildRow): Child {
       emotionalIntensity: row.emotional_intensity,
       flexibility: row.flexibility,
     },
+    focusAreas: row.focus_areas ?? [],
+    household: row.household ?? [],
+    homeLanguages: row.home_languages ?? [],
+    profileNotes: row.profile_notes ?? null,
+    intakeBand: row.intake_band ?? null,
   };
 }
 
@@ -93,6 +103,32 @@ export function storyFromRow(row: StoryRow): Story {
     body: row.body,
     moral: row.moral || null,
     hasAudio: !!row.audio_path,
+    createdAt: row.created_at,
+  };
+}
+
+export interface MemoryRow {
+  id: string;
+  child_id: string;
+  kind: MemoryKind;
+  content: string;
+  source: MemorySource;
+  confidence: number;
+  sensitive: boolean;
+  created_at: string;
+}
+
+export const MEMORY_COLUMNS = 'id, child_id, kind, content, source, confidence, sensitive, created_at';
+
+export function memoryFromRow(row: MemoryRow): Memory {
+  return {
+    id: row.id,
+    childId: row.child_id,
+    kind: row.kind,
+    content: row.content,
+    source: row.source,
+    confidence: row.confidence,
+    sensitive: row.sensitive,
     createdAt: row.created_at,
   };
 }

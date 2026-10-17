@@ -53,6 +53,9 @@ export async function getEntitlement(supabase: SupabaseClient, userId: string): 
     .from('decodes')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
+    // Safety never consumes quota: turns with any safety signal, and refinements, are free.
+    .eq('safety_category', 'none')
+    .is('refines', null)
     .gte('created_at', new Date(Date.now() - windowMs).toISOString());
 
   return {

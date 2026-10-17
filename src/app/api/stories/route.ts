@@ -1,6 +1,6 @@
+import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSupabase } from '@/lib/supabase-server';
 import { getEntitlement } from '@/lib/billing';
 import { DECODE_MODEL } from '@/lib/ai/decode';
 import { writeStory } from '@/lib/ai/story';
@@ -10,9 +10,9 @@ import { FREE_STORIES_LIFETIME, PLUS_STORIES_PER_DAY, STORY_LANGUAGES } from '@/
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase } = access;
 
   const childId = z.string().uuid().safeParse(new URL(req.url).searchParams.get('childId'));
   if (!childId.success) return NextResponse.json({ error: 'Missing child.' }, { status: 400 });
@@ -34,9 +34,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const supabase = await getServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const access = await requireParentAccess();
+  if (access.response) return access.response;
+  const { supabase, user } = access;
 
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Tell us what the story should be about.' }, { status: 400 });

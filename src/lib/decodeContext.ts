@@ -15,12 +15,16 @@ export async function loadDecodeContext(
   let childQuery = supabase.from('children').select(CHILD_COLUMNS).eq('id', childId);
   if (userId) childQuery = childQuery.eq('user_id', userId);
 
-  const [childRes, logsRes, decodesRes] = await Promise.all([
+  const [childRes, logsRes, decodesRes, memoriesRes] = await Promise.all([
     childQuery.maybeSingle<ChildRow>(),
     supabase.from('context_logs').select('content, log_type, created_at')
       .eq('child_id', childId).order('created_at', { ascending: false }).limit(15),
     supabase.from('decodes').select('scenario, analysis, outcome, created_at')
       .eq('child_id', childId).not('outcome', 'is', null).order('created_at', { ascending: false }).limit(8),
+    // Memory read gate: relevant, recent, permitted — sensitive memories are never fed back automatically.
+    supabase.from('memories').select('kind, content, source, confidence')
+      .eq('child_id', childId).eq('archived', false).eq('sensitive', false)
+      .order('created_at', { ascending: false }).limit(25),
   ]);
   if (childRes.error) throw childRes.error;
   if (!childRes.data) return null;
@@ -34,5 +38,7 @@ export async function loadDecodeContext(
       outcome: d.outcome as string | null,
       created_at: d.created_at as string,
     })),
+    // A missing memories table (migration not yet applied) must not break decoding.
+    memories: memoriesRes.error ? [] : (memoriesRes.data ?? []) as DecodeContext['memories'],
   };
 }

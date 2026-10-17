@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { deleteAccount } from '@/lib/account-client';
 import { useAppStore } from '@/stores/appStore';
 import { WhatsAppSheet } from '@/components/WhatsAppSheet';
 import { SproutMark } from '@/components/illustrations';
@@ -77,6 +78,9 @@ export function TopBar() {
           <DropdownMenuItem asChild>
             <a href="/privacy" target="_blank" rel="noreferrer"><Shield className="w-4 h-4" /> Privacy</a>
           </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <a href="/app/privacy"><Shield className="w-4 h-4" /> Privacy choices</a>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => deleteAccount()} className="text-red-600 focus:text-red-700">
             <Trash2 className="w-4 h-4" /> Delete account & data
           </DropdownMenuItem>
@@ -89,18 +93,4 @@ export function TopBar() {
       {whatsAppOpen && <WhatsAppSheet onClose={() => setWhatsAppOpen(false)} />}
     </header>
   );
-}
-
-async function deleteAccount() {
-  const typed = window.prompt(
-    'This permanently deletes your account, every child profile, log and decode, and cancels any subscription. Type DELETE to confirm.',
-  );
-  if (typed?.trim().toUpperCase() !== 'DELETE') return;
-  const res = await fetch('/api/account/delete', { method: 'POST' });
-  if (res.ok) {
-    window.location.href = '/';
-  } else {
-    const body = await res.json().catch(() => null);
-    window.alert(body?.error ?? 'We could not delete your account. Please try again.');
-  }
 }

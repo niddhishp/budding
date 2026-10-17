@@ -54,6 +54,7 @@ export function AskAIPage() {
   const [safety, setSafety] = useState<SafetyNotice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [streamingSay, setStreamingSay] = useState<string | null>(null);
+  const [streamingNow, setStreamingNow] = useState<string | null>(null);
   const [sharing, setSharing] = useState<Decode | null>(null);
   const [history, setHistory] = useState<Decode[]>([]);
   const [listening, setListening] = useState(false);
@@ -103,20 +104,24 @@ export function AskAIPage() {
     setListening(true);
   };
 
-  const handleAnalyze = async () => {
-    if (!scenario.trim() || !selectedChild || isAnalyzing) return;
+  /** Run a decode. `refine` answers the previous decode's clarifying question (free, not counted). */
+  const handleAnalyze = async (refine?: { decode: Decode; question: string; answer: string }) => {
+    if (!selectedChild || isAnalyzing) return;
+    const text = refine ? `${refine.decode.scenario}\n\n(${refine.question} ${refine.answer})` : scenario.trim();
+    if (!text) return;
     recognitionRef.current?.stop();
     setIsAnalyzing(true);
     setCurrent(null);
     setSafety(null);
     setError(null);
     setStreamingSay(null);
+    setStreamingNow(null);
 
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: selectedChild.id, scenario: scenario.trim() }),
+        body: JSON.stringify({ childId: selectedChild.id, scenario: text, ...(refine ? { refines: refine.decode.id } : {}) }),
       });
       if (!res.ok || !res.body) {
         const body = await res.json().catch(() => null);
@@ -134,6 +139,8 @@ export function AskAIPage() {
             break;
           case 'delta': {
             json += event.text;
+            const now = extractPartialString(json, 'rightNow');
+            if (now?.text) setStreamingNow(now.text);
             const partial = extractPartialString(json, 'sayThis');
             if (partial) setStreamingSay(partial.text);
             break;
@@ -152,6 +159,7 @@ export function AskAIPage() {
       setError('The connection dropped. Check your internet and try again.');
     } finally {
       setStreamingSay(null);
+      setStreamingNow(null);
       setIsAnalyzing(false);
     }
   };
@@ -160,11 +168,13 @@ export function AskAIPage() {
     const update = (d: Decode) => (d.id === decode.id ? { ...d, outcome } : d);
     setCurrent((c) => (c ? update(c) : c));
     setHistory((h) => h.map(update));
-    const { error: updateError } = await getSupabase()
-      .from('decodes')
-      .update({ outcome, outcome_at: new Date().toISOString() })
-      .eq('id', decode.id);
-    if (updateError) console.error('[decode] outcome not saved', updateError.message);
+    // Server route also turns the rating into a what-worked / what-didn't memory.
+    const res = await fetch(`/api/decodes/${decode.id}/outcome`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outcome }),
+    }).catch(() => null);
+    if (!res?.ok) console.error('[decode] outcome not saved');
   };
 
   const analysis = current?.analysis;
@@ -214,7 +224,7 @@ export function AskAIPage() {
                 </button>
               ) : <span />}
               <Button
-                onClick={handleAnalyze}
+                onClick={() => handleAnalyze()}
                 disabled={!scenario.trim() || isAnalyzing}
                 className="bg-slate-850 hover:bg-slate-800 text-white rounded-full px-6 h-10 disabled:opacity-50"
               >
@@ -263,6 +273,8 @@ export function AskAIPage() {
             </div>
           )}
 
+          {isAnalyzing && streamingNow && <RightNow text={streamingNow} />}
+
           {isAnalyzing && streamingSay && (
             <div className="mt-8 p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm" aria-live="polite">
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -275,7 +287,7 @@ export function AskAIPage() {
             </div>
           )}
 
-          {isAnalyzing && !streamingSay && (
+          {isAnalyzing && !streamingSay && !streamingNow && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-clay/10 flex items-center justify-center animate-pulse">
                 <Sparkles className="w-5 h-5 text-clay" />
@@ -291,13 +303,34 @@ export function AskAIPage() {
 
           {analysis && current && !isAnalyzing && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-8">
+              {analysis.rightNow && <RightNow text={analysis.rightNow} />}
+
               {/* Say this — first, biggest */}
               <div className="p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-leaf" /> Say this
                 </h3>
                 <p className="text-2xl md:text-3xl font-heading text-slate-850 leading-snug">"{analysis.sayThis}"</p>
+                <p className="mt-3 text-xs text-slate-400">An example, not magic words. Say it your way.</p>
               </div>
+
+              {analysis.clarify && (
+                <div className="p-5 rounded-[1.5rem] bg-paper-deep">
+                  <p className="font-medium text-slate-800 mb-3">{analysis.clarify.question}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {analysis.clarify.options.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => handleAnalyze({ decode: current, question: analysis.clarify!.question, answer: opt })}
+                        className="px-4 py-2 rounded-full bg-surface border border-slate-200 text-sm text-slate-700 hover:border-clay"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">Tap to sharpen the advice. This doesn&rsquo;t use a decode.</p>
+                </div>
+              )}
 
               <div>
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Do this now</h3>
@@ -318,10 +351,23 @@ export function AskAIPage() {
 
               <div>
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-clay" /> What's going on
+                  <Sparkles className="w-4 h-4 text-clay" /> What may be happening
                 </h3>
-                <p className="text-lg text-slate-800 leading-relaxed">{analysis.interpretation}</p>
-                <p className="mt-3 text-slate-500 leading-relaxed">{analysis.developmentalContext}</p>
+                {analysis.hypotheses?.length ? (
+                  <ul className="space-y-3">
+                    {analysis.hypotheses.map((h, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span className={`mt-1 h-fit flex-shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${i === 0 ? 'bg-clay/10 text-clay' : 'bg-slate-100 text-slate-500'}`}>
+                          {h.likelihood}
+                        </span>
+                        <span className={i === 0 ? 'text-lg text-slate-800 leading-relaxed' : 'text-slate-600 leading-relaxed'}>{h.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-lg text-slate-800 leading-relaxed">{analysis.interpretation}</p>
+                )}
+                <p className="mt-4 text-slate-500 leading-relaxed">{analysis.developmentalContext}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clay/5 border border-clay/10 text-clay text-sm font-medium">
                     <Heart className="w-4 h-4" /> Needs: {analysis.emotionalNeed}
@@ -338,6 +384,46 @@ export function AskAIPage() {
                 </h3>
                 <p className="text-slate-700 leading-relaxed">{analysis.afterwards}</p>
               </div>
+
+              {(analysis.watchFor || analysis.seekHelpIf) && (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {analysis.watchFor && (
+                    <div className="p-4 rounded-2xl bg-slate-50">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Watch for</p>
+                      <p className="text-sm text-slate-700 leading-relaxed">{analysis.watchFor}</p>
+                    </div>
+                  )}
+                  {analysis.seekHelpIf && (
+                    <div className="p-4 rounded-2xl bg-amber-50">
+                      <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1.5">Talk to a professional if</p>
+                      <p className="text-sm text-amber-900 leading-relaxed">{analysis.seekHelpIf}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {analysis.whyItWorks && (
+                <details className="group rounded-2xl border border-slate-200 px-5 py-4">
+                  <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-semibold text-slate-700">
+                    Why this works
+                    {analysis.evidence?.[0] && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-leaf/10 text-leaf">{analysis.evidence[0].label}</span>
+                    )}
+                  </summary>
+                  <p className="mt-3 text-sm text-slate-700 leading-relaxed">{analysis.whyItWorks}</p>
+                  {!!analysis.evidence?.length && (
+                    <ul className="mt-4 space-y-2.5">
+                      {analysis.evidence.map((e) => (
+                        <li key={e.id} className="text-sm leading-relaxed">
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 mr-2">{e.label}</span>
+                          <span className="text-slate-600">{e.claim}</span>
+                          <span className="block text-xs text-slate-400 mt-0.5">{e.source}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </details>
+              )}
 
               <OutcomeBar decode={current} onSelect={recordOutcome} />
 
@@ -390,11 +476,44 @@ export function AskAIPage() {
   );
 }
 
+function RightNow({ text }: { text: string }) {
+  return (
+    <div className="mt-8 flex items-start gap-3 p-5 rounded-[1.5rem] bg-slate-850 text-white" aria-live="polite">
+      <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-turmeric whitespace-nowrap">Right now</span>
+      <p className="text-lg leading-snug">{text}</p>
+    </div>
+  );
+}
+
 function SafetyBanner({ notice, onExpert }: { notice: SafetyNotice; onExpert: () => void }) {
+  // Tier 1 (parent distress) is support, not alarm.
+  if (notice.tier === 1) {
+    return (
+      <div role="status" className="mt-8 p-5 rounded-[1.5rem] bg-leaf/10 border border-leaf/20">
+        <p className="font-semibold text-slate-800 leading-relaxed">{notice.message}</p>
+        {notice.steps.map((s) => <p key={s} className="mt-2 text-sm text-slate-700 leading-relaxed">{s}</p>)}
+        {notice.helplines.map((h) => (
+          <a key={h.number} href={`tel:${h.number}`} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-leaf">
+            <Phone className="w-4 h-4" /> {h.name} · {h.number}
+          </a>
+        ))}
+      </div>
+    );
+  }
   const urgent = notice.level === 'urgent';
   return (
     <div role="alert" className={`mt-8 p-6 rounded-[2rem] border ${urgent ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
       <p className={`font-semibold mb-4 leading-relaxed ${urgent ? 'text-red-900' : 'text-amber-900'}`}>{notice.message}</p>
+      {notice.steps.length > 0 && (
+        <ol className={`mb-5 space-y-2 text-[15px] leading-relaxed ${urgent ? 'text-red-950' : 'text-amber-950'}`}>
+          {notice.steps.map((s, i) => (
+            <li key={s} className="flex gap-3">
+              <span className="font-semibold">{i + 1}.</span>
+              <span>{s}</span>
+            </li>
+          ))}
+        </ol>
+      )}
       <div className="grid sm:grid-cols-2 gap-2">
         {notice.helplines.map((h) => (
           <a

@@ -1,105 +1,76 @@
 import 'server-only';
-import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
-import type { AgentAnalysis, Child, RiskLevel, SafetyNotice } from '@/types';
+import { FAST_MODEL, MODEL, structuredCall, structuredStream } from '@/lib/ai/llm';
+import { CONSTITUTION } from '@/lib/ai/doctrine/constitution';
+import { STAGES, stageBandFor } from '@/lib/ai/doctrine/stages';
+import { getModule } from '@/lib/ai/doctrine/modules';
+import { CARD_IDS, TIER_LABEL, getCard } from '@/lib/ai/doctrine/evidence';
+import { lintAnalysis, repairAnalysis } from '@/lib/ai/critic';
+import type { Route } from '@/lib/ai/router';
+import type { AgentAnalysis, Child, Memory } from '@/types';
 
-type Effort = 'low' | 'medium' | 'high';
+// Back-compat re-exports for report/story/week-guide and routes.
+export { structuredCall, DecodeError } from '@/lib/ai/llm';
+export const DECODE_MODEL = MODEL;
 
-// The decode is the product: it gets the main model. Classification and message rewriting
-// are simpler tasks and can run on a cheaper model via BUDDING_FAST_MODEL (defaults to the main one).
-const MODEL = process.env.BUDDING_MODEL || 'claude-opus-5-5';
-const FAST_MODEL = process.env.BUDDING_FAST_MODEL || MODEL;
-// Decodes are read mid-meltdown: favour latency. Raise via env once evals show headroom.
-const EFFORT = (process.env.BUDDING_EFFORT || 'low') as Effort;
+/*
+ * Orchestrator step 2: compose doctrine for THIS child and moment, then generate one answer.
+ * Constitution (stable, system) + stage band + routed modules + allowed evidence cards + memory
+ * (per-request, user turn) → one streamed structured response → critic.
+ */
 
-// Haiku 4.5 rejects `effort` and is not a server-side-fallback model; omit both for it.
-const supportsEffortAndFallbacks = (model: string) => !model.startsWith('claude-haiku');
+// ─── Output contract ─────────────────────────────────────────────────────────
 
-let client: Anthropic | null = null;
-function getClient() {
-  if (!client) client = new Anthropic();
-  return client;
-}
-
-// ─── Output schemas ──────────────────────────────────────────────────────────
-
-const analysisSchema = z.object({
+const generatedSchema = z.object({
+  rightNow: z.string(),
   sayThis: z.string().min(1),
-  interpretation: z.string().min(1),
-  emotionalNeed: z.string().min(1),
   doThis: z.array(z.string().min(1)).min(1).max(5),
   avoid: z.string().min(1),
+  hypotheses: z.array(z.object({ text: z.string().min(1), likelihood: z.enum(['most likely', 'possible', 'less likely']) })).min(1).max(3),
+  emotionalNeed: z.string().min(1),
   afterwards: z.string().min(1),
+  watchFor: z.string(),
+  seekHelpIf: z.string(),
   skillBeingBuilt: z.string().min(1),
   developmentalContext: z.string().min(1),
+  whyItWorks: z.string().min(1),
+  evidenceIds: z.array(z.string()).max(3),
 });
+type Generated = z.infer<typeof generatedSchema>;
 
-const ANALYSIS_JSON_SCHEMA = {
+// Property order is the streaming order: what the parent needs first comes first.
+const GENERATED_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['sayThis', 'interpretation', 'emotionalNeed', 'doThis', 'avoid', 'afterwards', 'skillBeingBuilt', 'developmentalContext'],
+  required: ['rightNow', 'sayThis', 'doThis', 'avoid', 'hypotheses', 'emotionalNeed', 'afterwards', 'watchFor', 'seekHelpIf', 'skillBeingBuilt', 'developmentalContext', 'whyItWorks', 'evidenceIds'],
   properties: {
-    sayThis: { type: 'string', description: 'The exact words the parent says right now. 1-3 short sentences, spoken language, addressed to the child.' },
-    interpretation: { type: 'string', description: 'What the behavior most likely means. 2-3 sentences, plain language, no jargon.' },
-    emotionalNeed: { type: 'string', description: 'The need underneath the behavior, in under 8 words.' },
-    doThis: { type: 'array', items: { type: 'string' }, description: '2-4 concrete actions for the next few minutes, each under 20 words.' },
+    rightNow: { type: 'string', description: 'If the moment is happening now: ONE calm instruction for this second, under 20 words (safety first). Otherwise an empty string.' },
+    sayThis: { type: 'string', description: 'Exact words the parent says to the child, spoken style, sized to the stage band. 1-3 short sentences.' },
+    doThis: { type: 'array', items: { type: 'string' }, description: '2-4 concrete actions for the next few minutes, each under 20 words, in order.' },
     avoid: { type: 'string', description: 'The single most likely mistake to avoid with THIS child, and why, in one sentence.' },
-    afterwards: { type: 'string', description: 'What to do or say later, once everyone is calm. 1-2 sentences.' },
-    skillBeingBuilt: { type: 'string', description: 'The skill this moment builds, in under 6 words.' },
-    developmentalContext: { type: 'string', description: 'Why this is expected at this age/stage. 1-2 sentences.' },
+    hypotheses: {
+      type: 'array',
+      description: '2-3 possibilities for what is going on, ranked, each tied to age, temperament or history. One sentence each.',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['text', 'likelihood'],
+        properties: {
+          text: { type: 'string' },
+          likelihood: { type: 'string', enum: ['most likely', 'possible', 'less likely'] },
+        },
+      },
+    },
+    emotionalNeed: { type: 'string', description: 'The need underneath the behaviour, under 8 words.' },
+    afterwards: { type: 'string', description: 'What to do or teach later, once everyone is calm. 1-2 sentences.' },
+    watchFor: { type: 'string', description: 'What to notice over the coming days that would tell the parent more. One sentence. Empty if not useful.' },
+    seekHelpIf: { type: 'string', description: 'Concrete signs that mean talking to a paediatrician or child psychologist, and the words to describe it. Empty for ordinary everyday moments.' },
+    skillBeingBuilt: { type: 'string', description: 'The skill this moment builds, under 6 words.' },
+    developmentalContext: { type: 'string', description: 'Why this is expected at this stage. 1-2 sentences, no invented facts.' },
+    whyItWorks: { type: 'string', description: 'Why the suggested approach works, in one or two plain sentences, consistent with the cited evidence.' },
+    evidenceIds: { type: 'array', items: { type: 'string', enum: CARD_IDS }, description: '0-3 evidence card ids that genuinely support this answer. Only ids from the allowed list.' },
   },
 } as const;
-
-const safetySchema = z.object({
-  level: z.enum(['none', 'low', 'elevated', 'urgent']),
-  reason: z.string(),
-});
-
-const SAFETY_JSON_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['level', 'reason'],
-  properties: {
-    level: { type: 'string', enum: ['none', 'low', 'elevated', 'urgent'] },
-    reason: { type: 'string', description: 'One sentence explaining the rating.' },
-  },
-} as const;
-
-// ─── Prompts ─────────────────────────────────────────────────────────────────
-
-const DECODE_SYSTEM = `You are Kahiye, a parenting guide grounded in developmental psychology, attachment research and practical behavior science. A parent is describing a moment with their child, often while it is still happening. They need the right words in seconds, not an essay.
-
-How to respond:
-- Lead with what to SAY. Write it as the parent would speak it to this child at this age: short, warm, firm where a boundary is needed. A 2-year-old gets 5-word sentences; a teenager gets respect and brevity, never a lecture.
-- Behavior is communication, not a moral failing. Explain what this behavior most likely signals given the child's age and temperament. Do not diagnose.
-- Use the child's temperament and history. If a past approach worked or failed with this child, build on it explicitly. A highly sensitive or intense child needs a different approach from a flexible, low-intensity one.
-- Hold boundaries. Empathy does not mean giving in; name the limit and the feeling together.
-- Be concrete. "Get down to eye level and lower your voice" beats "connect with your child".
-- Respect the family's context. Many families are multigenerational (grandparents, nannies, relatives share caregiving); where it helps, note how to keep caregivers consistent.
-- Reply in the same language and register the parent wrote in (English, Hindi, Hinglish, Malayalam, Tamil, etc.).
-- Safety first: if anyone may be at risk of harm, the first action in doThis must be to make everyone physically safe and seek help.
-
-Never shame the parent. They are here because they care.`;
-
-const SAFETY_SYSTEM = `You classify parent messages about their child for safety risk. Rate the situation described:
-- "urgent": immediate danger — self-harm or suicidal talk by the child, abuse, a medical emergency, a child missing, violence causing injury, a parent at risk of harming the child.
-- "elevated": warning signs that warrant professional input soon — persistent withdrawal or hopelessness, eating or sleep severely disrupted for weeks, regression after a trauma, developmental red flags, parental burnout with thoughts of giving up.
-- "low": ordinary but intense difficulty — tantrums, defiance, sibling fights, school refusal, screen battles.
-- "none": everyday questions.
-Rate on the content, not the tone. Ordinary frustration ("I'm going to lose it") is not a risk of harm.`;
-
-// Instant, model-free screen so obvious emergencies never depend on an API round-trip.
-const URGENT_PATTERNS = [
-  /\bsuicid/i, /\bkill (him|her|them)sel(f|ves)\b/i, /\bwants? to die\b/i, /\bself[- ]?harm/i, /\bcutting (him|her)self/i,
-  /\b(sexual(ly)?|physical(ly)?) abus/i, /\bnot breathing\b/i, /\bunconscious\b/i, /\bseizure/i, /\bswallowed\b/i,
-  /\bmissing\b.*\b(child|son|daughter|kid)\b/i, /\bhurt(ing)? (my|the) (baby|child|kid)\b/i,
-];
-
-const HELPLINES: SafetyNotice['helplines'] = [
-  { name: 'Emergency', number: '112', note: 'Police, ambulance, fire — India' },
-  { name: 'Childline', number: '1098', note: 'Children in distress or danger, 24×7' },
-  { name: 'Tele-MANAS', number: '14416', note: 'Free mental health support, 24×7, many languages' },
-];
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 
@@ -107,151 +78,139 @@ export interface DecodeContext {
   child: Child;
   recentLogs: { content: string; log_type: string; created_at: string }[];
   pastDecodes: { scenario: string; say_this: string | null; outcome: string | null; created_at: string }[];
+  memories?: Pick<Memory, 'kind' | 'content' | 'source' | 'confidence'>[];
 }
 
-function describeTrait(name: string, value: number) {
-  const band = value >= 70 ? 'high' : value <= 30 ? 'low' : 'moderate';
-  return `${name}: ${band} (${value}/100)`;
+function band(value: number) {
+  return value >= 70 ? 'high' : value <= 30 ? 'low' : 'moderate';
 }
 
-function buildUserMessage(scenario: string, ctx: DecodeContext) {
-  const { child, recentLogs, pastDecodes } = ctx;
+const PROVENANCE: Record<string, string> = {
+  parent_said: 'parent said',
+  decode_outcome: 'parent reported outcome',
+  log: 'parent logged',
+  ai_inferred: 'inferred',
+};
+
+function composeUserTurn(scenario: string, ctx: DecodeContext, route: Route) {
+  const { child, recentLogs, pastDecodes, memories = [] } = ctx;
   const t = child.temperament;
+  const stageBand = stageBandFor(child.age);
+  const stage = STAGES[stageBand];
   const age = child.age.stage === 'pregnancy'
     ? `not yet born (pregnancy week ${child.age.pregnancyWeek})`
-    : `${child.age.years} years ${child.age.months} months (${child.age.stage.replace('-', ' ')})`;
+    : `${child.age.years} years ${child.age.months} months`;
 
-  const lines = [
-    `<child>`,
+  const modules = route.modules.map(getModule).filter((m): m is NonNullable<typeof m> => !!m);
+  const cardIds = [...new Set(modules.flatMap((m) => m.cards))];
+
+  const lines: string[] = [];
+
+  lines.push(`<stage band="${stage.label}">`,
+    `Developmental engine: ${stage.engine}.`,
+    `Typical at this stage: ${stage.typical}.`,
+    `Guidance posture: ${stage.posture}.`,
+    `Words to the child: ${stage.scriptStyle}.`,
+    `</stage>`);
+
+  for (const m of modules) {
+    lines.push(`<module name="${m.label}">`,
+      ...m.principles.map((p) => `- ${p}`),
+      `Avoid: ${m.avoid.join('; ')}.`,
+      ...(m.escalate ? [`Escalate: ${m.escalate}`] : []),
+      `</module>`);
+  }
+
+  lines.push(`<allowed_evidence>`,
+    ...cardIds.map((id) => getCard(id)).filter(Boolean).map((c) => `- ${c!.id} [${TIER_LABEL[c!.tier]}]: ${c!.claim} (${c!.source})`),
+    `</allowed_evidence>`);
+
+  lines.push(`<child>`,
     `Name: ${child.name}`,
     `Age: ${age}`,
-    `Temperament (parent-reported): ${[
-      describeTrait('sensitivity', t.sensitivity),
-      describeTrait('emotional intensity', t.emotionalIntensity),
-      describeTrait('flexibility', t.flexibility),
-      describeTrait('persistence', t.persistence),
-      describeTrait('sociability', t.sociability),
-      describeTrait('curiosity', t.curiosity),
-    ].join('; ')}`,
-    `</child>`,
-  ];
+    child.age.stage === 'pregnancy' ? '' : `Current patterns (parent-reported, changeable — not labels): reactivity/sensitivity ${band(t.sensitivity)}, intensity of reactions ${band(t.emotionalIntensity)}, flexibility with change ${band(t.flexibility)}, persistence ${band(t.persistence)}, sociability ${band(t.sociability)}, curiosity/approach ${band(t.curiosity)}.`,
+    child.focusAreas.length ? `What the parent wants help with lately: ${child.focusAreas.join(', ')}.` : '',
+    child.household.length ? `Household / caregivers: ${child.household.join(', ')}.` : '',
+    child.homeLanguages.length ? `Languages at home: ${child.homeLanguages.join(', ')}.` : '',
+    child.profileNotes ? `Parent's note: ${child.profileNotes}` : '',
+    `</child>`);
+
+  if (memories.length) {
+    lines.push(`<what_kahiye_remembers>`,
+      ...memories.map((m) => `- [${m.kind.replace('_', ' ')}; ${PROVENANCE[m.source] ?? m.source}${m.source === 'ai_inferred' ? `, confidence ${Math.round(m.confidence * 100)}%` : ''}] ${m.content}`),
+      `</what_kahiye_remembers>`);
+  }
 
   if (recentLogs.length) {
-    lines.push(`<recent_observations>`);
-    recentLogs.forEach((l) => lines.push(`- [${l.created_at.slice(0, 10)}, ${l.log_type}] ${l.content}`));
-    lines.push(`</recent_observations>`);
+    lines.push(`<recent_observations>`, ...recentLogs.map((l) => `- [${l.created_at.slice(0, 10)}, ${l.log_type}] ${l.content}`), `</recent_observations>`);
   }
 
   const rated = pastDecodes.filter((d) => d.outcome);
   if (rated.length) {
-    lines.push(`<what_has_worked_before>`);
-    rated.forEach((d) =>
-      lines.push(`- Situation: ${d.scenario}\n  Said: ${d.say_this ?? '—'}\n  Parent's verdict: ${d.outcome!.replace(/_/g, ' ')}`),
-    );
-    lines.push(`</what_has_worked_before>`);
+    lines.push(`<what_has_worked_before>`,
+      ...rated.map((d) => `- Situation: ${d.scenario}\n  Said: ${d.say_this ?? '—'}\n  Parent's verdict: ${d.outcome!.replace(/_/g, ' ')}`),
+      `</what_has_worked_before>`);
   }
 
+  lines.push(`<routing mode="${route.mode}" parent_goal="${route.goal}" />`);
+  if (route.clarify) {
+    lines.push(`<open_question>The parent will also be asked: "${route.clarify.question}". Give your best answer now without waiting for it.</open_question>`);
+  }
   lines.push(`<parent_message>\n${scenario}\n</parent_message>`);
-  return lines.join('\n');
+
+  return lines.filter(Boolean).join('\n');
 }
 
-// ─── Calls ───────────────────────────────────────────────────────────────────
+// ─── Generation ──────────────────────────────────────────────────────────────
 
-function firstText(content: Anthropic.Beta.BetaContentBlock[]) {
-  for (const block of content) if (block.type === 'text') return block.text;
-  return null;
-}
-
-interface StructuredOpts<T> {
-  model?: string;
-  effort?: Effort;
-  system: string;
-  user: string;
-  schema: Record<string, unknown>;
-  validator: z.ZodType<T>;
-  maxTokens: number;
-}
-
-function requestParams(opts: StructuredOpts<unknown>) {
-  const model = opts.model ?? MODEL;
-  const full = supportsEffortAndFallbacks(model);
+function toAnalysis(g: Generated, route: Route): AgentAnalysis {
+  const evidence = [...new Set(g.evidenceIds)]
+    .map((id) => getCard(id))
+    .filter((c): c is NonNullable<typeof c> => !!c)
+    .map((c) => ({ id: c.id, tier: c.tier, label: TIER_LABEL[c.tier], claim: c.claim, source: c.source }));
   return {
-    model,
-    max_tokens: opts.maxTokens,
-    ...(full ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
-    system: opts.system,
-    messages: [{ role: 'user' as const, content: opts.user }],
-    output_config: {
-      ...(full ? { effort: opts.effort ?? EFFORT } : {}),
-      format: { type: 'json_schema' as const, schema: opts.schema },
-    },
+    rightNow: g.rightNow.trim(),
+    sayThis: g.sayThis,
+    doThis: g.doThis,
+    avoid: g.avoid,
+    hypotheses: g.hypotheses,
+    interpretation: g.hypotheses[0]?.text ?? '',
+    emotionalNeed: g.emotionalNeed,
+    afterwards: g.afterwards,
+    watchFor: g.watchFor.trim(),
+    seekHelpIf: g.seekHelpIf.trim(),
+    skillBeingBuilt: g.skillBeingBuilt,
+    developmentalContext: g.developmentalContext,
+    whyItWorks: g.whyItWorks,
+    evidence,
+    clarify: route.clarify,
+    modules: route.modules,
   };
 }
 
-function parseFinal<T>(response: Anthropic.Beta.BetaMessage, validator: z.ZodType<T>): T {
-  if (response.stop_reason === 'refusal') throw new DecodeError('refused', 'The model declined this request.');
-  if (response.stop_reason === 'max_tokens') throw new DecodeError('truncated', 'The response was cut off.');
-  const text = firstText(response.content);
-  if (!text) throw new DecodeError('empty', 'The model returned no text.');
-  return validator.parse(JSON.parse(text));
-}
-
-export async function structuredCall<T>(opts: StructuredOpts<T>): Promise<T> {
-  const response = await getClient().beta.messages.create(requestParams(opts));
-  return parseFinal(response, opts.validator);
-}
-
-/** Same as structuredCall, but forwards raw JSON text deltas as they arrive. */
-async function structuredStream<T>(opts: StructuredOpts<T>, onText: (delta: string) => void): Promise<T> {
-  const stream = getClient().beta.messages.stream(requestParams(opts));
-  for await (const event of stream) {
-    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') onText(event.delta.text);
-  }
-  return parseFinal(await stream.finalMessage(), opts.validator);
-}
-
-export class DecodeError extends Error {
-  constructor(public code: 'refused' | 'truncated' | 'empty', message: string) {
-    super(message);
-  }
-}
-
-export async function classifySafety(scenario: string): Promise<{ level: RiskLevel; reason: string }> {
-  if (URGENT_PATTERNS.some((p) => p.test(scenario))) {
-    return { level: 'urgent', reason: 'Matched an emergency pattern.' };
-  }
-  try {
-    return await structuredCall({
-      model: FAST_MODEL,
-      system: SAFETY_SYSTEM,
-      user: `<parent_message>\n${scenario}\n</parent_message>`,
-      schema: SAFETY_JSON_SCHEMA,
-      validator: safetySchema,
-      maxTokens: 2000,
-    });
-  } catch (error) {
-    // Fail safe-ish: an unclassified message is treated as low, never silently as none.
-    console.error('[safety] classification failed', error);
-    return { level: 'low', reason: 'Classifier unavailable.' };
-  }
-}
-
 /**
- * Streams the decode. `sayThis` is the first schema property, so the words to say
- * reach the parent before the rest of the analysis is written.
+ * Streams the decode (rightNow and sayThis arrive first), then runs the critic.
+ * Returns the final, constitution-checked analysis.
  */
 export async function decodeBehavior(
   scenario: string,
   ctx: DecodeContext,
+  route: Route,
   onText: (delta: string) => void = () => {},
-): Promise<AgentAnalysis> {
-  return structuredStream({
-    system: DECODE_SYSTEM,
-    user: buildUserMessage(scenario, ctx),
-    schema: ANALYSIS_JSON_SCHEMA,
-    validator: analysisSchema,
-    maxTokens: 8000,
+): Promise<{ analysis: AgentAnalysis; violations: string[]; repaired: boolean }> {
+  const generated = await structuredStream({
+    system: CONSTITUTION,
+    user: composeUserTurn(scenario, ctx, route),
+    schema: GENERATED_JSON_SCHEMA,
+    validator: generatedSchema,
+    maxTokens: 10000,
   }, onText);
+
+  const violations = lintAnalysis(generated);
+  if (!violations.length) return { analysis: toAnalysis(generated, route), violations: [], repaired: false };
+
+  const { analysis, repaired } = await repairAnalysis(generated, violations, GENERATED_JSON_SCHEMA, generatedSchema);
+  return { analysis: toAnalysis(analysis, route), violations: violations.map((v) => v.rule), repaired };
 }
 
 // ─── Caregiver sharing ───────────────────────────────────────────────────────
@@ -301,23 +260,3 @@ export async function writeShareMessage(opts: {
   });
   return message;
 }
-
-export function safetyNotice(level: RiskLevel): SafetyNotice | null {
-  if (level === 'urgent') {
-    return {
-      level,
-      message: 'This sounds serious. Make sure everyone is physically safe first, then call for help now. You do not have to handle this alone.',
-      helplines: HELPLINES,
-    };
-  }
-  if (level === 'elevated') {
-    return {
-      level,
-      message: 'What you describe is worth discussing with your pediatrician or a child psychologist soon. The guidance below can help in the meantime.',
-      helplines: HELPLINES.slice(1),
-    };
-  }
-  return null;
-}
-
-export const DECODE_MODEL = MODEL;
