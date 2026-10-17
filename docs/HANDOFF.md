@@ -3,9 +3,9 @@
 Read this first when resuming work. Update it at the end of every working session.
 Last updated: 2026-10-18.
 
-**Current work:** [Phase 3 — playful onboarding](PLAYFUL-ONBOARDING.md). Optional four-scene quiz, quick first help, explicit unanswered observations, preserved edits and anonymous new share links. Release verification is recorded there; until its production release entry is complete, production remains the phase 2 release below.
+**Current deployed release:** [Phase 3 — playful onboarding](PLAYFUL-ONBOARDING.md), code `05d5a7a`, migration 013. Optional four-scene quiz, quick first help, explicit unanswered observations, preserved edits and anonymous new share links. CI, database/security tests, mobile/keyboard and save/retry browser checks passed. Production is Ready on both Kahiye domains; the signed-in family app loads successfully. Existing child data fingerprint and record counts are unchanged. See the linked record for exact release evidence.
 
-**Current deployed baseline:** [Phase 2 — guidance reliability](GUIDANCE-RELIABILITY.md), code `a1fb9bc`, migration 012. The security foundation (006–010), full admin/expert/consultation workspace (011), password sign-in, consent, account privacy and admin MFA are already deployed. Legacy application records were removed in phases 0/1; existing Kahiye records remain preserved. Follow the linked release records for actual verification and limitations.
+**Previous deployed baseline:** [Phase 2 — guidance reliability](GUIDANCE-RELIABILITY.md), code `a1fb9bc`, migration 012. The security foundation (006–010), full admin/expert/consultation workspace (011), password sign-in, consent, account privacy and admin MFA are already deployed. Legacy application records were removed in phases 0/1; existing Kahiye records remain preserved. Follow the linked release records for actual verification and limitations.
 
 **Sign-in:** existing email address as username plus password. Signup and recovery use one-time verification links. Admin access still requires MFA.
 
