@@ -11,6 +11,7 @@ const checks = [
   ['/admin/experts','GET',null,307],
   ['/admin/consultations','GET',null,307],
   ['/admin/team','GET',null,307],
+  ['/auth/password','GET',null,307],
   ['/api/admin/experts','GET',null,401],
   ['/api/admin/overview','GET',null,401],
   ['/api/admin/consultations','GET',null,401],

@@ -18,7 +18,7 @@ export default async function VerifyAdminPage() {
   return <main className="max-w-lg mx-auto px-6 py-16">
     <Link href="/app" className="text-clay underline">Back to Kahiye</Link>
     <h1 className="font-heading text-3xl mt-8 mb-4">One more step to your team space</h1>
-    <p className="text-slate-600 mb-8">Use an authenticator app to protect team access. Your email sign-in still comes first.</p>
+    <p className="text-slate-600 mb-8">Use an authenticator app to protect team access after signing in with your email and password.</p>
     <AdminMfa factorId={data.totp.find(f => f.status === 'verified')?.id ?? null} />
   </main>;
 }

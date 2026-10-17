@@ -20,6 +20,10 @@ Credential review is a recorded human check, not automated accreditation. Availa
 
 ## Release verification
 
+**Live:** release `c427be57abc98fa022d7c830dc1af06d6a41ddeb`, deployed from `main` on 17 October 2026 at 23:35 IST. Vercel deployment `dpl_3jRTtBYMsM6rNzP4GyNxpy3rDZZ6` is READY at https://budding-3kssdfmht-reactic.vercel.app with `www.kahiye.app` and `kahiye.app` aliases. Build: 33 seconds. [GitHub CI](https://github.com/niddhishp/budding/actions/runs/39056363082) passed all checks before pushing production. The release branch is `codex/admin-operations`.
+
+All 22 live HTTP checks passed: public pages, protected-page redirects, all admin API authentication, parent request status authentication, same-origin/foreign-origin enforcement and response security headers. The available in-app browser remained on the owner's email-link sign-in screen; no authenticated production UI session was available to the agent. The full create/assign/schedule/complete browser flow was tested locally as described below. No production expert, request, message or payment was created during verification.
+
 17 October 2026: migration 011 applied to production with atomic preservation fingerprints. Existing account, child, consent and owner membership preserved; no live experts/requests or synthetic identities added. The migration is recorded in both Supabase history and `_budding_migrations`.
 
 Passed locally: lint, strict types, 5 unit tests, production build, 19 HTTP security/header checks, clean migrations 001–011, original security suite and the new operations SQL suite. The latter covers anonymous/parent/reviewer/MFA denial, direct-write tampering, assigned therapist isolation, paused membership, stale versions, invalid therapist linking, schedule conflicts/past times, workflow transitions, withdrawal and erasure. All fixtures rolled back.

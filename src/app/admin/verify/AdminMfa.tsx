@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { safeAuthDestination } from '@/lib/auth-flow';
 
-export function AdminMfa({ factorId }: { factorId: string | null }) {
+export function AdminMfa({ factorId, destination = '/admin' }: { factorId: string | null; destination?: string }) {
   const [factor, setFactor] = useState(factorId);
   const [setup, setSetup] = useState<{ qr: string; secret: string } | null>(null);
   const [code, setCode] = useState('');
@@ -36,7 +37,7 @@ export function AdminMfa({ factorId }: { factorId: string | null }) {
       const { error } = await getSupabase().auth.mfa.challengeAndVerify({ factorId: factor, code });
       if (error) { setError('That code did not work. Try the latest code from your authenticator.'); return; }
       setSetup(null); setCode('');
-      window.location.assign('/admin');
+      window.location.assign(safeAuthDestination(destination, '/admin'));
     } catch { setError('Verification is unavailable. Please try again.'); }
     finally { setBusy(false); }
   }

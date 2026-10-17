@@ -3,6 +3,8 @@
 Read this first when resuming work. Update it at the end of every working session.
 Last updated: 2026-10-17.
 
+**Password sign-in:** [Implementation and verification record](PASSWORD-SIGNIN.md). Routine sign-in now uses the existing email address as username plus a password. Explicit signup and password recovery retain one-time verification links. Account identities, family data, team roles and admin MFA are preserved; no credential was changed by an operator. See the linked record for deployment status.
+
 **Current execution record:** [Phases 0 and 1 — security foundation](SECURITY-FOUNDATION.md). Database migrations 006–010 are applied and recorded. Legacy public users/sessions/mindmaps and their 20 records were removed with preservation checks; Kahiye identities/data remain intact. Release `bdc62e3` is deployed on `www.kahiye.app` from `main`, including preserved agents-v2 work, consent enforcement, privacy controls, owner/MFA/admin access, audit and security tests. GitHub CI and live protection checks passed. Owner MFA enrollment is still a personal onboarding step at `/admin`. Treat the older infrastructure/work notes below as historical where they differ from that record.
 
 ## 1. What this is

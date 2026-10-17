@@ -81,6 +81,9 @@ export function TopBar() {
           <DropdownMenuItem asChild>
             <a href="/app/privacy"><Shield className="w-4 h-4" /> Privacy choices</a>
           </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <a href="/auth/password"><Shield className="w-4 h-4" /> Set or change password</a>
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => deleteAccount()} className="text-red-600 focus:text-red-700">
             <Trash2 className="w-4 h-4" /> Delete account & data
           </DropdownMenuItem>
