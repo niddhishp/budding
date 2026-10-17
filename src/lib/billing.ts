@@ -41,15 +41,16 @@ export function hasAccess(sub: SubscriptionRow | null, now = new Date()): boolea
 
 /** Resolve plan and usage for the signed-in parent. `supabase` must be the user-scoped client. */
 export async function getEntitlement(supabase: SupabaseClient, userId: string): Promise<Entitlement> {
-  const { data: sub } = await supabase
+  const { data: sub, error: subscriptionError } = await supabase
     .from('subscriptions')
     .select('status, interval, current_period_end, cancel_at_period_end, razorpay_subscription_id')
     .eq('user_id', userId)
     .maybeSingle<SubscriptionRow>();
 
+  if (subscriptionError) throw new Error('Subscription lookup unavailable');
   const plus = hasAccess(sub);
   const windowMs = plus ? 86_400_000 : 7 * 86_400_000;
-  const { count } = await supabase
+  const { count, error: usageError } = await supabase
     .from('decodes')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
@@ -58,6 +59,7 @@ export async function getEntitlement(supabase: SupabaseClient, userId: string): 
     .is('refines', null)
     .gte('created_at', new Date(Date.now() - windowMs).toISOString());
 
+  if (usageError || count === null) throw new Error('Usage lookup unavailable');
   return {
     plan: plus ? 'plus' : 'free',
     used: count ?? 0,

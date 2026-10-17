@@ -16,12 +16,12 @@ const supportsEffortAndFallbacks = (model: string) => !model.startsWith('claude-
 
 let client: Anthropic | null = null;
 function getClient() {
-  if (!client) client = new Anthropic();
+  if (!client) client = new Anthropic({ timeout: 35_000, maxRetries: 0 });
   return client;
 }
 
 export class DecodeError extends Error {
-  constructor(public code: 'refused' | 'truncated' | 'empty' | 'timeout', message: string) {
+  constructor(public code: 'refused' | 'truncated' | 'empty' | 'timeout' | 'unsafe', message: string) {
     super(message);
   }
 }
@@ -34,6 +34,8 @@ export interface StructuredOpts<T> {
   schema: Record<string, unknown>;
   validator: z.ZodType<T>;
   maxTokens: number;
+  signal?: AbortSignal;
+  timeoutMs?: number;
 }
 
 function requestParams(opts: StructuredOpts<unknown>) {
@@ -66,23 +68,25 @@ function parseFinal<T>(response: Anthropic.Beta.BetaMessage, validator: z.ZodTyp
 }
 
 export async function structuredCall<T>(opts: StructuredOpts<T>): Promise<T> {
-  const response = await getClient().beta.messages.create(requestParams(opts));
+  const response = await getClient().beta.messages.create(requestParams(opts), { signal: opts.signal, timeout: opts.timeoutMs ?? 35_000, maxRetries: 0 });
   return parseFinal(response, opts.validator);
 }
 
 /** Same as structuredCall, but forwards raw JSON text deltas as they arrive. */
 export async function structuredStream<T>(opts: StructuredOpts<T>, onText: (delta: string) => void): Promise<T> {
-  const stream = getClient().beta.messages.stream(requestParams(opts));
+  const stream = getClient().beta.messages.stream(requestParams(opts), { signal: opts.signal, timeout: opts.timeoutMs ?? 35_000, maxRetries: 0 });
   for await (const event of stream) {
     if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') onText(event.delta.text);
   }
   return parseFinal(await stream.finalMessage(), opts.validator);
 }
 
-/** Resolve within `ms` or reject with a timeout DecodeError. */
-export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new DecodeError('timeout', `Timed out after ${ms}ms`)), ms)),
-  ]);
+/** Bounds non-provider tasks; provider calls also use an abortable SDK deadline. */
+export async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([promise, new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new DecodeError('timeout', 'Request timed out')), ms);
+    })]);
+  } finally { clearTimeout(timer); }
 }

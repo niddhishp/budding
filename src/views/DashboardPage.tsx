@@ -130,7 +130,7 @@ export function DashboardPage() {
       )}
 
       <div className="space-y-6 md:space-y-8">
-        {isPregnancy && selectedChild.age.pregnancyWeek && <WeekGuideCard week={selectedChild.age.pregnancyWeek} />}
+        {isPregnancy && selectedChild.age.pregnancyWeek && <WeekGuideCard key={selectedChild.age.pregnancyWeek} week={selectedChild.age.pregnancyWeek} />}
         {dailyFeed.map((item, index) => (
           <motion.div
             key={item.id}

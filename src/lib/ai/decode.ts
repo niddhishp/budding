@@ -1,11 +1,11 @@
 import 'server-only';
 import { z } from 'zod';
-import { FAST_MODEL, MODEL, structuredCall, structuredStream } from '@/lib/ai/llm';
+import { FAST_MODEL, MODEL } from '@/lib/ai/llm';
 import { CONSTITUTION } from '@/lib/ai/doctrine/constitution';
 import { STAGES, stageBandFor } from '@/lib/ai/doctrine/stages';
 import { getModule } from '@/lib/ai/doctrine/modules';
 import { CARD_IDS, TIER_LABEL, getCard } from '@/lib/ai/doctrine/evidence';
-import { lintAnalysis, repairAnalysis } from '@/lib/ai/critic';
+import { checkedCall } from '@/lib/ai/checked-content';
 import type { Route } from '@/lib/ai/router';
 import type { AgentAnalysis, Child, Memory } from '@/types';
 
@@ -16,7 +16,7 @@ export const DECODE_MODEL = MODEL;
 /*
  * Orchestrator step 2: compose doctrine for THIS child and moment, then generate one answer.
  * Constitution (stable, system) + stage band + routed modules + allowed evidence cards + memory
- * (per-request, user turn) → one streamed structured response → critic.
+ * (per-request, user turn) → one complete structured response → safety check → saved result.
  */
 
 // ─── Output contract ─────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const generatedSchema = z.object({
 });
 type Generated = z.infer<typeof generatedSchema>;
 
-// Property order is the streaming order: what the parent needs first comes first.
+// The response puts the immediate parenting steps before explanation.
 const GENERATED_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -189,28 +189,23 @@ function toAnalysis(g: Generated, route: Route): AgentAnalysis {
 }
 
 /**
- * Streams the decode (rightNow and sayThis arrive first), then runs the critic.
- * Returns the final, constitution-checked analysis.
+ * Generates and checks the complete decode before returning any parenting text.
  */
 export async function decodeBehavior(
   scenario: string,
   ctx: DecodeContext,
   route: Route,
-  onText: (delta: string) => void = () => {},
+  _onText: (delta: string) => void = () => {},
+  signal?: AbortSignal,
 ): Promise<{ analysis: AgentAnalysis; violations: string[]; repaired: boolean }> {
-  const generated = await structuredStream({
-    system: CONSTITUTION,
-    user: composeUserTurn(scenario, ctx, route),
-    schema: GENERATED_JSON_SCHEMA,
-    validator: generatedSchema,
-    maxTokens: 10000,
-  }, onText);
-
-  const violations = lintAnalysis(generated);
-  if (!violations.length) return { analysis: toAnalysis(generated, route), violations: [], repaired: false };
-
-  const { analysis, repaired } = await repairAnalysis(generated, violations, GENERATED_JSON_SCHEMA, generatedSchema);
-  return { analysis: toAnalysis(analysis, route), violations: violations.map((v) => v.rule), repaired };
+  void _onText; // Legacy callback retained for callers; unchecked text is never emitted.
+  const generated = await checkedCall({
+    system: CONSTITUTION, user: composeUserTurn(scenario, ctx, route),
+    schema: GENERATED_JSON_SCHEMA, validator: generatedSchema,
+    maxTokens: 6000, signal, additionalContent: route.clarify,
+  });
+  // No raw token callback: only complete, checked content may leave this module.
+  return { analysis: toAnalysis(generated, route), violations: [], repaired: false };
 }
 
 // ─── Caregiver sharing ───────────────────────────────────────────────────────
@@ -239,8 +234,9 @@ export async function writeShareMessage(opts: {
   analysis: AgentAnalysis;
   language: ShareLanguage;
   audience: ShareAudience;
+  signal?: AbortSignal;
 }): Promise<string> {
-  const { message } = await structuredCall({
+  const { message } = await checkedCall({
     model: FAST_MODEL,
     system: SHARE_SYSTEM,
     user: [
@@ -256,7 +252,7 @@ export async function writeShareMessage(opts: {
     ].join('\n'),
     schema: SHARE_JSON_SCHEMA,
     validator: shareSchema,
-    maxTokens: 3000,
+    maxTokens: 3000, signal: opts.signal,
   });
   return message;
 }

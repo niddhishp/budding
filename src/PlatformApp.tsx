@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
@@ -21,7 +22,7 @@ import { PlanSheet } from '@/components/PlanSheet';
 import { ExpertSheet } from '@/components/ExpertSheet';
 
 function PlatformApp() {
-  const { status, error, load, currentPage, addingChild, editingChildId, children, consentNeeded, expert } = useAppStore();
+  const { status, error, load, currentPage, addingChild, editingChildId, children, consentNeeded, expert, selectedChildId } = useAppStore();
   const editChild = children.find((c) => c.id === editingChildId);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ function PlatformApp() {
   if (status === 'loading') {
     return (
       <div className="min-h-[100dvh] bg-canvas flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-clay animate-spin" />
+        <div className="text-center"><Loader2 className="w-6 h-6 text-clay animate-spin mx-auto" /><Link href="/help-now" className="block mt-6 text-clay underline">Immediate support</Link></div>
       </div>
     );
   }
@@ -39,7 +40,7 @@ function PlatformApp() {
   if (status === 'error') {
     return (
       <div className="min-h-[100dvh] bg-canvas flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <p className="text-slate-600 max-w-sm">{error}</p>
+        <p className="text-slate-600 max-w-sm">{error}</p><Link href="/help-now" className="text-clay underline">Immediate support</Link>
         <Button onClick={load} className="rounded-full bg-slate-850 text-white px-6">Try again</Button>
       </div>
     );
@@ -64,14 +65,14 @@ function PlatformApp() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] bg-canvas">
+    <div className="relative min-h-[100dvh] bg-canvas"><Link href="/help-now" className="fixed bottom-2 right-3 z-[60] bg-paper px-3 py-2 rounded-full text-xs text-clay underline">Immediate support</Link>
       {consentNeeded ? <ConsentGate /> : editChild ? <GenomeOnboarding key={editChild.id} editChild={editChild} /> : addingChild && <GenomeOnboarding />}
       <PlanSheet />
       {expert.open && <ExpertSheet key={expert.concern ?? 'blank'} />}
       <div className="grain-overlay" />
       {children.length > 0 && (
         <>
-          <Layout>{renderPage()}</Layout>
+          <Layout key={selectedChildId}>{renderPage()}</Layout>
           <QuickLog />
         </>
       )}

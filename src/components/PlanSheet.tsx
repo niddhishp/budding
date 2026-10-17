@@ -116,7 +116,7 @@ export function PlanSheet() {
               <Sparkles className="w-8 h-8 text-clay" />
             </div>
             <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2">Welcome to Plus.</h2>
-            <p className="text-slate-500 mb-8">Unlimited decodes and family sharing are on.</p>
+            <p className="text-slate-500 mb-8">Your Plus daily allowance and family sharing are on.</p>
             <Button onClick={close} className="rounded-full bg-slate-850 text-white px-8 h-12">Continue</Button>
           </div>
         ) : isPlus ? (

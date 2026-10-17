@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRequestScope } from '@/hooks/useRequestScope';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Check, Loader2, Lock, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,8 @@ type Audience = (typeof AUDIENCES)[number]['value'];
 
 // One script, every caregiver: turns a decode into a WhatsApp-ready message in their language.
 export function ShareSheet({ decode, childName, onClose }: { decode: Decode; childName: string; onClose: () => void }) {
+  const scope = useRequestScope();
+  const active = useRef<AbortSignal | null>(null);
   const { entitlement, openPaywall } = useAppStore();
   const isPlus = entitlement?.plan === 'plus';
   const [language, setLanguage] = useState<Language>('English');
@@ -43,20 +46,24 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
       openPaywall('Share scripts with family in their own language.');
       return;
     }
+    active.current = null; scope.cancel(); setBusy(false);
     setLanguage(value);
     setMessage('');
   };
 
   const generate = async () => {
+    const task = scope.start();
+    active.current = task.signal;
     setBusy(true);
     setError(null);
     try {
       const res = await fetch('/api/share', {
-        method: 'POST',
+        method: 'POST', signal: task.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decodeId: decode.id, language, audience }),
       });
       const body = await res.json();
+      if (!task.active()) return;
       if (res.status === 402) {
         openPaywall(body.error);
         return;
@@ -64,9 +71,11 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
       if (!res.ok) throw new Error(body.error);
       setMessage(body.message);
     } catch (err) {
+      if (active.current !== task.signal) return;
       setError(err instanceof Error && err.message ? err.message : 'Could not write the message. Please try again.');
     } finally {
-      setBusy(false);
+      task.finish();
+      if (active.current === task.signal) { active.current = null; setBusy(false); }
     }
   };
 
@@ -100,7 +109,7 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
           {AUDIENCES.map((a) => (
             <button
               key={a.value}
-              onClick={() => { setAudience(a.value); setMessage(''); }}
+              onClick={() => { active.current = null; scope.cancel(); setBusy(false); setAudience(a.value); setMessage(''); }}
               className={`px-4 py-2 rounded-full text-sm border transition-colors ${audience === a.value ? 'border-clay bg-clay/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600'}`}
             >
               {a.label}

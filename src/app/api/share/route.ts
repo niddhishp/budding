@@ -1,3 +1,4 @@
+import { completeGuidance, failGuidance, guidanceErrorResponse, reserveGuidance, type Reservation } from '@/lib/guidance';
 import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -24,6 +25,8 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Choose a language and who it is for.' }, { status: 400 });
   const { decodeId, language, audience } = parsed.data;
 
+  let reservation: Reservation | undefined;
+  try {
   if (language !== 'English') {
     const entitlement = await getEntitlement(supabase, user.id);
     if (entitlement.plan !== 'plus') {
@@ -36,22 +39,21 @@ export async function POST(req: Request) {
 
   const { data: decode } = await supabase
     .from('decodes')
-    .select('scenario, analysis, children(name)')
+    .select('child_id, scenario, analysis, safety_category, children(name)')
     .eq('id', decodeId)
-    .maybeSingle<{ scenario: string; analysis: AgentAnalysis | null; children: { name: string } | null }>();
+    .maybeSingle<{ child_id: string; safety_category: string; scenario: string; analysis: AgentAnalysis | null; children: { name: string } | null }>();
   if (!decode?.analysis) return NextResponse.json({ error: 'Decode not found.' }, { status: 404 });
 
-  try {
+  if (decode.safety_category !== 'none') return NextResponse.json({ error: 'Use the original support information for this situation.' }, { status: 422 });
+  reservation = await reserveGuidance({ id: crypto.randomUUID(), userId: user.id, childId: decode.child_id, kind: 'share', content: { decodeId, language, audience } });
     const message = await writeShareMessage({
       childName: decode.children?.name ?? 'our child',
       scenario: decode.scenario,
       analysis: decode.analysis,
       language,
-      audience,
+      audience, signal: AbortSignal.any([req.signal, AbortSignal.timeout(45_000)]),
     });
+    await completeGuidance(reservation, {});
     return NextResponse.json({ message });
-  } catch (error) {
-    console.error('[share] failed', error);
-    return NextResponse.json({ error: 'We could not write that message. Please try again.' }, { status: 502 });
-  }
+  } catch (error) { await failGuidance(reservation).catch(() => undefined); return guidanceErrorResponse(error); }
 }

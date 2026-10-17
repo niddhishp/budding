@@ -1,3 +1,4 @@
+import { useRequestScope } from '@/hooks/useRequestScope';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookHeart, Loader2, Lock, Moon, Pause, Play, Sparkles } from 'lucide-react';
@@ -23,10 +24,12 @@ const SPEECH_LANG: Record<string, string> = {
 };
 
 export function StoriesPage() {
+  const scope = useRequestScope();
   const { selectedChildId, children, entitlement, openPaywall } = useAppStore();
   const child = children.find((c) => c.id === selectedChildId);
   const isPlus = entitlement?.plan === 'plus';
 
+  const receipt = useRef<{ key: string; id: string } | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [current, setCurrent] = useState<Story | null>(null);
   const [theme, setTheme] = useState('');
@@ -36,9 +39,16 @@ export function StoriesPage() {
 
   const load = useCallback(async () => {
     if (!selectedChildId) return;
-    const res = await fetch(`/api/stories?childId=${selectedChildId}`);
-    if (res.ok) setStories((await res.json()).stories);
-  }, [selectedChildId]);
+    const task = scope.start();
+    try { const res = await fetch(`/api/stories?childId=${selectedChildId}`, { signal: task.signal });
+      const body = await res.json();
+      if (!task.active()) return;
+      if (!task.active()) return;
+      if (!res.ok) throw new Error('History unavailable');
+      setStories(body.stories.filter((s: Story) => s.childId === selectedChildId));
+    } catch { if (task.active()) setError('Could not load your saved stories. Reload to retry.'); }
+    finally { task.finish(); }
+  }, [selectedChildId, scope]);
 
   useEffect(() => {
     setCurrent(null);
@@ -57,26 +67,33 @@ export function StoriesPage() {
 
   const create = async () => {
     if (!theme.trim() || busy) return;
+    const task = scope.start();
+    const key = JSON.stringify({ childId: child.id, theme: theme.trim(), language });
+    if (receipt.current?.key !== key) receipt.current = { key, id: crypto.randomUUID() };
     setBusy(true);
     setError(null);
     try {
       const res = await fetch('/api/stories', {
-        method: 'POST',
+        method: 'POST', signal: task.signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: child.id, theme: theme.trim(), language }),
+        body: JSON.stringify({ childId: child.id, theme: theme.trim(), language, requestId: receipt.current.id }),
       });
       const body = await res.json();
+      if (!task.active()) return;
+      if (!task.active()) return;
       if (res.status === 402) {
         openPaywall(body.error);
         return;
       }
       if (!res.ok) throw new Error(body.error);
+      if (body.story.childId !== child.id) throw new Error('Response child mismatch');
       setCurrent(body.story);
-      setStories((s) => [body.story, ...s]);
+      setStories((s) => [body.story, ...s.filter(old => old.id !== body.story.id)]);
       setTheme('');
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : 'Could not write the story. Please try again.');
     } finally {
+      task.finish();
       setBusy(false);
     }
   };
@@ -90,7 +107,7 @@ export function StoriesPage() {
   };
 
   if (current) {
-    return <StoryReader story={current} onBack={() => setCurrent(null)} />;
+    return <StoryReader key={current.id} story={current} onBack={() => setCurrent(null)} />;
   }
 
   return (
@@ -175,6 +192,7 @@ export function StoriesPage() {
 }
 
 function StoryReader({ story, onBack }: { story: Story; onBack: () => void }) {
+  const scope = useRequestScope();
   const [playing, setPlaying] = useState(false);
   const [loadingAudio, setLoadingAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -208,10 +226,12 @@ function StoryReader({ story, onBack }: { story: Story; onBack: () => void }) {
       setPlaying(true);
       return;
     }
+    const task = scope.start();
     setLoadingAudio(true);
     try {
-      const res = await fetch(`/api/stories/${story.id}/audio`, { method: 'POST' });
+      const res = await fetch(`/api/stories/${story.id}/audio`, { method: 'POST', signal: task.signal });
       const body = await res.json();
+      if (!task.active()) return;
       if (body.url) {
         const audio = new Audio(body.url);
         audio.onended = () => setPlaying(false);
@@ -222,8 +242,9 @@ function StoryReader({ story, onBack }: { story: Story; onBack: () => void }) {
         speakOnDevice();
       }
     } catch {
-      speakOnDevice();
+      if (task.active()) speakOnDevice();
     } finally {
+      task.finish();
       setLoadingAudio(false);
     }
   };

@@ -20,13 +20,14 @@ export async function loadDecodeContext(
     supabase.from('context_logs').select('content, log_type, created_at')
       .eq('child_id', childId).order('created_at', { ascending: false }).limit(15),
     supabase.from('decodes').select('scenario, analysis, outcome, created_at')
-      .eq('child_id', childId).not('outcome', 'is', null).order('created_at', { ascending: false }).limit(8),
+      .eq('child_id', childId).eq('safety_category', 'none').not('outcome', 'is', null).order('created_at', { ascending: false }).limit(8),
     // Memory read gate: relevant, recent, permitted — sensitive memories are never fed back automatically.
     supabase.from('memories').select('kind, content, source, confidence')
       .eq('child_id', childId).eq('archived', false).eq('sensitive', false)
       .order('created_at', { ascending: false }).limit(25),
   ]);
-  if (childRes.error) throw childRes.error;
+  const failed = [childRes, logsRes, decodesRes, memoriesRes].find(result => result.error);
+  if (failed) throw new Error('Guidance context unavailable');
   if (!childRes.data) return null;
 
   return {
@@ -38,7 +39,6 @@ export async function loadDecodeContext(
       outcome: d.outcome as string | null,
       created_at: d.created_at as string,
     })),
-    // A missing memories table (migration not yet applied) must not break decoding.
-    memories: memoriesRes.error ? [] : (memoriesRes.data ?? []) as DecodeContext['memories'],
+    memories: (memoriesRes.data ?? []) as DecodeContext['memories'],
   };
 }

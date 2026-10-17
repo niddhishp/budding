@@ -42,7 +42,7 @@ export function ChildProfilePage() {
         </p>
       </motion.div>
 
-      {child.age.stage !== 'pregnancy' && <WeeklyReportCard child={child} />}
+      {child.age.stage !== 'pregnancy' && <WeeklyReportCard key={child.id} child={child} />}
 
       <div className="grid md:grid-cols-12 gap-12">
         {/* Left Column - The Memory Timeline */}

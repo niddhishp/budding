@@ -1,9 +1,7 @@
 import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAdminSupabase } from '@/lib/supabase-admin';
-import { DECODE_MODEL } from '@/lib/ai/decode';
-import { weekGuideSchema, writeWeekGuide } from '@/lib/ai/weekGuide';
+import { weekGuideSchema } from '@/lib/ai/weekGuide';
 import { STORY_LANGUAGES } from '@/lib/plans';
 
 export const maxDuration = 60;
@@ -29,19 +27,10 @@ export async function GET(req: Request) {
     .select('guide')
     .eq('week', week)
     .eq('language', language)
+    .not('reviewed_at', 'is', null)
     .maybeSingle();
   const valid = weekGuideSchema.safeParse(cached?.guide);
   if (valid.success) return NextResponse.json({ guide: valid.data });
 
-  try {
-    const guide = await writeWeekGuide(week, language);
-    const { error } = await getAdminSupabase()
-      .from('week_guides')
-      .upsert({ week, language, guide, model: DECODE_MODEL }, { onConflict: 'week,language', ignoreDuplicates: true });
-    if (error) console.error('[week-guide] cache write failed', error.message);
-    return NextResponse.json({ guide });
-  } catch (error) {
-    console.error('[week-guide] generation failed', error);
-    return NextResponse.json({ error: 'This week\'s guide is not available right now.' }, { status: 502 });
-  }
+  return NextResponse.json({ error: 'A reviewed guide for this week is not published yet. Keep your antenatal appointments and ask your clinician for advice specific to your pregnancy.' }, { status: 404 });
 }

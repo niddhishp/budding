@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { structuredCall } from '@/lib/ai/decode';
+import { checkedCall } from '@/lib/ai/checked-content';
 import type { Child, WeeklyReport } from '@/types';
 
 const reportSchema = z.object({
@@ -60,7 +60,7 @@ function formatDay(iso: string) {
   return new Date(iso).toLocaleString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
 }
 
-export async function writeWeeklyReport(input: ReportInput): Promise<WeeklyReport> {
+export async function writeWeeklyReport(input: ReportInput, signal?: AbortSignal): Promise<WeeklyReport> {
   const { child } = input;
   const t = child.temperament;
   const lines = [
@@ -79,12 +79,12 @@ export async function writeWeeklyReport(input: ReportInput): Promise<WeeklyRepor
     `</situations_asked_about>`,
   ];
 
-  return structuredCall({
+  return checkedCall({
     effort: 'medium',
     system: REPORT_SYSTEM,
     user: lines.join('\n'),
     schema: REPORT_JSON_SCHEMA,
     validator: reportSchema,
-    maxTokens: 12000,
+    maxTokens: 6000, signal,
   });
 }

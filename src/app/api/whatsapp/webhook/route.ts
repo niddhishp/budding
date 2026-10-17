@@ -1,12 +1,13 @@
+import { createHash } from 'node:crypto';
 import { after } from 'next/server';
 import { checkUserConsent } from '@/lib/access';
 import { getAdminSupabase } from '@/lib/supabase-admin';
-import { getEntitlement } from '@/lib/billing';
+import { reserveGuidance, completeGuidance, failGuidance, GuidanceRequestError } from '@/lib/guidance';
+import { processGuidanceJob } from '@/lib/guidance-jobs';
 import { loadDecodeContext } from '@/lib/decodeContext';
 import { decodeBehavior, DECODE_MODEL } from '@/lib/ai/decode';
-import { bypassesPaywall, classifySafety, needsReview, safetyNotice } from '@/lib/ai/safety';
+import { classifySafety, guidancePath, needsReview, safetyNotice } from '@/lib/ai/safety';
 import { routeMessage } from '@/lib/ai/router';
-import { rememberFromDecode, rememberOutcome } from '@/lib/ai/memory';
 import { stageBandFor } from '@/lib/ai/doctrine/stages';
 import type { AgentAnalysis } from '@/types';
 import { formatDecode, formatSafety, isValidTwilioRequest, sendWhatsApp, WHATSAPP_HELP } from '@/lib/whatsapp';
@@ -35,9 +36,9 @@ export async function POST(req: Request) {
 
   after(async () => {
     try {
-      await handleMessage(from, body, hasMedia);
+      await handleMessage(from, body, hasMedia, params.MessageSid ?? '');
     } catch (error) {
-      console.error('[whatsapp] handling failed', error);
+      console.error('[whatsapp] handling failed', { name: error instanceof Error ? error.name : 'unknown' });
       await sendWhatsApp(from, 'Sorry, something went wrong on our side. Please try again in a moment.').catch(() => {});
     }
   });
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
   return new Response(EMPTY_TWIML, { headers: { 'Content-Type': 'text/xml' } });
 }
 
-async function handleMessage(from: string, body: string, hasMedia: boolean) {
+async function handleMessage(from: string, body: string, hasMedia: boolean, messageId: string) {
   const phone = from.replace(/^whatsapp:/, '');
   const admin = getAdminSupabase();
   const command = body.toUpperCase();
@@ -109,6 +110,8 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
       .from('decodes')
       .select('id')
       .eq('user_id', userId)
+      .eq('channel', 'whatsapp')
+      .eq('child_id', link.last_child_id ?? '00000000-0000-0000-0000-000000000000')
       .is('outcome', null)
       .gte('created_at', new Date(Date.now() - 2 * 86_400_000).toISOString())
       .order('created_at', { ascending: false })
@@ -119,17 +122,11 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
       return;
     }
     const outcome = OUTCOMES[command as keyof typeof OUTCOMES];
-    const { data: rated } = await admin.from('decodes')
+    const { error } = await admin.from('decodes')
       .update({ outcome, outcome_at: new Date().toISOString() })
-      .eq('id', last.id)
-      .select('id, child_id, scenario, analysis')
-      .maybeSingle<{ id: string; child_id: string; scenario: string; analysis: AgentAnalysis | null }>();
-    if (rated) {
-      await rememberOutcome(admin, { userId, childId: rated.child_id, decodeId: rated.id, scenario: rated.scenario, analysis: rated.analysis, outcome });
-    }
-    await sendWhatsApp(from, command === '1'
-      ? 'Wonderful. I\'ll remember what works. 🌱'
-      : 'Thanks for telling me. Next time I\'ll suggest something different.');
+      .eq('id', last.id).eq('user_id', userId);
+    if (error) throw error;
+    await sendWhatsApp(from, 'Thank you. Your feedback has been saved.');
     return;
   }
   if (!body) {
@@ -164,51 +161,49 @@ async function handleMessage(from: string, body: string, hasMedia: boolean) {
     scenario = prefix[2].trim();
   }
 
-  // Safety first, for every plan. Urgent help goes out before anything else is generated.
-  const safety = await classifySafety(scenario);
+  // Support is terminal: never follow urgent or uncertain triage with generated advice.
+  const signal = AbortSignal.timeout(45_000);
+  const safety = await classifySafety(scenario, signal);
   const notice = safetyNotice(safety);
-  if (notice && notice.tier >= 2) await sendWhatsApp(from, formatSafety(notice));
-
-  const entitlement = await getEntitlement(admin, userId);
-  if (entitlement.used >= entitlement.limit && !bypassesPaywall(safety)) {
-    await sendWhatsApp(from, entitlement.plan === 'free'
-      ? `You've used your ${entitlement.limit} free decodes this week. Go unlimited with Kahiye Plus: ${SITE}/app`
-      : `You've reached today's limit of ${entitlement.limit} decodes. It resets within 24 hours.`);
+  if (guidancePath(safety) !== 'ordinary') {
+    await sendWhatsApp(from, (notice ? formatSafety(notice) : 'I could not safely check this message. Please try again later.') + `\n\nImmediate support: ${SITE}/help-now`);
+    if (needsReview(safety)) {
+      const { error } = await admin.from('safety_events').insert({ user_id: userId, child_id: child.id, channel: 'whatsapp', level: safety.level, category: safety.category, reason: 'Support route selected by safety triage.' });
+      if (error) console.error('[whatsapp] safety event save failed');
+    }
     return;
   }
-
-  const context = await loadDecodeContext(admin, child.id, userId);
-  if (!context) return;
-
-  const route = await routeMessage(scenario, stageBandFor(context.child.age), context.child.name);
-  const { analysis } = await decodeBehavior(scenario, context, route);
-
-  const { data: row, error } = await admin.from('decodes').insert({
-    child_id: child.id,
-    user_id: userId,
-    scenario,
-    analysis,
-    risk_level: safety.level,
-    safety_category: safety.category,
-    model: DECODE_MODEL,
-    channel: 'whatsapp',
-  }).select('id').single();
-  if (error) throw error;
-  await admin.from('whatsapp_links').update({ last_child_id: child.id }).eq('user_id', userId);
-
-  const switchHint = kids.length > 1 && !named
-    ? `
-
-_(About ${child.name}. Start with a name to switch, e.g. "${kids.find((k) => k.id !== child.id)?.name}: …")_`
-    : '';
-  // Tier 2/3 notices were already sent; tier 1 (parent distress) rides along with the answer.
-  await sendWhatsApp(from, formatDecode(child.name, analysis, notice && notice.tier === 1 ? notice : null) + switchHint);
-
-  if (needsReview(safety)) {
-    await admin.from('safety_events').insert({
-      user_id: userId, child_id: child.id, decode_id: row.id, channel: 'whatsapp',
-      level: safety.level, category: safety.category, reason: safety.reason,
-    });
+  if (!messageId) throw new Error('Missing message identity');
+  const hash = createHash('sha256').update(`whatsapp:${userId}:${messageId}`).digest('hex');
+  const id = `${hash.slice(0,8)}-${hash.slice(8,12)}-${hash.slice(12,16)}-${hash.slice(16,20)}-${hash.slice(20,32)}`;
+  let reservation;
+  try {
+    reservation = await reserveGuidance({ id, userId, childId: child.id, kind: 'decode', content: { scenario, channel: 'whatsapp' }, free: safety.category !== 'none' });
+    let analysis: AgentAnalysis;
+    if (reservation.complete) {
+      // Twilio delivery retries must not regenerate or consume another allowance.
+      const { data, error } = await admin.from('decodes').select('analysis').eq('id', reservation.resultId!).eq('user_id', userId).single();
+      if (error || !data) throw new Error('Saved guidance unavailable');
+      analysis = data.analysis as AgentAnalysis;
+    } else {
+      const context = await loadDecodeContext(admin, child.id, userId);
+      if (!context) throw new Error('Child unavailable');
+      const route = await routeMessage(scenario, stageBandFor(context.child.age), context.child.name, signal);
+      ({ analysis } = await decodeBehavior(scenario, context, route, undefined, signal));
+      signal.throwIfAborted();
+      await completeGuidance(reservation, { scenario, analysis, risk_level: safety.level, safety_category: safety.category, model: DECODE_MODEL, channel: 'whatsapp' });
+    }
+    const { error } = await admin.from('whatsapp_links').update({ last_child_id: child.id }).eq('user_id', userId);
+    if (error) throw error;
+    const switchHint = kids.length > 1 && !named ? `\n\n_(About ${child.name}. Start with a child's name to switch.)_` : '';
+    await sendWhatsApp(from, formatDecode(child.name, analysis, notice) + switchHint);
+    await processGuidanceJob(userId);
+  } catch (error) {
+    await failGuidance(reservation);
+    if (error instanceof GuidanceRequestError) {
+      await sendWhatsApp(from, error.message + `\n\nImmediate support: ${SITE}/help-now`);
+      return;
+    }
+    throw error;
   }
-  await rememberFromDecode(admin, { userId, childId: child.id, childName: child.name, decodeId: row.id, message: scenario });
 }

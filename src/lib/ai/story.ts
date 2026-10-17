@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { structuredCall } from '@/lib/ai/decode';
+import { checkedCall } from '@/lib/ai/checked-content';
 import type { Child } from '@/types';
 
 const storySchema = z.object({
@@ -36,10 +36,10 @@ function targetLength(child: Child) {
   return 'about 500 words, a calm, grown-up tone without being childish';
 }
 
-export async function writeStory(opts: { child: Child; theme: string; language: string }) {
+export async function writeStory(opts: { child: Child; theme: string; language: string; signal?: AbortSignal }) {
   const { child, theme, language } = opts;
   const t = child.temperament;
-  return structuredCall({
+  return checkedCall({
     system: STORY_SYSTEM,
     user: [
       `<child name="${child.name}" age="${child.age.label}">`,
@@ -51,6 +51,6 @@ export async function writeStory(opts: { child: Child; theme: string; language: 
     ].join('\n'),
     schema: STORY_JSON_SCHEMA,
     validator: storySchema,
-    maxTokens: 12000,
+    maxTokens: 6000, signal: opts.signal,
   });
 }

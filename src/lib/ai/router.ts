@@ -53,7 +53,7 @@ ${MODULE_MENU}
 
 Pick 1-3 modules, most important first. Ask a clarifying question only when its answer would change the advice substantially; most messages need none.`;
 
-export async function routeMessage(message: string, stage: StageBand, childName: string): Promise<Route> {
+export async function routeMessage(message: string, stage: StageBand, childName: string, signal?: AbortSignal): Promise<Route> {
   try {
     const r = await withTimeout(structuredCall({
       model: FAST_MODEL,
@@ -61,14 +61,14 @@ export async function routeMessage(message: string, stage: StageBand, childName:
       user: `<child stage="${stage}" name="${childName}" />\n<message>\n${message}\n</message>`,
       schema: ROUTE_JSON_SCHEMA,
       validator: routeSchema,
-      maxTokens: 1200,
+      maxTokens: 1200, signal, timeoutMs: 4000,
     }), 4000);
     const clarify = r.clarifyNeeded && r.clarifyQuestion.trim() && r.clarifyOptions.length >= 2
       ? { question: r.clarifyQuestion.trim(), options: r.clarifyOptions.slice(0, 4) }
       : null;
     return { modules: [...new Set(r.modules)], mode: r.mode, goal: r.goal, clarify, source: 'router' };
   } catch (error) {
-    console.error('[router] falling back to keywords', error instanceof Error ? error.message : error);
+    console.error('[router] falling back to keywords', { name: error instanceof Error ? error.name : 'unknown' });
     return { modules: keywordRoute(message), mode: 'right_now', goal: 'calm_now', clarify: null, source: 'fallback' };
   }
 }

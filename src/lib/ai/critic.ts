@@ -1,10 +1,10 @@
 import 'server-only';
 import { z } from 'zod';
-import { FAST_MODEL, structuredCall, withTimeout } from '@/lib/ai/llm';
+import { DecodeError, FAST_MODEL, structuredCall } from '@/lib/ai/llm';
 
 /*
  * Orchestrator step 3: the critic. A deterministic lint runs on every decode; only when it flags
- * something does a fast model repair the affected fields. Clean decodes pay no latency.
+ * something does a fast model repair the affected fields. Every result then receives the shared content check.
  */
 
 export interface Violation { rule: string; field: string; excerpt: string }
@@ -21,16 +21,17 @@ const RULES: { rule: string; re: RegExp; fields?: string[] }[] = [
 
 export function lintAnalysis(a: Record<string, unknown>): Violation[] {
   const out: Violation[] = [];
-  for (const [field, value] of Object.entries(a)) {
-    const texts = Array.isArray(value) ? value.map((v) => (typeof v === 'string' ? v : (v as { text?: string })?.text ?? '')) : typeof value === 'string' ? [value] : [];
-    for (const text of texts) {
-      for (const r of RULES) {
-        if (r.fields && !r.fields.includes(field)) continue;
-        const m = r.re.exec(text);
-        if (m) out.push({ rule: r.rule, field, excerpt: text.slice(Math.max(0, m.index - 30), m.index + m[0].length + 30) });
-      }
+  const visit = (value: unknown, field: string) => {
+    if (Array.isArray(value)) { value.forEach((v, i) => visit(v, `${field}[${i}]`)); return; }
+    if (value && typeof value === 'object') { Object.entries(value).forEach(([k, v]) => visit(v, field ? `${field}.${k}` : k)); return; }
+    if (typeof value !== 'string') return;
+    for (const r of RULES) {
+      if (r.fields && !r.fields.some(f => field === f || field.startsWith(`${f}.`))) continue;
+      const m = r.re.exec(value);
+      if (m) out.push({ rule: r.rule, field, excerpt: value.slice(Math.max(0, m.index - 30), m.index + m[0].length + 30) });
     }
-  }
+  };
+  visit(a, '');
   return out;
 }
 
@@ -42,27 +43,29 @@ If an excerpt is actually compliant (e.g. it tells the parent NOT to spank), kee
 Return the full JSON object with every field present.`;
 
 /**
- * Repairs a decode that failed lint. Returns the original if repair fails or times out:
- * never block the parent on the critic.
+ * A failed repair must never return the unsafe original. Recheck every repaired field.
  */
 export async function repairAnalysis<T extends Record<string, unknown>>(
   analysis: T,
   violations: Violation[],
   schema: Record<string, unknown>,
   validator: z.ZodType<T>,
+  signal?: AbortSignal,
+  call = structuredCall,
 ): Promise<{ analysis: T; repaired: boolean }> {
   try {
-    const fixed = await withTimeout(structuredCall({
+    const fixed = await call({
       model: FAST_MODEL,
       system: REPAIR_SYSTEM,
       user: `<violations>\n${violations.map((v) => `- ${v.rule} in ${v.field}: "${v.excerpt}"`).join('\n')}\n</violations>\n<answer>\n${JSON.stringify(analysis)}\n</answer>`,
       schema,
       validator,
-      maxTokens: 6000,
-    }), 12000);
+      maxTokens: 6000, signal, timeoutMs: 8000,
+    });
+    if (lintAnalysis(fixed).length) throw new DecodeError('unsafe', 'Repaired output did not pass checks');
     return { analysis: fixed, repaired: true };
   } catch (error) {
-    console.error('[critic] repair failed', error);
-    return { analysis, repaired: false };
+    console.error('[critic] repair withheld', { name: error instanceof Error ? error.name : 'unknown' });
+    throw new DecodeError('unsafe', 'We could not verify this guidance. Please try again.');
   }
 }

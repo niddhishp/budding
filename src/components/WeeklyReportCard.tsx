@@ -1,29 +1,38 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useRequestScope } from '@/hooks/useRequestScope';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CalendarRange, Loader2, Printer, Sparkles, Stethoscope } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/stores/appStore';
 import type { Child, Report } from '@/types';
 
 export function WeeklyReportCard({ child }: { child: Child }) {
+  const scope = useRequestScope();
   const { entitlement, openPaywall, openExpert } = useAppStore();
+  const receipt = useRef(crypto.randomUUID());
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    const task = scope.start();
     setLoading(true);
     setMessage(null);
     try {
-      const res = await fetch(`/api/report?childId=${child.id}`);
+      const res = await fetch(`/api/report?childId=${child.id}`, { signal: task.signal });
       const body = await res.json();
-      setReport(res.ok ? body.report : null);
+      if (!task.active()) return;
+      if (!res.ok) throw new Error('Report unavailable');
+      setReport(body.report?.childId === child.id ? body.report : null);
     } catch {
+      if (task.signal.aborted) return;
       setReport(null);
+      setMessage('We could not load the saved report. Please try again.');
     } finally {
+      task.finish();
       setLoading(false);
     }
-  }, [child.id]);
+  }, [child.id, scope]);
 
   useEffect(() => {
     load();
@@ -34,21 +43,24 @@ export function WeeklyReportCard({ child }: { child: Child }) {
       openPaywall(`See ${child.name}'s patterns every week.`);
       return;
     }
+    const task = scope.start();
     setGenerating(true);
     setMessage(null);
     try {
       const res = await fetch('/api/report', {
-        method: 'POST',
+        method: 'POST', signal: task.signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: child.id }),
+        body: JSON.stringify({ childId: child.id, requestId: receipt.current }),
       });
       const body = await res.json();
+      if (!task.active()) return;
       if (res.status === 402) openPaywall(body.error);
       else if (!res.ok) setMessage(body.error);
-      else setReport(body.report);
+      else if (body.report.childId === child.id) { setReport(body.report); receipt.current = crypto.randomUUID(); }
     } catch {
       setMessage('The connection dropped. Please try again.');
     } finally {
+      task.finish();
       setGenerating(false);
     }
   };

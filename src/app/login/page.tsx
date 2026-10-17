@@ -55,5 +55,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return <main className="min-h-[100dvh] bg-canvas flex flex-col items-center justify-center px-4 py-12"><Link href="/" className="mb-8 flex items-center gap-2 text-sm text-muted-foreground"><ArrowLeft className="w-4 h-4" /> Kahiye</Link><Suspense fallback={<p role="status">Loading sign-in…</p>}><LoginForm /></Suspense></main>;
+  return <main className="min-h-[100dvh] bg-canvas flex flex-col items-center justify-center px-4 py-12"><Link href="/" className="mb-8 flex items-center gap-2 text-sm text-muted-foreground"><ArrowLeft className="w-4 h-4" /> Kahiye</Link><Link href="/help-now" className="mb-4 text-sm text-clay underline">Immediate support — no sign-in needed</Link><Suspense fallback={<p role="status">Loading sign-in…</p>}><LoginForm /></Suspense></main>;
 }

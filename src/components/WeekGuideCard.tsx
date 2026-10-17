@@ -8,7 +8,8 @@ export function WeekGuideCard({ week }: { week: number }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/week-guide?week=${week}`)
+    const controller = new AbortController();
+    fetch(`/api/week-guide?week=${week}`, { signal: controller.signal })
       .then(async (res) => {
         const body = await res.json();
         if (cancelled) return;
@@ -16,7 +17,7 @@ export function WeekGuideCard({ week }: { week: number }) {
         else setError(body.error);
       })
       .catch(() => !cancelled && setError('Could not load this week\'s guide.'));
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [week]);
 
   return (

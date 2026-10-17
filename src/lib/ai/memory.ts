@@ -70,12 +70,12 @@ export async function extractMemories(opts: {
       ].join('\n'),
       schema: EXTRACT_JSON_SCHEMA,
       validator: extractSchema,
-      maxTokens: 1500,
+      maxTokens: 1500, timeoutMs: 5000,
     });
     return memories;
   } catch (error) {
-    console.error('[memory] extraction failed', error);
-    return [];
+    console.warn('[memory] extraction deferred', { name: error instanceof Error ? error.name : 'unknown' });
+    throw new Error('Memory extraction unavailable');
   }
 }
 

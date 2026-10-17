@@ -197,10 +197,12 @@ export interface Decode {
 }
 
 export type DecodeStreamEvent =
+  | { type: 'status'; message: string }
+  | { type: 'support'; message: string }
   | { type: 'safety'; safety: SafetyNotice | null }
   | { type: 'delta'; text: string }
   | { type: 'done'; decode: Decode; entitlement: Entitlement }
-  | { type: 'error'; error: string };
+  | { type: 'error'; error: string; code?: string };
 
 export type { Entitlement } from '@/lib/plans';
 

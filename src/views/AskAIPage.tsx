@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { ShareSheet } from '@/components/ShareSheet';
 import { readNdjson } from '@/lib/ndjson';
-import { extractPartialString } from '@/lib/partialJson';
+import Link from 'next/link';
+import { useRequestScope } from '@/hooks/useRequestScope';
 import type { Child, Decode, DecodeOutcome, DecodeStreamEvent, SafetyNotice } from '@/types';
 
 const SPRING_TRANSITION = { type: 'spring', stiffness: 100, damping: 20 } as const;
@@ -53,8 +54,13 @@ export function AskAIPage() {
   const [current, setCurrent] = useState<Decode | null>(null);
   const [safety, setSafety] = useState<SafetyNotice | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [streamingSay, setStreamingSay] = useState<string | null>(null);
-  const [streamingNow, setStreamingNow] = useState<string | null>(null);
+  const scope = useRequestScope();
+  const activeRequest = useRef<ReturnType<typeof scope.start> | null>(null);
+  const receipt = useRef<{ key: string; id: string } | null>(null);
+  const [progress, setProgress] = useState('Checking the situation…');
+  const [support, setSupport] = useState<string | null>(null);
+  const [outcomes, setOutcomes] = useState<Record<string, { state: 'saving' | 'saved' | 'failed'; value: DecodeOutcome }>>({});
+  const savingOutcomes = useRef(new Set<string>());
   const [sharing, setSharing] = useState<Decode | null>(null);
   const [history, setHistory] = useState<Decode[]>([]);
   const [listening, setListening] = useState(false);
@@ -65,15 +71,20 @@ export function AskAIPage() {
 
   const loadHistory = useCallback(async () => {
     if (!selectedChildId) return;
-    const { data } = await getSupabase()
+    const task = scope.start();
+    const { data, error: historyError } = await getSupabase()
       .from('decodes')
       .select(DECODE_COLUMNS)
       .eq('child_id', selectedChildId)
       .order('created_at', { ascending: false })
       .limit(10)
       .returns<DecodeRow[]>();
-    setHistory((data ?? []).map(decodeFromRow));
-  }, [selectedChildId]);
+    if (task.active()) {
+      if (historyError) setError('Could not load saved guidance. Reload to retry.');
+      else setHistory((data ?? []).map(decodeFromRow));
+    }
+    task.finish();
+  }, [selectedChildId, scope]);
 
   useEffect(() => {
     setCurrent(null);
@@ -81,6 +92,11 @@ export function AskAIPage() {
     setError(null);
     loadHistory();
   }, [loadHistory]);
+
+  useEffect(() => () => {
+    const rec = recognitionRef.current;
+    if (rec) { rec.onresult = null; rec.onend = null; rec.onerror = null; rec.stop(); }
+  }, []);
 
   const toggleVoice = () => {
     if (listening) {
@@ -106,7 +122,7 @@ export function AskAIPage() {
 
   /** Run a decode. `refine` answers the previous decode's clarifying question (free, not counted). */
   const handleAnalyze = async (refine?: { decode: Decode; question: string; answer: string }) => {
-    if (!selectedChild || isAnalyzing) return;
+    if (!selectedChild || activeRequest.current) return;
     const text = refine ? `${refine.decode.scenario}\n\n(${refine.question} ${refine.answer})` : scenario.trim();
     if (!text) return;
     recognitionRef.current?.stop();
@@ -114,67 +130,76 @@ export function AskAIPage() {
     setCurrent(null);
     setSafety(null);
     setError(null);
-    setStreamingSay(null);
-    setStreamingNow(null);
+    setSupport(null);
+    const task = scope.start();
+    activeRequest.current = task;
+    const requestKey = JSON.stringify({ childId: selectedChild.id, text, refines: refine?.decode.id });
+    if (receipt.current?.key !== requestKey) receipt.current = { key: requestKey, id: crypto.randomUUID() };
 
     try {
       const res = await fetch('/api/analyze', {
-        method: 'POST',
+        method: 'POST', signal: task.signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: selectedChild.id, scenario: text, ...(refine ? { refines: refine.decode.id } : {}) }),
+        body: JSON.stringify({ requestId: receipt.current.id, childId: selectedChild.id, scenario: text, ...(refine ? { refines: refine.decode.id, answer: refine.answer } : {}) }),
       });
+      if (!task.active()) return;
       if (!res.ok || !res.body) {
         const body = await res.json().catch(() => null);
+        if (!task.active()) return;
         if (body?.entitlement) setEntitlement(body.entitlement);
         if (body?.code === 'upgrade_required') openPaywall(body.error);
         setError(body?.error ?? 'Something went wrong. Please try again.');
         return;
       }
 
-      let json = '';
+      let terminal = false;
       for await (const event of readNdjson<DecodeStreamEvent>(res.body)) {
+        if (!task.active()) return;
         switch (event.type) {
+          case 'status': setProgress(event.message); break;
+          case 'support': setSupport(event.message); terminal = true; break;
           case 'safety':
             setSafety(event.safety);
             break;
-          case 'delta': {
-            json += event.text;
-            const now = extractPartialString(json, 'rightNow');
-            if (now?.text) setStreamingNow(now.text);
-            const partial = extractPartialString(json, 'sayThis');
-            if (partial) setStreamingSay(partial.text);
-            break;
-          }
+          case 'delta': break; // Never display unvalidated legacy token events.
           case 'done':
+            if (event.decode.childId !== selectedChild.id) throw new Error('Response child mismatch');
+            terminal = true;
             setCurrent(event.decode);
             setEntitlement(event.entitlement);
-            setHistory((h) => [event.decode, ...h].slice(0, 10));
+            setHistory((h) => [event.decode, ...h.filter(d => d.id !== event.decode.id)].slice(0, 10));
             break;
           case 'error':
+            terminal = true;
+            if (event.code === 'upgrade_required') openPaywall(event.error);
             setError(event.error);
             break;
         }
       }
+      if (!terminal) throw new Error('Incomplete response');
     } catch {
-      setError('The connection dropped. Check your internet and try again.');
+      if (activeRequest.current === task) setError('The request stopped before completion. Retry the same moment to recover a saved result.');
     } finally {
-      setStreamingSay(null);
-      setStreamingNow(null);
-      setIsAnalyzing(false);
+      task.finish();
+      if (activeRequest.current === task) { activeRequest.current = null; setIsAnalyzing(false); }
     }
   };
 
   const recordOutcome = async (decode: Decode, outcome: DecodeOutcome) => {
-    const update = (d: Decode) => (d.id === decode.id ? { ...d, outcome } : d);
-    setCurrent((c) => (c ? update(c) : c));
-    setHistory((h) => h.map(update));
-    // Server route also turns the rating into a what-worked / what-didn't memory.
-    const res = await fetch(`/api/decodes/${decode.id}/outcome`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ outcome }),
-    }).catch(() => null);
-    if (!res?.ok) console.error('[decode] outcome not saved');
+    if (savingOutcomes.current.has(decode.id)) return;
+    savingOutcomes.current.add(decode.id);
+    setOutcomes(s => ({ ...s, [decode.id]: { state: 'saving', value: outcome } }));
+    const task = scope.start(15_000);
+    try {
+      const res = await fetch(`/api/decodes/${decode.id}/outcome`, { method: 'POST', signal: task.signal,
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ outcome }) });
+      if (!res.ok) throw new Error('Save failed');
+      if (!task.active()) return;
+      const update = (d: Decode) => d.id === decode.id ? { ...d, outcome } : d;
+      setCurrent(c => c ? update(c) : c); setHistory(h => h.map(update));
+      setOutcomes(s => ({ ...s, [decode.id]: { state: 'saved', value: outcome } }));
+    } catch { setOutcomes(s => ({ ...s, [decode.id]: { state: 'failed', value: outcome } })); }
+    finally { task.finish(); savingOutcomes.current.delete(decode.id); }
   };
 
   const analysis = current?.analysis;
@@ -200,6 +225,7 @@ export function AskAIPage() {
         <div className="md:col-span-7">
           <div className="relative">
             <Textarea
+              aria-label="Describe what is happening"
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
               onKeyDown={(e) => {
@@ -242,10 +268,10 @@ export function AskAIPage() {
               {entitlement.plan === 'free' ? (
                 <>
                   {Math.max(0, entitlement.limit - entitlement.used)} of {entitlement.limit} free decodes left this week ·{' '}
-                  <button onClick={() => openPaywall()} className="text-leaf font-medium hover:underline">Go unlimited</button>
+                  <button onClick={() => openPaywall()} className="text-leaf font-medium hover:underline">See Plus</button>
                 </>
               ) : (
-                <>Kahiye Plus · unlimited decodes</>
+                <>Kahiye Plus · {entitlement.limit} decodes per rolling day</>
               )}
             </p>
           )}
@@ -273,32 +299,8 @@ export function AskAIPage() {
             </div>
           )}
 
-          {isAnalyzing && streamingNow && <RightNow text={streamingNow} />}
-
-          {isAnalyzing && streamingSay && (
-            <div className="mt-8 p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm" aria-live="polite">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-leaf" /> Say this
-              </h3>
-              <p className="text-2xl md:text-3xl font-heading text-slate-850 leading-snug">"{streamingSay}"</p>
-              <p className="mt-4 flex items-center gap-2 text-sm text-slate-400">
-                <Loader2 className="w-4 h-4 animate-spin" /> Writing the rest of the plan…
-              </p>
-            </div>
-          )}
-
-          {isAnalyzing && !streamingSay && !streamingNow && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-clay/10 flex items-center justify-center animate-pulse">
-                <Sparkles className="w-5 h-5 text-clay" />
-              </div>
-              <div>
-                <p className="font-heading text-lg font-medium text-slate-850">Reading the moment…</p>
-                <p className="text-sm text-slate-500">Considering {selectedChild?.name}'s age, temperament and history.</p>
-              </div>
-            </motion.div>
-          )}
-
+          {isAnalyzing && <div className="mt-8" role="status"><p className="text-slate-700">{progress}</p><button className="mt-3 underline text-clay" onClick={() => { scope.cancel(); activeRequest.current = null; setIsAnalyzing(false); setError('Stopped. Your moment is still here; retry to recover any saved result.'); }}>Stop</button></div>}
+          {support && <div role="status" className="mt-6 p-5 rounded-2xl bg-paper-deep"><p>{support}</p><Link href="/help-now" className="inline-block mt-3 text-clay underline">Immediate support</Link></div>}
           {safety && <SafetyBanner notice={safety} onExpert={() => openExpert('safety', scenario.trim())} />}
 
           {analysis && current && !isAnalyzing && (
@@ -328,7 +330,7 @@ export function AskAIPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="mt-2 text-xs text-slate-500">Tap to sharpen the advice. This doesn&rsquo;t use a decode.</p>
+                  <p className="mt-2 text-xs text-slate-500">This quick follow-up is available for 30 minutes and doesn’t use your allowance.</p>
                 </div>
               )}
 
@@ -425,7 +427,8 @@ export function AskAIPage() {
                 </details>
               )}
 
-              <OutcomeBar decode={current} onSelect={recordOutcome} />
+              <OutcomeBar decode={current} onSelect={recordOutcome} saving={outcomes[current.id]?.state === 'saving'} />
+              {outcomes[current.id] && <p role="status" className="text-sm">{outcomes[current.id].state === 'saving' ? 'Saving feedback…' : outcomes[current.id].state === 'saved' ? 'Feedback saved.' : 'Feedback was not saved. Tap your choice to retry.'}</p>}
 
               <button
                 onClick={() => setSharing(current)}
@@ -461,7 +464,7 @@ export function AskAIPage() {
                       {OUTCOME_LABELS[d.outcome]}
                     </span>
                   ) : (
-                    <OutcomeBar decode={d} onSelect={recordOutcome} compact />
+                    <><OutcomeBar decode={d} onSelect={recordOutcome} compact saving={outcomes[d.id]?.state === 'saving'} />{outcomes[d.id] && <p role="status" className="text-xs mt-2">{outcomes[d.id].state === 'saving' ? 'Saving…' : outcomes[d.id].state === 'failed' ? 'Not saved. Tap again to retry.' : 'Saved'}</p>}</>
                   )}
                 </div>
               ))}
@@ -470,7 +473,7 @@ export function AskAIPage() {
         </aside>
       </div>
       {sharing && selectedChild && (
-        <ShareSheet decode={sharing} childName={selectedChild.name} onClose={() => setSharing(null)} />
+        <ShareSheet key={sharing.id} decode={sharing} childName={selectedChild.name} onClose={() => setSharing(null)} />
       )}
     </div>
   );
@@ -539,10 +542,11 @@ function SafetyBanner({ notice, onExpert }: { notice: SafetyNotice; onExpert: ()
   );
 }
 
-function OutcomeBar({ decode, onSelect, compact = false }: {
+function OutcomeBar({ decode, onSelect, compact = false, saving = false }: {
   decode: Decode;
   onSelect: (decode: Decode, outcome: DecodeOutcome) => void;
   compact?: boolean;
+  saving?: boolean;
 }) {
   const options: { value: DecodeOutcome; icon: typeof ThumbsUp }[] = [
     { value: 'worked', icon: ThumbsUp },
@@ -558,6 +562,7 @@ function OutcomeBar({ decode, onSelect, compact = false }: {
           return (
             <button
               key={value}
+              disabled={saving}
               onClick={() => onSelect(decode, value)}
               className={`flex items-center gap-1.5 rounded-full border transition-colors ${compact ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'} ${
                 selected ? 'border-clay bg-clay/10 text-clay font-medium' : 'border-slate-200 text-slate-600 hover:border-slate-300'

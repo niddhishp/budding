@@ -1,6 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import { structuredCall } from '@/lib/ai/decode';
+import { checkedCall } from '@/lib/ai/checked-content';
 
 export const weekGuideSchema = z.object({
   babyThisWeek: z.string().min(1),
@@ -34,13 +34,13 @@ const WEEK_GUIDE_SYSTEM = `You write a short, warm week-by-week pregnancy guide 
 Follow mainstream obstetric guidance (WHO, FOGSI, ACOG). General information only: no medication names or doses, no diagnosis, and defer decisions to the parent's doctor. Mention tests only as "commonly offered around now". Be reassuring without dismissing real warning signs. Plain language, culturally aware (family involvement, diet), no myths.
 Write entirely in the requested language, in its native script.`;
 
-export async function writeWeekGuide(week: number, language: string): Promise<WeekGuide> {
-  return structuredCall({
+export async function writeWeekGuide(week: number, language: string, signal?: AbortSignal): Promise<WeekGuide> {
+  return checkedCall({
     effort: 'medium',
     system: WEEK_GUIDE_SYSTEM,
     user: `<week>${week}</week>\n<language>${language}</language>`,
     schema: WEEK_GUIDE_JSON_SCHEMA,
     validator: weekGuideSchema,
-    maxTokens: 8000,
+    maxTokens: 6000, signal,
   });
 }

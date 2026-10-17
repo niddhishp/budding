@@ -4,8 +4,8 @@
 export type PlanId = 'free' | 'plus';
 export type BillingInterval = 'monthly' | 'yearly';
 
-export const FREE_DECODES_PER_WEEK = Number(process.env.NEXT_PUBLIC_FREE_DECODES_PER_WEEK || 3);
-export const PLUS_DECODES_PER_DAY = Number(process.env.NEXT_PUBLIC_PLUS_DECODES_PER_DAY || 10);
+export const FREE_DECODES_PER_WEEK = 3;
+export const PLUS_DECODES_PER_DAY = 10;
 
 export const PRICES: Record<BillingInterval, { amount: string; per: string; note?: string }> = {
   monthly: { amount: '₹299', per: 'month' },
@@ -13,7 +13,7 @@ export const PRICES: Record<BillingInterval, { amount: string; per: string; note
 };
 
 export const PLUS_FEATURES = [
-  'Unlimited decodes, whenever a hard moment hits',
+  `${PLUS_DECODES_PER_DAY} decodes per rolling day`,
   'Share scripts with grandparents and caregivers in Hindi, Malayalam, Tamil and 6 more languages',
   'Guidance that learns from what worked for your child',
   'A weekly pattern report for each child, ready to show your pediatrician',

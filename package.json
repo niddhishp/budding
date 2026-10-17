@@ -12,7 +12,7 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:check": "node scripts/migrate.mjs --check",
     "eval": "tsx --env-file-if-exists=.env.local --conditions=react-server scripts/eval/run.ts",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test tests/*.test.ts && tsx --conditions=react-server --test tests/server/*.cases.ts",
     "test:security:db": "node scripts/test-security-db.mjs",
     "check": "npm run lint && npm run typecheck && npm test",
     "test:security:bootstrap": "node scripts/test-security-db.mjs --bootstrap",

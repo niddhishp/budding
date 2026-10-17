@@ -14,6 +14,7 @@ export interface SafetyResult {
   level: RiskLevel;
   category: SafetyCategory;
   reason: string;
+  status?: 'classified' | 'unavailable';
 }
 
 const CATEGORIES = ['none', 'parent_distress', 'parent_harm_risk', 'child_self_harm', 'abuse', 'medical', 'violence', 'missing_child', 'exam_distress', 'wellbeing_concern'] as const;
@@ -57,28 +58,28 @@ const PATTERNS: { re: RegExp; category: SafetyCategory }[] = [
   { re: /\b(i|i'm|im) (might|will|going to|could|want to) (hurt|hit|shake|kill) (my|the) (baby|child|kid|son|daughter)\b|\bshook (my|the) baby\b/i, category: 'parent_harm_risk' },
 ];
 
-export async function classifySafety(message: string): Promise<SafetyResult> {
+export async function classifySafety(message: string, signal?: AbortSignal, call = structuredCall): Promise<SafetyResult> {
   const hit = PATTERNS.find((p) => p.re.test(message));
   if (hit) return { level: 'urgent', category: hit.category, reason: 'Matched an emergency pattern.' };
   try {
-    return await structuredCall({
+    return await call({
       model: FAST_MODEL,
       system: SAFETY_SYSTEM,
       user: `<message>\n${message}\n</message>`,
       schema: SAFETY_JSON_SCHEMA,
       validator: safetySchema,
-      maxTokens: 1500,
+      maxTokens: 1500, signal, timeoutMs: 6000,
     });
   } catch (error) {
-    // Fail safe-ish: an unclassified message is treated as low, never silently as none.
-    console.error('[safety] classification failed', error);
-    return { level: 'low', category: 'none', reason: 'Classifier unavailable.' };
+    // Unknown is not an ordinary low-risk result. Never generate or charge on this path.
+    console.error('[safety] classification unavailable', { name: error instanceof Error ? error.name : 'unknown' });
+    return { status: 'unavailable', level: 'none', category: 'none', reason: 'Classifier unavailable.' };
   }
 }
 
 /** Crisis-adjacent turns bypass quotas and paywalls. */
 export function bypassesPaywall(s: SafetyResult): boolean {
-  return s.level === 'urgent' || s.level === 'elevated' || s.category === 'parent_distress' || s.category === 'parent_harm_risk';
+  return s.status === 'unavailable' || s.level === 'urgent' || s.level === 'elevated' || s.category === 'parent_distress' || s.category === 'parent_harm_risk';
 }
 
 /** Whether this turn should be queued for human review. */
@@ -97,6 +98,7 @@ const H = {
 };
 
 export function safetyNotice(s: SafetyResult): SafetyNotice | null {
+  if (s.status === 'unavailable') return null;
   const base = { level: s.level, category: s.category };
   switch (s.category) {
     case 'child_self_harm':
@@ -181,7 +183,7 @@ export function safetyNotice(s: SafetyResult): SafetyNotice | null {
       if (s.level !== 'elevated' && s.level !== 'urgent') return null;
       return {
         ...base, tier: 2,
-        message: 'What you describe is worth talking through with a paediatrician or child psychologist soon. The guidance below can help in the meantime.',
+        message: 'What you describe is worth talking through with a paediatrician or child psychologist soon. Kahiye cannot assess this situation. Contact a qualified professional for individual support.',
         steps: [],
         helplines: [H.teleManas, H.childline],
       };
@@ -190,8 +192,14 @@ export function safetyNotice(s: SafetyResult): SafetyNotice | null {
         return { ...base, tier: 3, message: 'This sounds serious. Make sure everyone is safe first, then call for help.', steps: ['Call 112 if anyone is in danger.'], helplines: [H.emergency, H.childline, H.teleManas] };
       }
       if (s.level === 'elevated') {
-        return { ...base, tier: 2, message: 'This is worth discussing with a professional soon. The guidance below can help in the meantime.', steps: [], helplines: [H.teleManas, H.childline] };
+        return { ...base, tier: 2, message: 'This is worth discussing with a professional soon. Kahiye cannot assess this situation. Contact a qualified professional for individual support.', steps: [], helplines: [H.teleManas, H.childline] };
       }
       return null;
   }
+}
+
+/** Higher-risk situations never enter the everyday advice generator. */
+export function guidancePath(s: SafetyResult): 'ordinary' | 'support' | 'unavailable' {
+  if (s.status === 'unavailable') return 'unavailable';
+  return s.level === 'urgent' || s.level === 'elevated' || ['child_self_harm', 'abuse', 'medical', 'parent_harm_risk', 'missing_child', 'violence'].includes(s.category) ? 'support' : 'ordinary';
 }

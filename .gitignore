@@ -49,3 +49,6 @@ next-env.d.ts
 
 # eval reports
 scripts/eval/results/
+
+# Supabase CLI local metadata
+/supabase/.temp/
