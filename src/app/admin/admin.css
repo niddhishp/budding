@@ -1,0 +1,9 @@
+.admin-workspace input:not([type=checkbox]), .admin-workspace select, .admin-workspace textarea {
+  display: block; width: 100%; margin-top: .5rem; border: 1px solid oklch(var(--border));
+  border-radius: .6rem; padding: .75rem; background: oklch(var(--surface)); color: oklch(var(--foreground));
+}
+.admin-workspace label { font-size: .875rem; }
+.admin-workspace input[type=checkbox] { width: 1.125rem; height: 1.125rem; accent-color: oklch(var(--clay)); }
+.admin-workspace textarea { min-height: 6rem; resize: vertical; }
+.admin-workspace button:disabled { cursor: not-allowed; }
+.admin-workspace input:disabled, .admin-workspace select:disabled { opacity: .7; }

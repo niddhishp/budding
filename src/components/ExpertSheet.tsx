@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Loader2, Stethoscope, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/stores/appStore';
 import { EXPERT_SESSION, STORY_LANGUAGES } from '@/lib/plans';
+import { STATUS_LABELS, type ConsultationStatus } from '@/lib/admin-operations';
 
 export function ExpertSheet() {
   const { expert, closeExpert, selectedChildId } = useAppStore();
@@ -14,6 +15,17 @@ export function ExpertSheet() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existing, setExisting] = useState<{ status: ConsultationStatus; scheduled_at: string | null } | null>(null);
+  const [checking, setChecking] = useState(true);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/expert', { signal: controller.signal, cache: 'no-store' }).then(async response => {
+      if (!response.ok) throw new Error('Could not check your existing request. Close and try again.');
+      const body = await response.json();
+      if (!controller.signal.aborted && body.request && ['new','contacted','scheduled'].includes(body.request.status)) setExisting(body.request);
+    }).catch(e => { if (!controller.signal.aborted) setError(e.message); }).finally(() => { if (!controller.signal.aborted) setChecking(false); });
+    return () => controller.abort();
+  }, []);
 
   if (!expert.open) return null;
 
@@ -58,7 +70,9 @@ export function ExpertSheet() {
           <X className="w-4 h-4" />
         </button>
 
-        {done ? (
+        {checking ? <p role="status" className="py-10">Checking your requests…</p> : existing ? (
+          <div className="py-8"><h2 id="expert-title" className="font-heading text-3xl mb-4">Your request is with us.</h2><p className="mb-4">{STATUS_LABELS[existing.status]}</p>{existing.scheduled_at && <p className="mb-4">Session: {new Date(existing.scheduled_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST</p>}<p className="text-sm text-slate-600 mb-6">Our team coordinates the conversation with you by phone. You don’t need to send another request.</p><Button onClick={closeExpert}>Done</Button></div>
+        ) : done ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 mx-auto rounded-full bg-clay/10 flex items-center justify-center mb-5"><Check className="w-8 h-8 text-clay" /></div>
             <h2 id="expert-title" className="font-heading text-3xl text-slate-850 mb-2">We'll call you.</h2>
@@ -113,6 +127,7 @@ export function ExpertSheet() {
               {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Request a call'}
             </Button>
             <p className="mt-3 text-xs text-center text-slate-400">No payment now. In an emergency, call 112.</p>
+            <p className="mt-3 text-xs text-center text-slate-500">By requesting a call, you share this concern, your contact details and your selected child’s name and age with our coordination team and the assigned expert.</p>
           </>
         )}
       </motion.div>

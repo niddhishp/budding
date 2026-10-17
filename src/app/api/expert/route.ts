@@ -2,6 +2,18 @@ import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { STORY_LANGUAGES } from '@/lib/plans';
+import { getServerSupabase } from '@/lib/supabase-server';
+
+// Parents may read their request status even after withdrawing processing consent.
+export async function GET() {
+  const supabase = await getServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
+  const { data, error } = await supabase.from('expert_requests').select('id,status,scheduled_at,created_at')
+    .eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+  if (error) return NextResponse.json({ error: 'Could not load your request.' }, { status: 503 });
+  return NextResponse.json({ request: data }, { headers: { 'Cache-Control': 'private, no-store' } });
+}
 
 const bodySchema = z.object({
   concern: z.string().trim().min(5).max(2000),
@@ -31,11 +43,12 @@ export async function POST(req: Request) {
   }
 
   // One open request at a time keeps the queue honest.
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from('expert_requests')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
-    .in('status', ['new', 'contacted']);
+    .in('status', ['new', 'contacted', 'scheduled']);
+  if (countError) return NextResponse.json({ error: 'Could not check your existing request. Please retry.' }, { status: 503 });
   if ((count ?? 0) > 0) {
     return NextResponse.json({ error: 'We already have your request and will call you soon.' }, { status: 409 });
   }
@@ -54,6 +67,7 @@ export async function POST(req: Request) {
     .select('id')
     .single();
   if (error) {
+    if (error.code === '23505') return NextResponse.json({ error: 'We already have your request.' }, { status: 409 });
     console.error('[expert] insert failed', error.message);
     return NextResponse.json({ error: 'We could not send your request. Please try again.' }, { status: 500 });
   }

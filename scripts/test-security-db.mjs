@@ -32,6 +32,8 @@ try {
   }
   await client.query(readFileSync('tests/sql/security.sql','utf8'));
   console.log('PASS: RLS, consent, tenant boundaries, MFA, membership, revocation, audit and erasure. All fixtures rolled back.');
+  await client.query(readFileSync('tests/sql/admin-operations.sql','utf8'));
+  console.log('PASS: admin operations, assignment scope, credential checks, scheduling, conflicts, consent and erasure. All fixtures rolled back.');
 } finally {
   await client.query('rollback');
   await client.end();

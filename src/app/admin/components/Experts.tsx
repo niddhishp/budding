@@ -1,0 +1,45 @@
+'use client';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { expertSchema, type Expert, type ExpertInput } from '@/lib/admin-operations';
+import { Heading, LoadState, requestJson, useRemote } from './shared';
+
+const blank: ExpertInput = { name: '', title: '', qualifications: '', registration: '', specialties: '', languages: '', age_min: 0, age_max: 18, pregnancy_support: false, bio: '', email: '', phone: '', availability: '', fee_inr: 0, session_minutes: 45, active: true, reviewed: false, verification_note: '', staff_email: '' };
+export function ExpertDirectory() {
+  const remote = useRemote<{ experts: Expert[] }>('/api/admin/experts');
+  const [editing, setEditing] = useState<ExpertInput | null>(null);
+  const [search, setSearch] = useState(''); const [filter, setFilter] = useState('active'); const [message, setMessage] = useState('');
+  if (editing) return <ExpertEditor initial={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); setMessage('Expert profile saved.'); remote.reload(); }} />;
+  const experts = remote.data?.experts.filter(e => (filter === 'all' || (filter === 'active' ? e.active : !e.active)) && `${e.name} ${e.specialties} ${e.languages}`.toLowerCase().includes(search.toLowerCase())) ?? [];
+  return <>
+    <div className="flex flex-wrap justify-between items-start gap-4"><Heading eyebrow="A team parents can turn to" title="Experts" description="Build your roster, record credential checks, and keep availability up to date." /><Button onClick={() => setEditing({ ...blank })}>Add expert</Button></div>
+    <p role="status" className="text-leaf text-sm mb-4">{message}</p>
+    <div className="grid sm:grid-cols-[1fr_180px] gap-4 mb-7"><label>Find an expert<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Name, specialty or language" /></label><label>Show<select value={filter} onChange={e => setFilter(e.target.value)}><option value="active">Active experts</option><option value="paused">Paused experts</option><option value="all">All experts</option></select></label></div>
+    <LoadState {...remote} />
+    {remote.data && <ul className="divide-y border-y border-border">{experts.map(expert => <li key={expert.id} className="py-6 flex flex-wrap justify-between gap-4"><div className="min-w-0 flex-1"><h2 className="font-heading text-2xl break-words">{expert.name}</h2><p className="text-sm mt-1 mb-3">{expert.title}</p><p className="text-sm text-muted-foreground break-words">{expert.specialties} · {expert.languages}</p><p className="text-sm text-muted-foreground mt-2">Ages {expert.age_min}–{expert.age_max}{expert.pregnancy_support ? ' · Pregnancy support' : ''} · {expert.session_minutes} min · ₹{expert.fee_inr.toLocaleString('en-IN')}</p><p className="text-xs mt-3">{expert.active ? 'Active' : 'Paused'} · {expert.verified_at ? 'Credentials reviewed' : 'Credential review needed'} · {expert.staff_email ? 'Therapist account linked' : 'Managed by operations'}</p></div><Button variant="outline" onClick={() => setEditing({ ...expert, reviewed: Boolean(expert.verified_at) })}>Edit {expert.name}</Button></li>)}</ul>}
+    {remote.data && experts.length === 0 && <div className="py-12 max-w-lg"><h2 className="font-heading text-2xl mb-3">{search || filter !== 'active' ? 'No matching experts' : 'Start with the people you trust'}</h2><p className="text-muted-foreground">Add an expert, review their credentials, then assign them to consultation requests. Profiles stay within this team space.</p></div>}
+  </>;
+}
+
+function ExpertEditor({ initial, onClose, onSaved }: { initial: ExpertInput; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState(initial); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const update = <K extends keyof ExpertInput>(key: K, value: ExpertInput[K]) => setForm(f => ({ ...f, [key]: value }));
+  const textField = (key: 'name' | 'title' | 'qualifications' | 'registration' | 'specialties' | 'languages' | 'bio' | 'email' | 'phone' | 'availability' | 'verification_note' | 'staff_email', label: string, max: number, multiline = false, required = false) => <label key={key}>{label}{multiline ? <textarea maxLength={max} required={required} value={form[key]} onChange={e => update(key, e.target.value)} /> : <input type={key.includes('email') ? 'email' : 'text'} maxLength={max} required={required} value={form[key]} onChange={e => update(key, e.target.value)} />}</label>;
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setError('');
+    const parsed = expertSchema.safeParse(form);
+    if (!parsed.success) { setError(parsed.error.issues[0].message); return; }
+    setBusy(true);
+    try { await requestJson('/api/admin/experts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed.data) }); onSaved(); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Could not save.'); } finally { setBusy(false); }
+  }
+  return <>
+    <button className="text-sm text-clay underline mb-6" disabled={busy} onClick={onClose}>← Back to experts</button>
+    <Heading eyebrow="Expert profile" title={initial.id ? `Edit ${initial.name}` : 'Someone who can help'} description="Required fields describe who this expert is and which families they can support. Credentials are reviewed by your team." />
+    <form onSubmit={save} className="space-y-8 max-w-3xl"><fieldset disabled={busy} className="space-y-8">
+      <section><h2 className="font-heading text-2xl mb-5">Profile & practice</h2><div className="grid sm:grid-cols-2 gap-5">{textField('name', 'Full name *', 120, false, true)}{textField('title', 'Professional title *', 120, false, true)}{textField('qualifications', 'Qualifications *', 1000, true, true)}{textField('specialties', 'Specialties *', 500, true, true)}{textField('languages', 'Languages *', 300, false, true)}{textField('registration', 'Registration / licence reference', 200)}<label>Minimum age (years)<input type="number" min={0} max={18} required value={form.age_min} onChange={e => update('age_min', Number(e.target.value))} /></label><label>Maximum age (years)<input type="number" min={0} max={18} required value={form.age_max} onChange={e => update('age_max', Number(e.target.value))} /></label></div><label className="flex items-center gap-3 mt-5"><input type="checkbox" checked={form.pregnancy_support} onChange={e => update('pregnancy_support', e.target.checked)} />Also supports expecting parents</label><div className="mt-5">{textField('bio', 'Short biography', 2000, true)}</div></section>
+      <section className="border-t pt-7"><h2 className="font-heading text-2xl mb-5">Contact & availability</h2><div className="grid sm:grid-cols-2 gap-5">{textField('email', 'Contact email', 320)}{textField('phone', 'Contact phone', 30)}<label>Session fee (INR)<input type="number" min={0} max={100000} required value={form.fee_inr} onChange={e => update('fee_inr', Number(e.target.value))} /></label><label>Session length (minutes)<input type="number" min={15} max={180} required value={form.session_minutes} onChange={e => update('session_minutes', Number(e.target.value))} /></label></div><div className="mt-5">{textField('availability', 'Usual availability, timezone and booking notes', 1000, true)}</div><p className="text-xs text-muted-foreground mt-3">Availability helps the team coordinate. Confirm each session with the expert and parent.</p></section>
+      <section className="border-t pt-7"><h2 className="font-heading text-2xl mb-5">Readiness & access</h2><label className="flex items-center gap-3 mb-5"><input type="checkbox" checked={form.active} onChange={e => update('active', e.target.checked)} />Active on the roster</label><p className="text-xs text-muted-foreground mb-5">Pausing keeps existing bookings and history, prevents new assignments, and pauses this profile’s therapist access. Review any booked sessions before pausing.</p><label className="flex items-center gap-3 mb-5"><input type="checkbox" checked={form.reviewed} onChange={e => update('reviewed', e.target.checked)} />Our team has reviewed these credentials</label>{textField('verification_note', 'Credential review reference / method', 1000, true, form.reviewed)}<p className="text-xs text-muted-foreground my-4">Record the source and date of the check. Do not paste identity documents.</p>{textField('staff_email', 'Linked therapist sign-in email (optional)', 320)}<p className="text-xs text-muted-foreground mt-3">An owner must first give this verified account the therapist role in Team access. Linking lets them see only their assigned requests. Leave blank for an expert coordinated entirely by operations.</p></section>
+    </fieldset><div role="alert" className="text-sm text-destructive">{error}</div><div className="flex gap-4"><Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save expert'}</Button><Button type="button" variant="outline" disabled={busy} onClick={onClose}>Cancel</Button></div></form>
+  </>;
+}

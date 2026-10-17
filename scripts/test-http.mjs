@@ -8,6 +8,16 @@ const checks = [
   ['/app/privacy','GET',null,307],
   ['/api/admin/staff','GET',null,401],
   ['/api/admin/audit','GET',null,401],
+  ['/admin/experts','GET',null,307],
+  ['/admin/consultations','GET',null,307],
+  ['/admin/team','GET',null,307],
+  ['/api/admin/experts','GET',null,401],
+  ['/api/admin/overview','GET',null,401],
+  ['/api/admin/consultations','GET',null,401],
+  ['/api/admin/consultations/a0000000-0000-4000-8000-000000000001','GET',null,401],
+  ['/api/admin/experts','POST','https://foreign.invalid',403],
+  ['/api/admin/consultations/a0000000-0000-4000-8000-000000000001','PATCH','https://foreign.invalid',403],
+  ['/api/expert','GET',null,401],
   ['/api/admin/staff','POST','https://foreign.invalid',403],
   ['/api/account/delete','POST','https://foreign.invalid',403],
   ['/api/consent','POST',base,401],
@@ -19,6 +29,6 @@ for (const [path, method, origin, expected] of checks) {
   assert.equal(response.status, expected, `${method} ${path}`);
   assert.equal(response.headers.get('x-content-type-options'),'nosniff');
   assert.equal(response.headers.get('x-frame-options'),'DENY');
-  if (expected === 307) assert.equal(new URL(response.headers.get('location')).pathname,'/login');
+  if (expected === 307) assert.equal(new URL(response.headers.get('location'),base).pathname,'/login');
   console.log(`PASS ${method} ${path}: ${response.status}`);
 }

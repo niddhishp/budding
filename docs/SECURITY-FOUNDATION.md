@@ -4,13 +4,17 @@ Implementation record: 17 October 2026. Scope approved by the founder: preserve 
 
 ## Release boundary
 
-**Database changes are live. Application changes are local on `codex/security-foundation`; no commit, push or deployment was performed.** The existing production application therefore does not yet have the new server guards, privacy controls or admin screens. Its direct database writes are already subject to the new RLS policies.
+**Database and application changes are live.** On 17 October 2026, after explicit deployment approval, release commit `bdc62e3bbc75e5bf2238bc2ebd1bc1d8e4a66292` was pushed to `main` and deployed to `https://www.kahiye.app`. The release branch remains `codex/security-foundation`.
+
+Production deployment: `dpl_3aDexvQVMVxsnGLx5FkfGYPUjf1a`, `https://budding-mxgu8a88g-reactic.vercel.app`, Vercel status READY, build duration 33 seconds. The existing aliases `www.kahiye.app` and `kahiye.app` point to this deployment. Rollback target: `dpl_69cMf3Na4FNQx8KuzZHp4BQ8626H` (`https://budding-jwhy6sbup-reactic.vercel.app`).
+
+[GitHub verification run](https://github.com/niddhishp/budding/actions/runs/39053051872) passed before the production push: clean install, lint/types/unit checks, clean-database migrations/security tests and production build. Twelve live HTTP checks passed after deployment: public pages, admin/privacy redirects, unauthenticated API rejection, foreign-origin rejection and security headers. Browser verification reached the real admin sign-in screen. The new deployment's error-log scan returned zero records in the checked release window. Authenticated owner enrollment still requires the owner; no sign-in email, AI generation, payment or WhatsApp message was triggered by release verification.
 
 Baseline source HEAD: `efa278724811951eb978cd4b9f6d2cde8a806ea3`. All 199 tracked/non-ignored source files, including uncommitted agents-v2 work, were copied with SHA-256 hashes to:
 
 `C:\Users\Admin\.codex\visualizations\2026\10\17\01a14a81-9a08-7f22-ab03-d2a79055ac2f\kahiye-baseline-20261017`
 
-No environment secrets, dependency directories or generated build files were included. No original source file was deleted. Existing uncommitted changes remain in the working tree; do not reset or discard them when preparing a release.
+No environment secrets, dependency directories or generated build files were included. No original source file was deleted. The pre-existing Kahiye work was preserved and included in the release commit alongside the security foundation.
 
 ## Database retirement and preservation
 
@@ -98,7 +102,7 @@ The migration runner now excludes `ALL_IN_ONE.sql`, uses a read-only transaction
 
 - Review the complete working tree against the source snapshot, including the pre-existing agents-v2 changes, before committing. Do not mistake that older work for changes introduced by this phase.
 - Configure the preview deployment's required server credentials without copying production secrets into source or CI. A public publishable Supabase key was added only to ignored local `.env.local`; local service-role and AI credentials remain unconfigured.
-- Deploy a preview, complete owner sign-in/MFA and role-management acceptance, then review before promoting production. The CI workflow exists locally but has not run on GitHub yet.
+- The branch build, GitHub CI and production deployment succeeded. Complete owner sign-in/MFA and authenticated role-management acceptance on the live admin screen; the agent did not enroll the owner's personal authenticator.
 - Confirm current custom SMTP, sender verification, live payments and WhatsApp configuration before market launch. The older handoff's infrastructure claims are historical until checked against the provider dashboards.
 - Supabase's security advisor reports no public table with RLS disabled. Its three no-policy notices are intentional service-only tables: migration ledger, safety events and WhatsApp link codes.
 - Remaining advisor warnings: [extensions in the public schema](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public) (`vector`, `pg_trgm`) and [leaked-password protection disabled](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). The UI uses email links, but the provider setting should still be reviewed before launch. No paid provider plan/configuration was changed.

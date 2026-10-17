@@ -46,7 +46,7 @@ export function AdminTeam() {
         <label>Role<select className="block w-full border rounded-xl p-3 mt-2" value={role} onChange={e => setRole(e.target.value as AdminRole)}>{ADMIN_ROLES.map(r => <option key={r} value={r}>{r.replace('_',' ')}</option>)}</select></label>
         <Button className="sm:col-span-2 justify-self-start" disabled={busy || loading} type="submit">{busy ? 'Saving…' : 'Save team access'}</Button>
       </form>
-      <p className="mt-4 text-sm text-slate-500">Owners can manage access. Operations, therapist and content reviewer tools will become available in later phases.</p>
+      <p className="mt-4 text-sm text-slate-500">Owners manage access. Operations manage experts and requests. Therapists see only requests assigned to their linked expert profile. Content reviewers have no consultation access.</p>
       <p aria-live="polite" className="mt-4 text-sm">{message}</p>
     </section>
     <section><h2 className="font-heading text-2xl mb-4">Team members</h2>
