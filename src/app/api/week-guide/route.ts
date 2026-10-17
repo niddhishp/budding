@@ -22,13 +22,14 @@ export async function GET(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid week.' }, { status: 400 });
   const { week, language } = parsed.data;
 
-  const { data: cached } = await supabase
+  const { data: cached, error } = await supabase
     .from('week_guides')
     .select('guide')
     .eq('week', week)
     .eq('language', language)
     .not('reviewed_at', 'is', null)
     .maybeSingle();
+  if (error) return NextResponse.json({ error: 'We could not load the reviewed guide. Please try again.' }, { status: 503 });
   const valid = weekGuideSchema.safeParse(cached?.guide);
   if (valid.success) return NextResponse.json({ guide: valid.data });
 
