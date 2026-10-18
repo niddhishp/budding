@@ -36,8 +36,8 @@ export function HealthUpcoming({ child }: { child: Child }) {
         <ul className="mt-3 space-y-3">
           {upcoming.map((e) => (
             <li key={e.id} className="flex justify-between gap-3 text-sm">
-              <span>{e.title}</span>
-              <span className="text-slate-600 text-right">
+              <span className="min-w-0 flex-1 break-words">{e.title}</span>
+              <span className="text-slate-600 text-right w-36 shrink-0">
                 {e.label} · {e.due}
               </span>
             </li>

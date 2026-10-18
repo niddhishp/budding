@@ -12,7 +12,7 @@ export function DailyInterestActivity({ child, interests, date = todayDate() }: 
   const activity = dailyInterest(child.dateOfBirth, interests, date, offset);
   return <section className="bg-paper-deep rounded-[1.75rem] p-6 sm:p-8 mb-7" aria-label="Today's interest activity">
     <p className="text-sm text-clay mb-3">A little practice, a little joy</p>
-    <h2 className="font-heading text-2xl mb-3">{activity ? `${child.name}’s invitation today` : 'Turn an interest into a little everyday moment'}</h2>
+    <h2 className="font-heading text-2xl mb-3 break-words">{activity ? `${child.name}’s invitation today` : 'Turn an interest into a little everyday moment'}</h2>
     {activity ? <>
       <p className="text-sm font-medium mb-3">{activity.area} · A few minutes, at their pace</p>
       <p className="text-slate-700 leading-relaxed" aria-live="polite">{activity.text}</p>
