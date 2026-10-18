@@ -16,7 +16,13 @@ No original situation, memory or family record is automatically deleted. Stop us
 
 ## Verification and deployment
 
-Implementation complete; release verification in progress. Production remains phase 3 until promotion.
+**Deployed 18 October 2026.** Code `1fd7a66e1ec7259ebc813fec20d3db40ace7c088` is on `main`. [CI run 39092281353](https://github.com/niddhishp/budding/actions/runs/39092281353) passed for that exact commit. Vercel production `dpl_5bnYh1qJmbiNcgvDp7sHMLEYxYWr` is Ready at https://budding-6pqdlvq35-reactic.vercel.app, with both `www.kahiye.app` and `kahiye.app` assigned.
+
+Migration `014_memory_continuity.sql` applied at 2026-10-18 03:06 UTC and was recorded in the repository migration ledger. Post-migration record counts and fingerprints match every pre-migration value below after excluding only the added columns. No family data was deleted or rewritten.
+
+Live verification: home, quiz, immediate support and login returned 200; anonymous memory API returned 401 with private/no-store; admin redirected to login. The existing signed-in family app loaded the memory settings and empty-memory state successfully, and the saved-situations screen appeared without an error. No production notes, decodes or settings were submitted. The new deployment returned no error-level runtime logs during the check.
+
+Supabase security advisories unchanged: two existing public-schema extensions and disabled leaked-password protection remain warnings; five intentionally server-only RLS tables have no client policy. No new findings were introduced.
 
 Local evidence (18 October 2026):
 - `npm run check`: lint and TypeScript pass; 22 unit and 9 server cases pass.
