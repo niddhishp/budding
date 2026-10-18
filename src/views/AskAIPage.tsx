@@ -52,6 +52,8 @@ export function AskAIPage() {
   const [scenario, setScenario] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [current, setCurrent] = useState<Decode | null>(null);
+  const [continuation, setContinuation] = useState<Decode | null>(null);
+  const scenarioInput = useRef<HTMLTextAreaElement>(null);
   const [safety, setSafety] = useState<SafetyNotice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const scope = useRequestScope();
@@ -63,31 +65,42 @@ export function AskAIPage() {
   const savingOutcomes = useRef(new Set<string>());
   const [sharing, setSharing] = useState<Decode | null>(null);
   const [history, setHistory] = useState<Decode[]>([]);
+  const [historyOffset, setHistoryOffset] = useState<number | null>(null);
+  const [historyBusy, setHistoryBusy] = useState(false);
+  const historyVersion = useRef(0);
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<Recognition | null>(null);
   const [voiceSupported, setVoiceSupported] = useState(false);
 
   useEffect(() => setVoiceSupported(!!createRecognition()), []);
 
-  const loadHistory = useCallback(async () => {
+  const loadHistory = useCallback(async (offset = 0) => {
     if (!selectedChildId) return;
+    const version = ++historyVersion.current; setHistoryBusy(true);
     const task = scope.start();
     const { data, error: historyError } = await getSupabase()
       .from('decodes')
       .select(DECODE_COLUMNS)
       .eq('child_id', selectedChildId)
       .order('created_at', { ascending: false })
-      .limit(10)
+      .order('id', { ascending: false })
+      .range(offset, offset + 9)
       .returns<DecodeRow[]>();
-    if (task.active()) {
+    if (task.active() && version === historyVersion.current) {
       if (historyError) setError('Could not load saved guidance. Reload to retry.');
-      else setHistory((data ?? []).map(decodeFromRow));
+      else {
+        const rows = (data ?? []).map(decodeFromRow);
+        setHistory(old => offset ? [...old, ...rows.filter(d => !old.some(x => x.id === d.id))] : rows);
+        setHistoryOffset(rows.length === 10 ? offset + 10 : null);
+      }
     }
     task.finish();
+    if (version === historyVersion.current) setHistoryBusy(false);
   }, [selectedChildId, scope]);
 
   useEffect(() => {
     setCurrent(null);
+    setContinuation(null);
     setSafety(null);
     setError(null);
     loadHistory();
@@ -127,20 +140,21 @@ export function AskAIPage() {
     if (!text) return;
     recognitionRef.current?.stop();
     setIsAnalyzing(true);
+    setProgress('Checking the situation…');
     setCurrent(null);
     setSafety(null);
     setError(null);
     setSupport(null);
     const task = scope.start();
     activeRequest.current = task;
-    const requestKey = JSON.stringify({ childId: selectedChild.id, text, refines: refine?.decode.id });
+    const requestKey = JSON.stringify({ childId: selectedChild.id, text, refines: refine?.decode.id, continues: refine ? undefined : continuation?.id });
     if (receipt.current?.key !== requestKey) receipt.current = { key: requestKey, id: crypto.randomUUID() };
 
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST', signal: task.signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId: receipt.current.id, childId: selectedChild.id, scenario: text, ...(refine ? { refines: refine.decode.id, answer: refine.answer } : {}) }),
+        body: JSON.stringify({ requestId: receipt.current.id, childId: selectedChild.id, scenario: text, ...(refine ? { refines: refine.decode.id, answer: refine.answer } : { continues: continuation?.id }) }),
       });
       if (!task.active()) return;
       if (!res.ok || !res.body) {
@@ -166,8 +180,10 @@ export function AskAIPage() {
             if (event.decode.childId !== selectedChild.id) throw new Error('Response child mismatch');
             terminal = true;
             setCurrent(event.decode);
+            setContinuation(null);
+            setScenario('');
             setEntitlement(event.entitlement);
-            setHistory((h) => [event.decode, ...h.filter(d => d.id !== event.decode.id)].slice(0, 10));
+            setHistory((h) => [event.decode, ...h.filter(d => d.id !== event.decode.id)]);
             break;
           case 'error':
             terminal = true;
@@ -204,6 +220,13 @@ export function AskAIPage() {
 
   const analysis = current?.analysis;
   const examples = selectedChild ? EXAMPLES[selectedChild.age.stage] : [];
+  const openSaved = (decode: Decode, continueIt = false) => {
+    recognitionRef.current?.stop();
+    setCurrent(continueIt ? null : decode); setContinuation(continueIt ? decode : null);
+    setScenario(''); setError(null); setSafety(null); setSupport(null);
+    scenarioInput.current?.focus();
+    scenarioInput.current?.scrollIntoView({ behavior: 'auto', block: 'center' });
+  };
 
   return (
     <div className="max-w-5xl mx-auto pt-8 md:pt-12 pb-24 px-4 sm:px-6">
@@ -223,8 +246,15 @@ export function AskAIPage() {
 
       <div className="grid md:grid-cols-12 gap-10 md:gap-12">
         <div className="md:col-span-7">
+          {continuation && <div className="mb-4 rounded-2xl bg-paper-deep p-4" role="status">
+            <p className="text-sm font-semibold text-slate-800">Continuing an earlier situation</p>
+            <p className="text-sm text-slate-600 mt-2 line-clamp-3">{continuation.scenario}</p>
+            <p className="text-xs text-slate-500 mt-2">Share what happened next. Up to four earlier moments in this thread are included. A new response uses your usual allowance.</p>
+            <button disabled={isAnalyzing} className="text-sm text-clay underline py-2" onClick={() => setContinuation(null)}>Start fresh instead</button>
+          </div>}
           <div className="relative">
             <Textarea
+              ref={scenarioInput}
               aria-label="Describe what is happening"
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
@@ -232,7 +262,7 @@ export function AskAIPage() {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAnalyze();
               }}
               maxLength={2000}
-              placeholder={`e.g., ${examples[0] ?? 'What happened, and what did you try?'}`}
+              placeholder={continuation ? 'What happened next? What helped, or what has changed?' : `e.g., ${examples[0] ?? 'What happened, and what did you try?'}`}
               className="w-full min-h-[140px] px-5 pt-4 pb-16 rounded-[2rem] border-slate-200 bg-white/70 backdrop-blur-md text-slate-800 text-lg placeholder:text-slate-400 focus:border-clay focus:ring-clay/20 resize-none shadow-sm"
             />
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
@@ -276,7 +306,7 @@ export function AskAIPage() {
             </p>
           )}
 
-          {!current && !isAnalyzing && !error && (
+          {!current && !continuation && !isAnalyzing && !error && (
             <div className="mt-8">
               <p className="text-sm font-medium text-slate-500 tracking-wider uppercase mb-4">Common moments</p>
               <div className="flex flex-wrap gap-2">
@@ -305,6 +335,7 @@ export function AskAIPage() {
 
           {analysis && current && !isAnalyzing && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-8">
+              <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600"><p className="font-medium text-slate-800">{current.continuationOf ? 'A continued situation' : 'Saved guidance'} · {new Date(current.createdAt).toLocaleDateString()}</p><p className="mt-2 whitespace-pre-wrap break-words">{current.scenario}</p></div>
               {analysis.rightNow && <RightNow text={analysis.rightNow} />}
 
               {/* Say this — first, biggest */}
@@ -316,7 +347,7 @@ export function AskAIPage() {
                 <p className="mt-3 text-xs text-slate-400">An example, not magic words. Say it your way.</p>
               </div>
 
-              {analysis.clarify && (
+              {analysis.clarify && !current.refines && Date.now() - new Date(current.createdAt).getTime() < 30 * 60 * 1000 && (
                 <div className="p-5 rounded-[1.5rem] bg-paper-deep">
                   <p className="font-medium text-slate-800 mb-3">{analysis.clarify.question}</p>
                   <div className="flex flex-wrap gap-2">
@@ -428,6 +459,7 @@ export function AskAIPage() {
               )}
 
               <OutcomeBar decode={current} onSelect={recordOutcome} saving={outcomes[current.id]?.state === 'saving'} />
+              {current.safetyCategory === 'none' && <button className="w-full rounded-full border border-clay text-clay py-3 font-medium" onClick={() => openSaved(current, true)}>Continue this situation</button>}
               {outcomes[current.id] && <p role="status" className="text-sm">{outcomes[current.id].state === 'saving' ? 'Saving feedback…' : outcomes[current.id].state === 'saved' ? 'Feedback saved.' : 'Feedback was not saved. Tap your choice to retry.'}</p>}
 
               <button
@@ -446,7 +478,8 @@ export function AskAIPage() {
 
         {/* History */}
         <aside className="md:col-span-5">
-          <h3 className="text-sm font-medium text-slate-500 tracking-wider uppercase mb-4">Recent decodes</h3>
+          <h3 className="text-sm font-medium text-slate-500 tracking-wider uppercase mb-4">Your saved situations</h3>
+          <p className="text-sm text-slate-500 mb-4">Open past guidance, or choose a situation to continue. Earlier moments are only included when you choose them.</p>
           {history.length === 0 ? (
             <p className="text-sm text-slate-400 leading-relaxed">
               Your decodes for {selectedChild?.name} will appear here. Mark whether each one worked, and Kahiye learns what fits {selectedChild?.name}.
@@ -455,6 +488,7 @@ export function AskAIPage() {
             <div className="space-y-3">
               {history.map((d) => (
                 <div key={d.id} className="p-5 rounded-[1.5rem] border border-slate-200/60 bg-white/60 shadow-sm">
+                  <p className="text-xs text-slate-500 mb-2">{new Date(d.createdAt).toLocaleDateString()}{d.continuationOf ? ' · Continued situation' : ''}</p>
                   <p className="text-sm text-slate-500 mb-2 line-clamp-2">{d.scenario}</p>
                   {d.analysis && <p className="font-heading text-lg text-slate-850 leading-snug mb-3">"{d.analysis.sayThis}"</p>}
                   {d.outcome ? (
@@ -466,10 +500,12 @@ export function AskAIPage() {
                   ) : (
                     <><OutcomeBar decode={d} onSelect={recordOutcome} compact saving={outcomes[d.id]?.state === 'saving'} />{outcomes[d.id] && <p role="status" className="text-xs mt-2">{outcomes[d.id].state === 'saving' ? 'Saving…' : outcomes[d.id].state === 'failed' ? 'Not saved. Tap again to retry.' : 'Saved'}</p>}</>
                   )}
+                  <div className="flex flex-wrap gap-2 mt-3"><button disabled={isAnalyzing} onClick={() => openSaved(d)} className="text-sm rounded-xl border border-slate-200 px-3 py-2.5 text-slate-700">Open saved guidance</button>{d.safetyCategory === 'none' && <button disabled={isAnalyzing} onClick={() => openSaved(d, true)} className="text-sm rounded-xl bg-clay/10 px-3 py-2.5 text-clay">Continue this situation</button>}</div>
                 </div>
               ))}
             </div>
           )}
+          {historyOffset !== null && <button disabled={historyBusy} onClick={() => loadHistory(historyOffset)} className="mt-4 px-4 py-2.5 rounded-xl border border-slate-200 text-sm">{historyBusy ? 'Loading…' : 'Load earlier situations'}</button>}
         </aside>
       </div>
       {sharing && selectedChild && (

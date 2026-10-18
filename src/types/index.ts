@@ -21,6 +21,7 @@ export interface Child {
   intakeBand: string | null;
   /** Null means legacy intake; [] means no observations supplied. */
   intakeAnswered?: (keyof TemperamentProfile)[] | null;
+  memoryEnabled?: boolean;
 }
 
 export type MemoryKind = 'fact' | 'observation' | 'pattern' | 'what_worked' | 'what_didnt' | 'preference' | 'milestone' | 'joy';
@@ -36,6 +37,12 @@ export interface Memory {
   confidence: number;
   sensitive: boolean;
   createdAt: string;
+  archived: boolean;
+  confirmedAt: string | null;
+  expiresAt: string | null;
+  editedAt: string | null;
+  revision: number;
+  decodeId: string | null;
 }
 
 export interface AgeInfo {
@@ -189,6 +196,7 @@ export interface SafetyNotice {
 }
 
 export interface Decode {
+  safetyCategory?: SafetyCategory;
   id: string;
   childId: string;
   scenario: string;
@@ -196,6 +204,8 @@ export interface Decode {
   riskLevel: RiskLevel;
   outcome: DecodeOutcome | null;
   createdAt: string;
+  continuationOf?: string | null;
+  refines?: string | null;
 }
 
 export type DecodeStreamEvent =

@@ -80,6 +80,7 @@ export interface DecodeContext {
   recentLogs: { content: string; log_type: string; created_at: string }[];
   pastDecodes: { scenario: string; say_this: string | null; outcome: string | null; created_at: string }[];
   memories?: Pick<Memory, 'kind' | 'content' | 'source' | 'confidence'>[];
+  continuation?: { id: string; scenario: string; sayThis: string; outcome: string | null; createdAt: string }[];
 }
 
 const PROVENANCE: Record<string, string> = {
@@ -146,6 +147,13 @@ function composeUserTurn(scenario: string, ctx: DecodeContext, route: Route) {
     lines.push(`<what_has_worked_before>`,
       ...rated.map((d) => `- Situation: ${d.scenario}\n  Said: ${d.say_this ?? '—'}\n  Parent's verdict: ${d.outcome!.replace(/_/g, ' ')}`),
       `</what_has_worked_before>`);
+  }
+
+  if (ctx.continuation?.length) {
+    lines.push('<parent_selected_earlier_moments>',
+      'The parent deliberately continued this situation. These are historical observations, not current facts. Current confirmed memories and the new update take precedence. A past suggestion is not evidence that it worked. Do not infer improvement without an outcome.',
+      ...ctx.continuation.map(d => `- [${d.createdAt.slice(0, 10)}] ${d.scenario}\n  Suggested: ${d.sayThis}\n  Parent feedback: ${d.outcome ?? 'not rated'}`),
+      '</parent_selected_earlier_moments>');
   }
 
   lines.push(`<routing mode="${route.mode}" parent_goal="${route.goal}" />`);

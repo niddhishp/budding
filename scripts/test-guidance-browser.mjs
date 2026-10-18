@@ -20,7 +20,7 @@ const session={access_token:token,refresh_token:'synthetic-only',token_type:'bea
 const cookie='sb-127-auth-token=base64-'+Buffer.from(JSON.stringify(session)).toString('base64url');
 const rpcs={reserve_guidance:['p_id','p_user','p_child','p_kind','p_fingerprint','p_refines','p_free'],complete_guidance:['p_id','p_lease','p_payload'],claim_guidance_job:['p_user'],finish_guidance_job:['p_decode','p_lease','p_memories'],record_decode_outcome:['p_id','p_outcome']};
 const tables=new Set(['consents','children','subscriptions','decodes','context_logs','memories','guidance_requests','guidance_jobs','stories','reports','safety_events']);
-let queue=Promise.resolve(), mode='ordinary', calls=0;
+let queue=Promise.resolve(), mode='ordinary', calls=0, lastGuidanceInput='';
 const ident=s=>{if(!/^[a-z_]+$/.test(s))throw new Error('Invalid test identifier');return `"${s}"`;};
 const backend=http.createServer(async(req,res)=>{
   res.setHeader('Content-Type','application/json'); res.setHeader('Access-Control-Allow-Origin','http://127.0.0.1:3011');
@@ -30,15 +30,16 @@ const backend=http.createServer(async(req,res)=>{
   const u=new URL(req.url,'http://127.0.0.1');
   const chunks=[];for await(const c of req)chunks.push(c);const body=JSON.parse(Buffer.concat(chunks).toString()||'{}');
   if(u.pathname==='/__test/mode'){mode=body.mode;calls=0;res.end('{}');return;}
-  if(u.pathname==='/__test/status'){res.end(JSON.stringify({mode,calls}));return;}
+  if(u.pathname==='/__test/status'){res.end(JSON.stringify({mode,calls,lastGuidanceInput}));return;}
   if(u.pathname==='/auth/v1/user'){res.end(JSON.stringify(user));return;}
   if(u.pathname==='/v1/messages'){
     calls++; const props=body.output_config?.format?.schema?.properties??{};
+    if(props.sayThis)lastGuidanceInput=JSON.stringify(body.messages);
     if(mode==='classifier-outage' && props.level){res.statusCode=503;res.end(JSON.stringify({type:'error',error:{type:'overloaded_error',message:'Synthetic outage'}}));return;}
     const answer=props.level?{level:'none',category:'none',reason:'Synthetic everyday input'}:
       props.approved?{approved:mode!=='review-reject'}:
       props.clarifyNeeded?{modules:[props.modules.items.enum[0]],mode:'right_now',goal:'calm_now',clarifyNeeded:true,clarifyQuestion:'When does this happen?',clarifyOptions:['Before bed','After school']}:
-      props.memories?{memories:[]}:
+      props.memories?{memories:[{kind:'preference',content:'Mira enjoys a quiet pause after the park.',source:'ai_inferred',confidence:0.6,sensitive:false}]}:
       props.title?{title:'Mira and the Moon',body:'Mira made room for a quiet moment before bed.',moral:'Small steps help.'}:
       props.message?{message:'Let us try a calm bedtime routine together.'}:
       {rightNow:'Pause and lower your voice.',sayThis:'I see that stopping is hard. I am here.',doThis:['Offer two calm choices.'],avoid:'Avoid threats.',hypotheses:[{text:'The transition may feel sudden.',likelihood:'possible'}],emotionalNeed:'A predictable transition',afterwards:'Plan the next transition together.',watchFor:'Notice which transition is hardest.',seekHelpIf:'',skillBeingBuilt:'Practising transitions',developmentalContext:'Transitions can take practice.',whyItWorks:'Predictability can help.',evidenceIds:[]};
@@ -60,7 +61,8 @@ const backend=http.createServer(async(req,res)=>{
         const table=u.pathname.replace('/rest/v1/','');if(!tables.has(table))throw new Error('Unsupported adapter route');
         const values=[],where=[];
         for(const[k,v]of u.searchParams){
-          if(['select','order','limit'].includes(k))continue;
+          if(['select','order','limit','offset'].includes(k))continue;
+          if(k==='or' && /^\(expires_at\.is\.null,expires_at\.gt\.[\dTZ:.+-]+\)$/.test(v)) { values.push(v.slice('(expires_at.is.null,expires_at.gt.'.length,-1)); where.push(`(expires_at is null or expires_at > $${values.length})`); continue; }
           const col=ident(k);let op,raw;
           if(v.startsWith('not.is.')){where.push(`${col} is not null`);continue;}
           if(v==='is.null'){where.push(`${col} is null`);continue;}
@@ -68,6 +70,8 @@ const backend=http.createServer(async(req,res)=>{
           if(!op)throw new Error('Unsupported test filter');values.push(raw);where.push(`${col}${op}$${values.length}`);
         }
         if(mode==='profile-save-failure' && table==='children' && ['POST','PATCH'].includes(req.method))throw new Error('Synthetic profile save failure');
+        if(mode==='memory-save-failure' && table==='memories' && ['POST','PATCH'].includes(req.method))throw new Error('Synthetic memory save failure');
+        if(mode==='memory-load-failure' && table==='memories' && req.method==='GET')throw new Error('Synthetic memory read failure');
         if(req.method==='PATCH'){
           const updates=Object.entries(body).map(([k,v])=>{values.push(v);return `${ident(k)}=$${values.length}`;});
           result=(await db.query(`update public.${ident(table)} set ${updates.join(',')} ${where.length?'where '+where.join(' and '):''} returning *`,values)).rows;
@@ -75,10 +79,12 @@ const backend=http.createServer(async(req,res)=>{
           const entries=Object.entries(body);result=(await db.query(`insert into public.${ident(table)}(${entries.map(([k])=>ident(k))}) values(${entries.map((_,i)=>'$'+(i+1))}) returning *`,entries.map(([,v])=>v))).rows;
         }else{
           let select=u.searchParams.get('select')??'*';
-          select=select.includes('children(name)')?"scenario,safety_category,(select jsonb_build_object('name',name) from public.children where id=decodes.child_id) as children":select==='*'?'*':select.split(',').map(s=>ident(s.trim())).join(',');
+          select=select.includes('children(name,memory_enabled)')?"scenario,safety_category,(select jsonb_build_object('name',name,'memory_enabled',memory_enabled) from public.children where id=decodes.child_id) as children":select==='*'?'*':select.split(',').map(s=>ident(s.trim())).join(',');
           const order=(u.searchParams.get('order')??'').split(',').filter(Boolean).map(s=>{const[col,dir]=s.split('.');return `${ident(col)} ${dir==='desc'?'desc':'asc'}`;});
           const limit=Number(u.searchParams.get('limit')??100);
-          result=(await db.query(`select ${select} from public.${ident(table)} ${where.length?'where '+where.join(' and '):''} ${order.length?'order by '+order.join(','):''} limit ${Math.min(limit,100)}`,values)).rows;
+          const offset=Number(u.searchParams.get('offset')??0);
+          if(!Number.isSafeInteger(offset)||offset<0||!Number.isSafeInteger(limit)||limit<0)throw new Error('Invalid pagination');
+          result=(await db.query(`select ${select} from public.${ident(table)} ${where.length?'where '+where.join(' and '):''} ${order.length?'order by '+order.join(','):''} limit ${Math.min(limit,100)} offset ${offset}`,values)).rows;
           res.setHeader('Content-Range',`0-${Math.max(0,result.length-1)}/${result.length}`);
           if(req.headers.accept?.includes('application/vnd.pgrst.object+json'))result=result[0]??null;
         }

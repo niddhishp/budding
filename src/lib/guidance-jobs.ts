@@ -10,12 +10,12 @@ export async function processGuidanceJob(userId: string) {
   if (error || !job) return;
   try {
     if (!await checkUserConsent(db, userId)) throw new Error('Consent unavailable');
-    const { data: source, error: readError } = await db.from('decodes').select('scenario,safety_category,children(name)').eq('id', job.decodeId).eq('user_id', userId).eq('child_id', job.childId).maybeSingle();
+    const { data: source, error: readError } = await db.from('decodes').select('scenario,safety_category,children(name,memory_enabled)').eq('id', job.decodeId).eq('user_id', userId).eq('child_id', job.childId).maybeSingle();
     if (readError) throw new Error('Source unavailable');
     let memories: Awaited<ReturnType<typeof extractMemories>> = [];
-    if (source && source.safety_category === 'none') {
+    if (source && source.safety_category === 'none' && (source.children as unknown as { memory_enabled: boolean }).memory_enabled) {
       const child = source.children as unknown as { name: string };
-      const { data: known, error: knownError } = await db.from('memories').select('content').eq('child_id', job.childId).eq('archived', false).eq('sensitive', false).limit(40);
+      const { data: known, error: knownError } = await db.from('memories').select('content').eq('child_id', job.childId).eq('sensitive', false).eq('archived', false).not('confirmed_at', 'is', null).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).limit(40);
       if (knownError) throw new Error('Memory lookup unavailable');
       memories = await extractMemories({ childName: child.name, message: source.scenario, known: (known ?? []).map(m => m.content) });
     }

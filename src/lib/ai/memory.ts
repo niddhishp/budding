@@ -1,8 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
-import type { SupabaseClient } from '@supabase/supabase-js';
 import { FAST_MODEL, structuredCall } from '@/lib/ai/llm';
-import type { AgentAnalysis, DecodeOutcome, MemoryKind } from '@/types';
 
 /*
  * Memory agent. Runs after the parent has their answer (never on the hot path).
@@ -77,68 +75,4 @@ export async function extractMemories(opts: {
     console.warn('[memory] extraction deferred', { name: error instanceof Error ? error.name : 'unknown' });
     throw new Error('Memory extraction unavailable');
   }
-}
-
-/** Extract and store memories from a decode. `db` may be the user-scoped or admin client. */
-export async function rememberFromDecode(db: SupabaseClient, opts: {
-  userId: string;
-  childId: string;
-  childName: string;
-  decodeId: string;
-  message: string;
-}) {
-  const { data: existing } = await db
-    .from('memories')
-    .select('content')
-    .eq('child_id', opts.childId)
-    .eq('archived', false)
-    .order('created_at', { ascending: false })
-    .limit(40);
-  const known = (existing ?? []).map((m) => m.content as string);
-
-  const memories = await extractMemories({ message: opts.message, childName: opts.childName, known });
-  const fresh = memories.filter((m) => !known.some((k) => k.toLowerCase() === m.content.toLowerCase()));
-  if (!fresh.length) return;
-
-  const { error } = await db.from('memories').insert(fresh.map((m) => ({
-    child_id: opts.childId,
-    user_id: opts.userId,
-    kind: m.kind,
-    content: m.content,
-    source: m.source,
-    confidence: m.source === 'parent_said' ? 1 : Math.min(m.confidence, 0.7),
-    sensitive: m.sensitive,
-    decode_id: opts.decodeId,
-  })));
-  if (error) console.error('[memory] insert failed', error.message);
-}
-
-/** Deterministic: an outcome rating becomes a "what worked / what didn't" memory. No model call. */
-export async function rememberOutcome(db: SupabaseClient, opts: {
-  userId: string;
-  childId: string;
-  decodeId: string;
-  scenario: string;
-  analysis: AgentAnalysis | null;
-  outcome: DecodeOutcome;
-}) {
-  if (!opts.analysis?.sayThis) return;
-  const kind: MemoryKind = opts.outcome === 'did_not_work' ? 'what_didnt' : 'what_worked';
-  const situation = opts.scenario.length > 90 ? `${opts.scenario.slice(0, 87)}…` : opts.scenario;
-  const verdict = opts.outcome === 'partly' ? ' (partly)' : '';
-  const content = `${situation} → "${opts.analysis.sayThis}"${verdict}`.slice(0, 480);
-
-  // One outcome memory per decode: replace if the parent changes their rating.
-  await db.from('memories').delete().eq('decode_id', opts.decodeId).in('kind', ['what_worked', 'what_didnt']);
-  const { error } = await db.from('memories').insert({
-    child_id: opts.childId,
-    user_id: opts.userId,
-    kind,
-    content,
-    source: 'decode_outcome',
-    confidence: 1,
-    sensitive: false,
-    decode_id: opts.decodeId,
-  });
-  if (error) console.error('[memory] outcome insert failed', error.message);
 }

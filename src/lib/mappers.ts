@@ -18,6 +18,7 @@ export interface ChildRow {
   profile_notes?: string | null;
   intake_band?: string | null;
   intake_answered?: (keyof TemperamentProfile)[] | null;
+  memory_enabled?: boolean;
 }
 
 export interface DecodeRow {
@@ -26,13 +27,16 @@ export interface DecodeRow {
   scenario: string;
   analysis: AgentAnalysis | null;
   risk_level: RiskLevel;
+  safety_category?: Decode['safetyCategory'];
   outcome: DecodeOutcome | null;
   created_at: string;
+  continuation_of?: string | null;
+  refines?: string | null;
 }
 
 export const CHILD_COLUMNS =
-  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band, intake_answered';
-export const DECODE_COLUMNS = 'id, child_id, scenario, analysis, risk_level, outcome, created_at';
+  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band, intake_answered, memory_enabled';
+export const DECODE_COLUMNS = 'id, child_id, scenario, analysis, risk_level, safety_category, outcome, created_at, continuation_of, refines';
 
 export function childFromRow(row: ChildRow): Child {
   return {
@@ -55,6 +59,7 @@ export function childFromRow(row: ChildRow): Child {
     profileNotes: row.profile_notes ?? null,
     intakeBand: row.intake_band ?? null,
     intakeAnswered: row.intake_answered ?? null,
+    memoryEnabled: row.memory_enabled ?? true,
   };
 }
 
@@ -76,8 +81,11 @@ export function decodeFromRow(row: DecodeRow): Decode {
     scenario: row.scenario,
     analysis: row.analysis,
     riskLevel: row.risk_level,
+    safetyCategory: row.safety_category,
     outcome: row.outcome,
     createdAt: row.created_at,
+    continuationOf: row.continuation_of ?? null,
+    refines: row.refines ?? null,
   };
 }
 
@@ -118,9 +126,15 @@ export interface MemoryRow {
   confidence: number;
   sensitive: boolean;
   created_at: string;
+  archived?: boolean;
+  confirmed_at?: string | null;
+  expires_at?: string | null;
+  edited_at?: string | null;
+  revision?: number;
+  decode_id?: string | null;
 }
 
-export const MEMORY_COLUMNS = 'id, child_id, kind, content, source, confidence, sensitive, created_at';
+export const MEMORY_COLUMNS = 'id, child_id, kind, content, source, confidence, sensitive, created_at, archived, confirmed_at, expires_at, edited_at, revision, decode_id';
 
 export function memoryFromRow(row: MemoryRow): Memory {
   return {
@@ -132,5 +146,11 @@ export function memoryFromRow(row: MemoryRow): Memory {
     confidence: row.confidence,
     sensitive: row.sensitive,
     createdAt: row.created_at,
+    archived: row.archived ?? false,
+    confirmedAt: row.confirmed_at ?? null,
+    expiresAt: row.expires_at ?? null,
+    editedAt: row.edited_at ?? null,
+    revision: row.revision ?? 1,
+    decodeId: row.decode_id ?? null,
   };
 }

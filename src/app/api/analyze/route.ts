@@ -14,7 +14,7 @@ import { processGuidanceJob } from '@/lib/guidance-jobs';
 import type { DecodeStreamEvent } from '@/types';
 
 export const maxDuration = 60;
-const bodySchema = z.object({ childId: z.string().uuid(), scenario: z.string().trim().min(3).max(2000), requestId: z.string().uuid().optional(), refines: z.string().uuid().optional(), answer: z.string().max(200).optional() });
+const bodySchema = z.object({ childId: z.string().uuid(), scenario: z.string().trim().min(3).max(2000), requestId: z.string().uuid().optional(), refines: z.string().uuid().optional(), answer: z.string().max(200).optional(), continues: z.string().uuid().optional() });
 
 export async function POST(req: Request) {
   const access = await requireParentAccess();
@@ -24,12 +24,19 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Describe the situation in a few words (up to 2000 characters).' }, { status: 400 });
   const { childId, refines, answer } = parsed.data;
   let scenario = parsed.data.scenario;
+  let continuationId = parsed.data.continues;
+  if (refines && continuationId) return NextResponse.json({ error: 'Choose a quick follow-up or a new continuation.' }, { status: 400 });
   if (refines) {
-    const { data: root, error } = await supabase.from('decodes').select('scenario,analysis').eq('id', refines).eq('child_id', childId).eq('user_id', user.id).maybeSingle();
+    const { data: root, error } = await supabase.from('decodes').select('scenario,analysis,continuation_of').eq('id', refines).eq('child_id', childId).eq('user_id', user.id).maybeSingle();
     const clarify = root?.analysis?.clarify;
     if (error || !root || !answer || !clarify?.options?.includes(answer)) return NextResponse.json({ error: 'Choose an available follow-up answer for this child.' }, { status: 422 });
+    continuationId = root.continuation_of ?? undefined;
     scenario = `${root.scenario}\n\n${clarify.question} ${answer}`;
     if (scenario.length > 2000) return NextResponse.json({ error: 'Please describe this follow-up as a new, shorter moment.' }, { status: 422 });
+  }
+  if (continuationId) {
+    const previous = await supabase.from('decodes').select('id').eq('id', continuationId).eq('child_id', childId).eq('user_id', user.id).eq('safety_category', 'none').maybeSingle();
+    if (previous.error || !previous.data) return NextResponse.json({ error: 'That earlier situation is no longer available for this child. Start a new moment instead.' }, { status: 422 });
   }
   const abort = new AbortController();
   const signal = AbortSignal.any([req.signal, abort.signal, AbortSignal.timeout(54_000)]);
@@ -56,17 +63,17 @@ export async function POST(req: Request) {
           }
           return;
         }
-        reservation = await reserveGuidance({ id: parsed.data.requestId ?? crypto.randomUUID(), userId: user.id, childId, kind: 'decode', content: { scenario, refines }, refines, free: safety.category !== 'none' });
+        reservation = await reserveGuidance({ id: parsed.data.requestId ?? crypto.randomUUID(), userId: user.id, childId, kind: 'decode', content: { scenario, refines, continuationId }, refines, free: safety.category !== 'none' });
         let resultId = reservation.resultId;
         if (!reservation.complete) {
-          const context = await loadDecodeContext(supabase, childId);
+          const context = await loadDecodeContext(supabase, childId, user.id, continuationId);
           if (!context) throw new Error('Child unavailable');
           const route = await routeMessage(scenario, stageBandFor(context.child.age), context.child.name, signal);
           if (refines) route.clarify = null;
           send({ type: 'status', message: 'Preparing and checking your guidance…' });
           const { analysis } = await decodeBehavior(scenario, context, route, undefined, signal);
           signal.throwIfAborted();
-          resultId = (await completeGuidance(reservation, { scenario, analysis, risk_level: safety.level, safety_category: safety.category, model: DECODE_MODEL })) ?? undefined;
+          resultId = (await completeGuidance(reservation, { scenario, analysis, risk_level: safety.level, safety_category: safety.category, model: DECODE_MODEL, continuation_of: continuationId ?? null })) ?? undefined;
         }
         const { data: row, error } = await supabase.from('decodes').select(DECODE_COLUMNS).eq('id', resultId!).eq('child_id', childId).single<DecodeRow>();
         if (error || !row) throw new Error('Saved result unavailable');
