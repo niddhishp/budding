@@ -1,6 +1,6 @@
 # Family planning and trusted referrals — proposed implementation design
 
-18 October 2026. Status: BMI interpretation and optional Western sun-sign reflection are the immediate release slice. The financial planner, gifts, curated shop and referral operations below are a proposed next programme, not deployed features. User chose simple birth-date sun-sign commentary, not a Vedic birth chart. Existing family data must remain intact.
+18 October 2026. Status: BMI interpretation and optional Western sun-sign reflection are the immediate release slice. Family overview, savings-goal scenarios and the private photo timeline are now deployed; see FAMILY-PLANNER-TIMELINE.md for exact scope and evidence. Gifts, curated shop and referral operations below remain proposed, not deployed features. User chose simple birth-date sun-sign commentary, not a Vedic birth chart. Existing family data must remain intact.
 
 ## Product intent
 
