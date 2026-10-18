@@ -1,2 +1,3 @@
 # Preserve the downloaded reference file byte-for-byte for its published checksum.
 data/reference/WHOref_d.csv binary
+data/reference/cdc-bmi-age.csv binary
