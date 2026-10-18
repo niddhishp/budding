@@ -39,10 +39,16 @@ export default function PrivacyPage() {
         children or build advertising profiles of them.
       </p>
 
+      <h2>How Kahiye uses AI</h2>
+      <p>
+        Kahiye&apos;s custom-designed AI guidance combines research-informed parenting frameworks, age-specific
+        context and safety checks to help you navigate everyday parenting situations.
+      </p>
+
       <h2>Who processes it</h2>
       <ul>
         <li><strong>Supabase</strong>: secure database and sign-in.</li>
-        <li><strong>Anthropic</strong>: the AI model that writes your guidance. Your messages are sent to it to generate a response and are not used to train its models.</li>
+        <li><strong>AI service providers</strong>: process your messages and relevant context to generate Kahiye&apos;s guidance. Your messages are not used to train these providers&apos; models.</li>
         <li><strong>Razorpay</strong>: subscription payments.</li>
         <li><strong>Vercel</strong>: hosting.</li>
         <li><strong>Twilio and WhatsApp/Meta</strong>: delivery of conversations you choose to start on WhatsApp.</li>
