@@ -85,7 +85,7 @@ export function WhatsAppSheet({ onClose }: { onClose: () => void }) {
         ) : code ? (
           <>
             <p className="text-sm text-slate-600 mb-3">Tap below. WhatsApp opens with your code ready — just press send.</p>
-            <p className="text-center font-mono text-3xl tracking-[0.3em] text-slate-850 py-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4">{code}</p>
+            <p className="text-sm text-slate-500 mb-4">Your private connection link expires in 15 minutes. Do not share it.</p>
             {waLink && (
               <Button asChild className="w-full h-14 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-lg">
                 <a href={waLink} target="_blank" rel="noreferrer">Send code on WhatsApp</a>

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { alertEnvelope, processConsultationAlert } from '../../src/lib/consultation-delivery';
-const config = { key:'synthetic',to:'ops@example.invalid',site:'https://www.kahiye.app' };
+const config = { key:'synthetic',to:'ops@example.invalid',from:'Kahiye <alerts@example.invalid>',site:'https://www.kahiye.app' };
 test('operations alert contains only reference and protected link; missing setup cannot send', async()=>{
   assert.equal(alertEnvelope('synthetic-id',{}),null);
   const payload=alertEnvelope('synthetic-id',config)!;

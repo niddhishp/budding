@@ -23,6 +23,7 @@ export default function PrivacyPage() {
         <li><strong>Optional family records:</strong> growth measurements, your chosen chart reference, milestone observations and reminder preferences, saved play activities, and pregnancy preparations and notes. These records stay separate from AI memory and are not automatically sent to an AI provider or clinician.</li>
         <li><strong>What you tell Kahiye:</strong> the situations you describe, notes you log, the guidance generated, and whether it worked.</li>
         <li><strong>Payments:</strong> handled by Razorpay. We store your subscription status and renewal date, never your card or UPI details.</li>
+        <li><strong>Optional WhatsApp:</strong> when you connect it, your phone number, incoming messages, replies and delivery receipts are processed to provide the conversation. Send STOP or disconnect in the app to stop future queued replies. An already in-flight message may still arrive.</li>
       </ul>
 
       <h2>Why we use it</h2>
@@ -44,10 +45,13 @@ export default function PrivacyPage() {
         <li><strong>Anthropic</strong>: the AI model that writes your guidance. Your messages are sent to it to generate a response and are not used to train its models.</li>
         <li><strong>Razorpay</strong>: subscription payments.</li>
         <li><strong>Vercel</strong>: hosting.</li>
+        <li><strong>Twilio and WhatsApp/Meta</strong>: delivery of conversations you choose to start on WhatsApp.</li>
+        <li><strong>Resend</strong>: minimal consultation alerts to the operations team and email delivery receipts. These alerts contain a request reference and protected workspace link, not your concern or child details.</li>
       </ul>
       <p>Some of these providers may process data outside India, under contracts that require them to protect it.</p>
 
       <h2>How long we keep it</h2>
+      <p>Transient WhatsApp transport records are kept for up to seven days; message text is cleared once a reply is prepared and reply text once sending finishes. Saved guidance follows your account history settings. Email webhook receipts retain provider identifiers and delivery status for up to seven days; consultation delivery status stays with its request. Providers maintain their own records under their policies.</p>
       <p>Optional family records remain until you clear them or delete the account. Archived growth measurements remain available for undo; archiving is not deletion. Pregnancy notes can be cleared and observations reset in their respective tools. Account deletion removes these records through the same child and account erasure process.</p>
       <p>For as long as your account is open. When you delete your account, your profile, children, notes and history are deleted immediately; backups roll off within [30] days.</p>
 

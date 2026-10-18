@@ -1,6 +1,6 @@
 import { requireParentAccess } from '@/lib/access';
 import { NextResponse } from 'next/server';
-import { randomInt } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { launchStatus } from '@/lib/launch';
@@ -26,7 +26,7 @@ export async function POST() {
 
   const admin = getAdminSupabase();
   for (let attempt = 0; attempt < 5; attempt++) {
-    const code = String(randomInt(100000, 1000000));
+    const code = randomBytes(16).toString('hex').toUpperCase();
     const { error } = await admin.from('whatsapp_link_codes').upsert({
       user_id: user.id,
       code,

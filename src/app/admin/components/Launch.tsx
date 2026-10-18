@@ -1,4 +1,5 @@
 import { launchStatus } from "@/lib/launch";
+import { ProviderDelivery } from './ProviderDelivery';
 export function LaunchReadiness() {
   const status = launchStatus();
   const checks = [
@@ -10,12 +11,12 @@ export function LaunchReadiness() {
     [
       "Consultation email alerts",
       status.operationsEmail,
-      "Requires Resend and an operations recipient. Verify sender-domain delivery before relying on email; the admin queue remains authoritative.",
+      "Requires Resend, an explicit verified sender and an operations recipient. Signed callbacks distinguish delivery, delays, bounces and complaints; the admin queue remains authoritative.",
     ],
     [
       "WhatsApp service",
       status.whatsapp,
-      "Not open for use. The existing sandbox integration needs verified business onboarding and durable inbound/outbound delivery before activation.",
+      "Requires explicit activation, an approved Twilio WhatsApp sender, matching displayed number and the recovery worker secret. Durable jobs and signed delivery receipts are installed; verify a real test conversation before opening the channel.",
     ],
   ] as const;
   return (
@@ -36,6 +37,8 @@ export function LaunchReadiness() {
           </section>
         ))}
       </div>
+      <ProviderDelivery />
+      <p className="text-sm text-muted-foreground">Email receipt verification: {process.env.RESEND_WEBHOOK_SECRET?'Configured':'Signing secret needed'}. Recovery worker: {(process.env.CRON_SECRET?.length??0)>=32?'Secret configured — verify the last completed pass below':'Secret needed'}.</p>
       <section className="border-t mt-6 pt-6">
         <h2 className="font-heading text-2xl">Owner’s release checklist</h2>
         <ul className="list-disc pl-5 mt-5 space-y-4 max-w-2xl">
@@ -64,9 +67,9 @@ export function LaunchReadiness() {
             available capacity.
           </li>
           <li>
-            For WhatsApp, complete business verification and build durable
-            delivery with replay protection, retry visibility and atomic account
-            linking before opening the channel.
+            For WhatsApp, register the purchased number as an approved business
+            sender. Verify linking, a reply, STOP, duplicate webhooks and delivery
+            callbacks with an owned test number before opening the channel.
           </li>
         </ul>
         <p className="text-sm text-muted-foreground mt-6">

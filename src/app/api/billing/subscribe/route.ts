@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getAdminSupabase } from '@/lib/supabase-admin';
 import { getEntitlement, getRazorpay, planIdFor } from '@/lib/billing';
 import { launchStatus } from '@/lib/launch';
+import { checkPaymentPlan } from '@/lib/payment-checks';
 
 const bodySchema = z.object({ interval: z.enum(['monthly', 'yearly']) });
 
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
   if (entitlement.plan === 'plus') return NextResponse.json({ error: 'You already have Kahiye Plus.' }, { status: 409 });
 
   try {
+    await checkPaymentPlan(interval);
     const admin=getAdminSupabase();
     const {data:reservation,error:reservationError}=await admin.rpc('reserve_billing_checkout',{target:user.id});
     if(reservationError)throw reservationError;
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
       email: user.email,
     });
   } catch (error) {
-    console.error('[billing] subscribe failed', error);
+    console.error('[billing] subscribe failed', { name: error instanceof Error ? error.name : 'unknown' });
     return NextResponse.json({ error: 'We could not start checkout. Please try again.' }, { status: 502 });
   }
 }

@@ -4,7 +4,7 @@ import { getAdminSupabase } from './supabase-admin';
 
 type Configuration = { key?: string; to?: string; from?: string; site?: string };
 export function alertEnvelope(id: string, config: Configuration) {
-  if (!config.key || !config.to) return null;
+  if (!config.key || !config.to || !config.from) return null;
   const url = new URL(`/admin/consultations/${id}`, config.site || 'https://www.kahiye.app');
   if (url.protocol !== 'https:') throw new Error('Invalid operations link');
   return { from: config.from || 'Kahiye <alerts@kahiye.app>', to: config.to, subject: 'A Kahiye consultation needs coordination', text: `Open the protected team workspace to review request ${id}:\n${url}\n\nThis alert is not confirmation that the parent has been contacted.` };

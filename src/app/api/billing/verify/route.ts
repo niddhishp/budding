@@ -6,12 +6,12 @@ import { getAdminSupabase } from '@/lib/supabase-admin';
 import { getEntitlement } from '@/lib/billing';
 
 const bodySchema = z.object({
-  razorpay_payment_id: z.string().min(1),
-  razorpay_subscription_id: z.string().min(1),
-  razorpay_signature: z.string().min(1),
+  razorpay_payment_id: z.string().min(1).max(100),
+  razorpay_subscription_id: z.string().min(1).max(100),
+  razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
 });
 
-// Called by Checkout's success handler. Grants access immediately; the webhook keeps it in sync afterwards.
+// Checkout verifies ownership/signature; only a captured-charge webhook grants access.
 export async function POST(req: Request) {
   const supabase = await getServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();

@@ -9,31 +9,21 @@ function getTwilio() {
     const sid = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
     if (!sid || !token) throw new Error('TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN are not set. See .env.example.');
-    client = twilio(sid, token);
+    client = twilio(sid, token, { timeout: 8000, autoRetry: false });
   }
   return client;
-}
-
-/** The public URL Twilio posts to; must match the Console setting exactly for signature checks. */
-export function webhookUrl() {
-  return process.env.TWILIO_WEBHOOK_URL
-    || `${(process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '')}/api/whatsapp/webhook`;
-}
-
-export function isValidTwilioRequest(signature: string, params: Record<string, string>) {
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  if (!token || !signature) return false;
-  return twilio.validateRequest(token, signature, webhookUrl(), params);
 }
 
 // Twilio rejects WhatsApp bodies over 1600 characters.
 const MAX_BODY = 1600;
 
-export async function sendWhatsApp(to: string, body: string) {
+export async function sendWhatsApp(to: string, body: string, statusCallback: string) {
   const from = process.env.TWILIO_WHATSAPP_FROM;
   if (!from) throw new Error('TWILIO_WHATSAPP_FROM is not set. See .env.example.');
-  const text = body.length > MAX_BODY ? `${body.slice(0, MAX_BODY - 1)}…` : body;
-  await getTwilio().messages.create({ from, to: to.startsWith('whatsapp:') ? to : `whatsapp:${to}`, body: text });
+  if(body.length>MAX_BODY)throw new Error('Reply exceeds transport limit');
+  const text = body;
+  const message = await getTwilio().messages.create({ from, to: to.startsWith('whatsapp:') ? to : `whatsapp:${to}`, body: text, statusCallback });
+  return message.sid;
 }
 
 /** Safety protocol as its own message, sent before any guidance. */
@@ -62,7 +52,8 @@ export function formatDecode(childName: string, analysis: AgentAnalysis, safety:
   parts.push(`*Later, when calm:* ${analysis.afterwards}`);
   if (analysis.seekHelpIf) parts.push(`*Talk to a professional if:* ${analysis.seekHelpIf}`);
   parts.push("Did it work? Reply *1* worked · *2* partly · *3* didn't");
-  return parts.join(NL + NL);
+  const complete=parts.join(NL + NL);
+  return complete.length<=MAX_BODY?complete:'Your guidance has been saved in Kahiye. Open https://www.kahiye.app/app to read the complete response, including the safety and follow-up notes. For immediate support, visit https://www.kahiye.app/help-now.';
 }
 
 export const WHATSAPP_HELP = [

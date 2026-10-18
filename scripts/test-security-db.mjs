@@ -44,6 +44,8 @@ try {
   await import('./test-capacity-db.mjs');
   await client.query(readFileSync('tests/sql/family-resources.sql','utf8'));
   console.log('PASS: private care/growth ownership, consent, revisions, retry, archive/undo, billing replay/order and erasure. Fixtures rolled back.');
+  await client.query(readFileSync('tests/sql/provider-delivery.sql','utf8'));
+  console.log('PASS: provider transport permissions, atomic linking, receipts, leases, STOP/consent, delivery ordering, ambiguous sends and erasure. Fixtures rolled back.');
 } finally {
   await client.query('rollback');
   await client.end();
