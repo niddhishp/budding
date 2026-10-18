@@ -73,3 +73,17 @@ Do not enable billing/WhatsApp switches merely because keys have been entered. N
 The production build passed; 45 HTTP route/auth/origin checks passed against it. Updated Next.js from 15.5.15 to 15.5.28; pinned patched PostCSS/Sharp through overrides and updated compatible transitive packages. The production dependency audit reports zero known advisories at verification time. A patched AVIF encoder smoke test passed. Development-tool advisories remain separate from the deployed runtime; no forced major framework upgrade was made.
 
 The Vercel Pro plan was verified. A fresh server-only CRON_SECRET was installed for Production without exposing its value. No existing credentials were overwritten. Production release evidence follows below.
+
+## Production release, 18 October 2026
+
+Code `908e79cc20f1cebcdaf16e63510e383b015b39a1` passed [CI 39098142652](https://github.com/niddhishp/budding/actions/runs/39098142652), including all provider/SQL tests and the production build. Main was fast-forwarded to that exact commit. Vercel deployment `dpl_5hxBr3zK1VPxCNYu2Lp3vAp6357e` is Ready at https://budding-9upttlfh6-reactic.vercel.app, with both Kahiye domains assigned; its production commit metadata matches.
+
+Migration 018 applied at 04:47:29.661066 UTC and is recorded in `_budding_migrations`. All before/after fingerprints matched: children 1 / `34bf618b4fa232dfff3b05f44485e7c0`; consents 1 / `8c1e356407206a52b355b2e84ddd06fa`; admin memberships 1 / `788305158078c020993a553041b9f34e`; subscriptions, WhatsApp links/codes, consultation requests/alerts, experts, memories and decodes each remained empty / `d751713988987e9331980363e24189ce`. All three new tables have RLS, no anonymous reads and no authenticated direct inserts. Security advisor warnings are unchanged (public extensions and leaked-password protection); three additional informational RLS-without-policy findings are intentional server-only transport/health tables.
+
+Live checks: public articles load, anonymous provider/worker requests return 401, unconfigured email/WhatsApp callbacks return 503. The authenticated worker returned 200 with zero failures. Vercel confirms the minute schedule is active for this deployment; the worker heartbeat records successful completion with no error. No messages or provider transactions were created. A five-minute error-log scan ending 04:49:41 UTC returned zero records; this is a bounded check, not a monitoring guarantee.
+
+The real owner/MFA session loaded the new Launch readiness controls. **The actual Razorpay API verified both existing TEST plans at INR 299/month and INR 1,999/year**, with matching intervals. This verifies credentials and plan configuration, not checkout authorization, capture or renewal. Those provider transaction tests remain pending. The screen correctly shows email and WhatsApp unconfigured and the recovery worker configured. Desktop proof was saved; mobile layout dimensions were also checked with no horizontal overflow.
+
+Pausing future subscription collections now preserves access through the already captured paid period, aligned in application and database quota checks. No paid access was granted to any real account during tests.
+
+Rollback: retain additive tables, receipts and user data. Disable the affected provider switch/configuration if needed; do not reset delivery leases or uncertain send records blindly. Keep the patched framework and paid-period checks when repairing forward. The release's cron route requires the configured secret and cannot be invoked anonymously.
