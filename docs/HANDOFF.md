@@ -3,7 +3,9 @@
 Read this first when resuming work. Update it at the end of every working session.
 Last updated: 2026-10-18.
 
-**Current deployed release:** [Phase 4 - memory controls and situation continuity](MEMORY-CONTINUITY.md), code `1fd7a66`, migration 014. Parent review/correction, privacy, review dates, stop/undo, per-child pause, and explicit continuation of saved situations are live. CI, 31 unit/server tests, disposable SQL security/continuity tests, HTTP and browser verification passed. Production is Ready on both Kahiye domains; signed-in screens and unchanged record fingerprints verified.
+**Current deployed release:** [Phase 5 - expert capacity and consultation delivery](CONSULTATION-DELIVERY.md), code `ccaf08d`, migration 015. Expert workload/daily limits and booking buffers, overdue/unassigned/alert queues, contact outcomes and follow-up dates, plus durable operations email receipts/retries are live. CI, 35 unit/server tests, SQL security/concurrency suites, 32 HTTP checks and desktop/mobile browser tests passed. Production is Ready on both domains; existing record fingerprints are unchanged. Real operations email remains unconfigured (`RESEND_API_KEY` and `EXPERT_NOTIFY_EMAIL` absent); no real messages were sent during testing.
+
+**Previous deployed release:** [Phase 4 - memory controls and situation continuity](MEMORY-CONTINUITY.md), code `1fd7a66`, migration 014. Parent review/correction, privacy, review dates, stop/undo, per-child pause, and explicit continuation of saved situations are live. CI, 31 unit/server tests, disposable SQL security/continuity tests, HTTP and browser verification passed. Production is Ready on both Kahiye domains; signed-in screens and unchanged record fingerprints verified.
 
 **Previous deployed release:** [Phase 3 — playful onboarding](PLAYFUL-ONBOARDING.md), code `05d5a7a`, migration 013. Optional four-scene quiz, quick first help, explicit unanswered observations, preserved edits and anonymous new share links. CI, database/security tests, mobile/keyboard and save/retry browser checks passed. Production is Ready on both Kahiye domains; the signed-in family app loads successfully. Existing child data fingerprint and record counts are unchanged. See the linked record for exact release evidence.
 
@@ -11,7 +13,7 @@ Last updated: 2026-10-18.
 
 **Sign-in:** existing email address as username plus password. Signup and recovery use one-time verification links. Admin access still requires MFA.
 
-**Next after phase 4:** expert capacity, overdue handling and delivery operations (phase 5); billing/webhook reconciliation, SMTP, WhatsApp delivery and launch gates (phase 6). Human expert roster, clinical/content review, legal identity/contact details and provider activation need real operational inputs. Never invent them.
+**Next after phase 5:** billing/webhook reconciliation, SMTP, WhatsApp delivery and launch gates (phase 6). Human expert roster, clinical/content review, legal identity/contact details and provider activation need real operational inputs. Never invent them.
 
 The infrastructure/work notes below are historical. In particular, statements that agents-v2 is uncommitted or migration 006 is unapplied are superseded by the release records above.
 
