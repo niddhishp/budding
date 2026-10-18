@@ -30,3 +30,17 @@ Amazon credentials belong in Vercel, not chat. Account/site approval, live provi
 - Prices and product images are not copied into the catalogue. Original editorial descriptions and category illustrations are used; current price, variants and checkout stay on Amazon. Live media/price enrichment can be added after provider activation with Amazon licence-compliant refresh/retention.
 - Financial referral activation is a separate environment switch. No financial partner is seeded or claimed approved. Aggregate settlement records are manual entries from provider statements, not measured conversions or automatic payout feeds.
 - Existing private family/photo records and erasure recovery remain intact. Roll back application code only; do not drop populated new tables. Keep the family-photo deletion worker when rolling back any release after photo uploads.
+
+## Release verification — 18 October 2026
+- Production application code: `01fbe5ea88c5e3a892f74af22d3f258e15dd69b9` on main.
+- GitHub Verify Kahiye: `39108328638` passed on that exact revision; initial implementation run `39108189962` also passed.
+- Vercel: `dpl_9Vsu9zPExj1w8c7JS9sQjeX4rALJ`, Ready, https://budding-ax96xn360-reactic.vercel.app, aliases www.kahiye.app and kahiye.app.
+- 52 unit tests and 22 server tests passed; lint, TypeScript and production build passed. Production dependency audit: zero reported vulnerabilities.
+- Clean disposable PostgreSQL applied all 21 migrations; ownership/consent, no direct client writes, staff MFA, revisions/retries, audit, discovery claim limits and erasure passed. Existing provider signature/concurrency and family-photo suites passed.
+- Actual shop and admin route handlers ran against isolated SQL: save/retry, conflicts, rejection/undo, private evidence redaction, paused-product hiding and admin role access. Creators API transport was simulated; real Amazon access is not verified until credentials are configured.
+- Production migration atomically compared fingerprints of all existing public application tables (except the migration ledger), auth users/identities/sessions and storage objects. All matched; otherwise it would have rolled back.
+- Security advisors: unchanged two public-extension warnings and leaked-password-protection warning. Two additional no-policy informational findings are intentional for service-only catalogue/discovery tables.
+- Signed-in desktop 1280x720 and mobile 390x844: Shop, preference controls, Gifts, reward fields, Plan entry points, financial setup state and default horoscope checked. No console errors, no horizontal page overflow. All test forms cancelled. Product purchase/real API delivery/payouts not exercised.
+- Live `/admin/shop` correctly required MFA; no authentication state was modified. Full admin browser visual check awaits an authenticated team session; admin HTTP/SQL behavior is covered by isolated tests.
+- Anonymous shop/admin APIs and unauthenticated discovery cron return 401. Final production counts: shop records 0, catalogue records 0, discovery runs 0, pending photo erasure 0.
+- Owner confirmed an Amazon India Associates account exists but requested engineering first; remaining provider setup and finance partners will be configured later.
