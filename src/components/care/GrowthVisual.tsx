@@ -218,6 +218,11 @@ export function GrowthVisual({
             BMI uses height and weight from this one record. Adult BMI ranges do
             not apply.
           </p>
+          {bmi?.guidance && <div className="mt-5 border-t border-slate-300/60 pt-4">
+            <h3 className="font-medium text-sm">{bmi.guidance.title}</h3>
+            <p className="text-sm text-slate-600 leading-relaxed mt-2">{bmi.guidance.text}</p>
+            <a className="text-xs text-clay underline inline-block mt-3" href="https://www.cdc.gov/bmi/child-teen-calculator/bmi-categories.html" target="_blank" rel="noreferrer">How child BMI ranges are interpreted ↗</a>
+          </div>}
         </div>
       }
     </section>

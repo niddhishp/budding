@@ -17,6 +17,7 @@ import { WeekGuideCard } from "@/components/WeekGuideCard";
 import { GrowthSnapshot } from "@/components/care/GrowthSnapshot";
 import { HealthUpcoming } from "@/components/care/HealthUpcoming";
 import { MilestoneNotice } from "@/views/MilestonesPage";
+import { HoroscopeCard } from '@/components/care/HoroscopeCard';
 
 const SPRING_TRANSITION = {
   type: "spring",
@@ -245,6 +246,7 @@ export function DashboardPage() {
         ))}
 
         <div className="text-center pt-6">
+          {!isPregnancy && <HoroscopeCard key={selectedChild.id} child={selectedChild} />}
           <Sparkles className="w-6 h-6 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-400 text-sm">You are caught up for today.</p>
         </div>

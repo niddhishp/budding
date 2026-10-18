@@ -11,6 +11,7 @@ import { Star, Circle, Target, RefreshCw } from "lucide-react";
 import { WeeklyReportCard } from "@/components/WeeklyReportCard";
 import { MemoryPanel } from "@/components/MemoryPanel";
 import { intakeBandForAge } from "@/lib/temperament";
+import { HoroscopeCard } from '@/components/care/HoroscopeCard';
 
 const SPRING_TRANSITION = {
   type: "spring",
@@ -90,6 +91,7 @@ export function ChildProfilePage() {
       {child.age.stage !== "pregnancy" && (
         <WeeklyReportCard key={child.id} child={child} />
       )}
+      {child.age.stage !== 'pregnancy' && <HoroscopeCard key={`sign-${child.id}`} child={child} profile />}
 
       <div className="grid md:grid-cols-12 gap-12">
         {/* Left Column - The Memory Timeline */}
