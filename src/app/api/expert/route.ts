@@ -1,5 +1,6 @@
+import { processConsultationAlert } from '@/lib/consultation-delivery';
 import { requireParentAccess } from '@/lib/access';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { z } from 'zod';
 import { STORY_LANGUAGES } from '@/lib/plans';
 import { getServerSupabase } from '@/lib/supabase-server';
@@ -72,38 +73,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'We could not send your request. Please try again.' }, { status: 500 });
   }
 
-  await notifyOps({ id: data.id, email: user.email ?? '', phone, concern, preferredLanguage, preferredTime, source });
+  after(async () => {
+    try { await processConsultationAlert(data.id); }
+    catch { console.warn('[consultation] operations alert pending review'); }
+  });
   return NextResponse.json({ ok: true });
-}
-
-async function notifyOps(r: {
-  id: string; email: string; phone: string; concern: string;
-  preferredLanguage: string; preferredTime?: string; source: string;
-}) {
-  const key = process.env.RESEND_API_KEY;
-  const to = process.env.EXPERT_NOTIFY_EMAIL;
-  if (!key || !to) return;
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'Kahiye <alerts@kahiye.app>',
-        to,
-        subject: `${r.source === 'safety' ? '⚠️ Safety-flagged ' : ''}Expert request · ${r.preferredLanguage}`,
-        text: [
-          `Request ${r.id} (source: ${r.source})`,
-          `Parent: ${r.email}`,
-          `Phone: ${r.phone}`,
-          `Language: ${r.preferredLanguage}`,
-          `Preferred time: ${r.preferredTime || '—'}`,
-          '',
-          r.concern,
-        ].join('\n'),
-      }),
-    });
-    if (!res.ok) console.error('[expert] notify failed', res.status, await res.text());
-  } catch (error) {
-    console.error('[expert] notify failed', error);
-  }
 }

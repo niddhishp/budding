@@ -39,6 +39,9 @@ try {
   await client.query(readFileSync('tests/sql/memory-continuity.sql','utf8'));
   console.log('PASS: memory revisions, ownership, corrections, stop/rerate, pause, pending extraction and continuity boundaries. Fixtures rolled back.');
   await import('./test-guidance-db.mjs');
+  await client.query(readFileSync('tests/sql/consultation-delivery.sql','utf8'));
+  console.log('PASS: expert capacity, booking buffers, daily limits, overdue queues, contact receipts, delivery leases, retry limits and erasure. Fixtures rolled back.');
+  await import('./test-capacity-db.mjs');
 } finally {
   await client.query('rollback');
   await client.end();

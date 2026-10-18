@@ -4,6 +4,7 @@ export function adminJson(value: unknown, status = 200) {
   return NextResponse.json(value, { status, headers: { 'Cache-Control': 'private, no-store' } });
 }
 const expectedErrors = new Set([
+  'This expert is not accepting new requests.', 'This expert has reached their open request limit.', 'This expert has reached their daily session limit.', 'Choose a future follow-up time.', 'Closed requests cannot receive new contact attempts.', 'This contact receipt has already been used.',
   'This expert changed. Reload before saving.', 'This request changed. Reload before saving.',
   'Link an active therapist team member with a verified email first.', 'Record how credentials were checked.',
   'Parent consent is withdrawn. Only cancellation is available.', 'That status transition is not available.',

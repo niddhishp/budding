@@ -1,11 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { expertSchema, consultationSchema, TRANSITIONS, localDateTime } from '../src/lib/admin-operations';
+import { expertSchema, consultationSchema, contactSchema, TRANSITIONS, localDateTime } from '../src/lib/admin-operations';
 
 test('expert validation rejects invalid age bands, unsupported fees and unsubstantiated credential review', () => {
   const valid = { name: 'Test Expert', title: 'Psychologist', qualifications: 'Test degree', specialties: 'Parenting', languages: 'English', age_min: 3, age_max: 10, pregnancy_support: false, email: '', phone: '', fee_inr: 1200, session_minutes: 45, active: true, reviewed: false, staff_email: '' };
   assert.equal(expertSchema.safeParse(valid).success, true);
-  for (const change of [{ age_max: 2 }, { fee_inr: -1 }, { session_minutes: 0 }, { reviewed: true }, { staff_email: 'not an email' }, { id: 'a0000000-0000-4000-8000-000000000001' }]) assert.equal(expertSchema.safeParse({ ...valid, ...change }).success, false);
+  for (const change of [{ max_open_requests: 0 },{ daily_session_limit: 25 },{ buffer_minutes: -1 },{ age_max: 2 }, { fee_inr: -1 }, { session_minutes: 0 }, { reviewed: true }, { staff_email: 'not an email' }, { id: 'a0000000-0000-4000-8000-000000000001' }]) assert.equal(expertSchema.safeParse({ ...valid, ...change }).success, false);
+});
+
+test('contact receipts require a bounded outcome, revision and timezone',()=>{
+  const valid={id:'a0000000-0000-4000-8000-000000000001',event_id:'a0000000-0000-4000-8000-000000000002',version:1,channel:'phone',outcome:'no_answer',follow_up_at:'2027-01-01T10:30:00+05:30',note:''};
+  assert.equal(contactSchema.safeParse(valid).success,true);
+  for(const change of [{outcome:'delivered'},{version:0},{event_id:''},{follow_up_at:'2027-01-01T10:30'},{note:'x'.repeat(2001)}])assert.equal(contactSchema.safeParse({...valid,...change}).success,false);
 });
 test('scheduling requires expert and explicit timezone; terminal states do not reopen', () => {
   const payload = { id: 'a0000000-0000-4000-8000-000000000001', version: 1, status: 'scheduled', expert_id: null, scheduled_at: null, note: '' };
