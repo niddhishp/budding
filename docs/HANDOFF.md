@@ -3,7 +3,11 @@
 Read this first when resuming work. Update it at the end of every working session.
 Last updated: 2026-10-18.
 
-**Current deployed release:** [Phase 5 - expert capacity and consultation delivery](CONSULTATION-DELIVERY.md), code `ccaf08d`, migration 015. Expert workload/daily limits and booking buffers, overdue/unassigned/alert queues, contact outcomes and follow-up dates, plus durable operations email receipts/retries are live. CI, 35 unit/server tests, SQL security/concurrency suites, 32 HTTP checks and desktop/mobile browser tests passed. Production is Ready on both domains; existing record fingerprints are unchanged. Real operations email remains unconfigured (`RESEND_API_KEY` and `EXPERT_NOTIFY_EMAIL` absent); no real messages were sent during testing.
+**Current deployed release:** [Phase 6 - family resources and launch foundations](FAMILY-RESOURCES-LAUNCH.md), code `cea1e0117db2cbac97874eedc0e02cabc2f4e056`, migrations 016–017. Discover links twenty public parenting guides, growth records with WHO birth-to-two reference charts, optional in-app milestone notices through age five, twelve play activities and pregnancy preparation/private notes. Billing receipts now handle duplicates, ordering, paid-period expiry and checkout reservations; `/admin/launch` exposes operational readiness. CI, 42 unit/server tests, database security/concurrency suites, 40 HTTP checks and desktop/mobile persistence/error tests passed. Deployment `dpl_6ch2V7NSFRz1z9jcLjAudqvz8sRy` is Ready on the production domains. All twenty live article pages and the signed-in growth screen were verified. Existing record fingerprints are unchanged; no production test families or real provider transactions/messages were created.
+
+**Remaining commercial-launch work:** real provider testing/activation and SMTP; durable WhatsApp inbound/outbound delivery and verified sender setup; real expert roster, clinical review, legal identity/grievance details. Paid checkout and WhatsApp remain closed. Articles are version-controlled, not an admin CMS; milestone notices are in-app, not push/email. Do not describe the commercial-launch checklist as complete.
+
+**Previous deployed release:** [Phase 5 - expert capacity and consultation delivery](CONSULTATION-DELIVERY.md), code `ccaf08d`, migration 015. Expert workload/daily limits and booking buffers, overdue/unassigned/alert queues, contact outcomes and follow-up dates, plus durable operations email receipts/retries are live. CI, 35 unit/server tests, SQL security/concurrency suites, 32 HTTP checks and desktop/mobile browser tests passed. Production is Ready on both domains; existing record fingerprints are unchanged. Real operations email remains unconfigured (`RESEND_API_KEY` and `EXPERT_NOTIFY_EMAIL` absent); no real messages were sent during testing.
 
 **Previous deployed release:** [Phase 4 - memory controls and situation continuity](MEMORY-CONTINUITY.md), code `1fd7a66`, migration 014. Parent review/correction, privacy, review dates, stop/undo, per-child pause, and explicit continuation of saved situations are live. CI, 31 unit/server tests, disposable SQL security/continuity tests, HTTP and browser verification passed. Production is Ready on both Kahiye domains; signed-in screens and unchanged record fingerprints verified.
 
@@ -13,7 +17,7 @@ Last updated: 2026-10-18.
 
 **Sign-in:** existing email address as username plus password. Signup and recovery use one-time verification links. Admin access still requires MFA.
 
-**Next after phase 5:** billing/webhook reconciliation, SMTP, WhatsApp delivery and launch gates (phase 6). Human expert roster, clinical/content review, legal identity/contact details and provider activation need real operational inputs. Never invent them.
+**Next after this release:** finish the remaining commercial-launch work above. Billing reconciliation foundations and the launch-readiness screen are deployed; real provider end-to-end checks and operational inputs are still required. Never invent experts, clinical approval, provider verification or legal identity.
 
 The infrastructure/work notes below are historical. In particular, statements that agents-v2 is uncommitted or migration 006 is unapplied are superseded by the release records above.
 

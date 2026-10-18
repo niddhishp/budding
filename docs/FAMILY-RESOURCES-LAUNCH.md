@@ -44,3 +44,19 @@ Before enabling paid plans, finish provider test-mode reconciliation, successful
 Resend recipient/sender configuration, authentication SMTP, verified WhatsApp delivery, the real expert roster, named clinical review and legal entity/grievance details remain operational release gates. Do not change article review labels until a real review has occurred. This delivery adds family tools and launch foundations; it does not claim the commercial-launch checklist is complete.
 
 Migrations are additive. Roll back application code if needed and retain the new tables and user records. Never drop care records or reset existing family data as a rollback step. Reverting to old billing code would restore its incorrect access rules; keep checkout closed during any rollback.
+
+## Production database verification
+
+Migration 016 applied at 2026-10-18 04:13:21 UTC; 017 at 04:13:24 UTC, with matching `_budding_migrations` entries. Before/after counts and ordered JSON fingerprints matched exactly: children 1 (`34bf618b4fa232dfff3b05f44485e7c0`), consents 1 (`8c1e356407206a52b355b2e84ddd06fa`), admin memberships 1 (`788305158078c020993a553041b9f34e`). Experts, consultation requests, memories, decodes and subscriptions remained empty (`d751713988987e9331980363e24189ce`). No existing rows were rewritten. All four new tables have RLS; anonymous reads and authenticated direct inserts are denied.
+
+Security advisor findings: no new warnings. Two new informational “RLS without policies” findings are intentional server-only billing tables with anonymous/authenticated privileges revoked. The existing [public extension warnings](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public) for vector/pg_trgm and [disabled leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) remain. Review these separately before commercial launch; do not move extensions blindly and break existing indexes/functions. [Server-only RLS information](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+
+GitHub CI [39096265823](https://github.com/niddhishp/budding/actions/runs/39096265823) passed every step for code commit `cea1e0117db2cbac97874eedc0e02cabc2f4e056`, including a clean database bootstrap through 017. Main was fast-forwarded from `ccaf08d` to that exact commit after CI success.
+
+## Production release and final checks
+
+Vercel deployment `dpl_6ch2V7NSFRz1z9jcLjAudqvz8sRy` is Ready, production target, exact code commit above. Deployment URL: https://budding-hd77tlb8p-reactic.vercel.app. Production aliases include https://www.kahiye.app and kahiye.app.
+
+Live verification: article index and all twenty detail pages returned HTTP 200 with their source sections; the sitemap contains all twenty. `/api/availability` reports billing and WhatsApp false. Unauthenticated care requests return 401; private app and admin launch routes redirect to login. A short production error-log query at 04:16:27 UTC returned no records in its five-minute window; this is a bounded smoke check, not an ongoing monitoring claim.
+
+The existing authenticated family session loaded the new Discover destination and growth screen successfully, including its empty measurement history and explicit reference choice. No real family data was changed. A public article-library screenshot was captured after deployment. Temporary test browser tabs, local application/test adapters and the disposable test database were stopped; the user's original app tab was preserved.
