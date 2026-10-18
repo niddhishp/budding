@@ -27,6 +27,7 @@ const GrowthPage=dynamic(()=>import('@/views/GrowthPage').then(m=>m.GrowthPage))
 const MilestonesPage=dynamic(()=>import('@/views/MilestonesPage').then(m=>m.MilestonesPage));
 const PlayPage=dynamic(()=>import('@/views/PlayPage').then(m=>m.PlayPage));
 const PregnancyPage=dynamic(()=>import('@/views/PregnancyPage').then(m=>m.PregnancyPage));
+const ParentSpacePage=dynamic(()=>import('@/views/ParentSpacePage').then(m=>m.ParentSpacePage));
 
 function PlatformApp() {
   const { status, error, load, currentPage, addingChild, editingChildId, children, consentNeeded, expert, selectedChildId } = useAppStore();
@@ -67,6 +68,7 @@ function PlatformApp() {
       case 'interests': return <InterestsPage />;
       case 'play': return <PlayPage />;
       case 'pregnancy': return <PregnancyPage />;
+      case 'parent-space': return <ParentSpacePage />;
       case 'emotional-lab': return <EmotionalLabPage />;
       case 'parent-coach': return <ParentCoachPage />;
       case 'family-hub': return <FamilyHubPage />;

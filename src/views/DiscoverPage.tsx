@@ -1,41 +1,7 @@
 import Link from "next/link";
-import { useAppStore, type Page } from "@/stores/appStore";
+import { useAppStore } from "@/stores/appStore";
+import { discoverTools } from '@/lib/discover-tools';
 import { CareFrame } from "@/components/care/CareFrame";
-const tools: {
-  page: Page;
-  title: string;
-  description: string;
-  number: string;
-}[] = [
-  {
-    page: "growth",
-    title: "A picture of their growth",
-    description:
-      "Height, weight and head measurements, kept together. WHO infant reference charts where supported.",
-    number: "01",
-  },
-  {
-    page: "milestones",
-    title: "Notice what is changing",
-    description:
-      "Save small observations and choose gentle milestone reminders, from infancy to five years.",
-    number: "02",
-  },
-  {
-    page: "play",
-    title: "Make room for play",
-    description:
-      "Low-preparation invitations for movement, discovery and time together.",
-    number: "03",
-  },
-  {
-    page: "pregnancy",
-    title: "Your pregnancy space",
-    description:
-      "Week and trimester context, questions for appointments and a practical support plan.",
-    number: "04",
-  },
-];
 export function DiscoverPage() {
   const { children, selectedChildId, setPage } = useAppStore();
   const child = children.find((c) => c.id === selectedChildId);
@@ -49,7 +15,7 @@ export function DiscoverPage() {
         className="block bg-paper-deep rounded-2xl p-6 sm:p-8 mb-8 group"
       >
         <p className="text-sm text-clay mb-3">
-          The reading room · 20 practical guides
+          The reading room · Early-years collection
         </p>
         <h2 className="font-heading text-3xl">
           Small questions.
@@ -62,23 +28,13 @@ export function DiscoverPage() {
         </p>
       </Link>
       <div className="divide-y">
-        {[...tools]
-          .sort((a, b) =>
-            child?.age.stage === "pregnancy"
-              ? a.page === "pregnancy"
-                ? -1
-                : b.page === "pregnancy"
-                  ? 1
-                  : 0
-              : 0,
-          )
-          .map((t) => (
+        {discoverTools(child?.age.stage === 'pregnancy').map((t, index) => (
             <button
               key={t.page}
               className="w-full text-left grid grid-cols-[36px_1fr_20px] gap-4 py-7 group"
               onClick={() => setPage(t.page)}
             >
-              <span className="text-sm text-clay pt-1">{t.number}</span>
+              <span className="text-sm text-clay pt-1">{String(index + 1).padStart(2, '0')}</span>
               <span>
                 <span className="font-heading text-2xl group-hover:text-clay">
                   {t.title}

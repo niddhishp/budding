@@ -12,7 +12,7 @@ export function BottomNav() {
       <div className="grid grid-cols-5">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentPage === item.id || (item.id === 'child-profile' && ['growth','health','interests'].includes(currentPage)) || (item.id === 'discover' && ['milestones','development','play','pregnancy'].includes(currentPage)) || (item.id === 'ask-ai' && currentPage === 'library');
+          const isActive = currentPage === item.id || (item.id === 'child-profile' && ['growth','health','interests'].includes(currentPage)) || (item.id === 'discover' && ['milestones','development','play','pregnancy','parent-space'].includes(currentPage)) || (item.id === 'ask-ai' && currentPage === 'library');
           return (
             <button
               key={item.id}

@@ -6,7 +6,7 @@ import type { Entitlement } from '@/lib/plans';
 import type { Child, FamilyRoutine, ParentWellbeingEntry, TemperamentProfile } from '@/types';
 
 export type Page =
-  | 'health' | 'interests' | 'discover' | 'growth' | 'milestones' | 'play' | 'pregnancy'
+  | 'parent-space' | 'health' | 'interests' | 'discover' | 'growth' | 'milestones' | 'play' | 'pregnancy'
   | 'dashboard' | 'ask-ai' | 'library' | 'child-profile' | 'development' | 'emotional-lab'
   | 'parent-coach' | 'family-hub' | 'life-skills' | 'community' | 'wellbeing' | 'stories';
 
@@ -80,7 +80,8 @@ interface AppState {
 
   // Onboarding: shown automatically when a parent has no children, or on demand.
   addingChild: boolean;
-  setAddingChild: (val: boolean) => void;
+  addingExpecting: boolean;
+  setAddingChild: (val: boolean, expecting?: boolean) => void;
   /** Child whose profile is being updated (retake), or null. */
   editingChildId: string | null;
   setEditingChild: (id: string | null) => void;
@@ -219,7 +220,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   addingChild: false,
-  setAddingChild: (val) => set({ addingChild: val }),
+  addingExpecting: false,
+  setAddingChild: (val, expecting = false) => set({ addingChild: val, addingExpecting: val && expecting }),
   editingChildId: null,
   setEditingChild: (id) => set({ editingChildId: id }),
 

@@ -18,14 +18,14 @@ function savedDueDate() {
 }
 
 export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
-  const { addChild, updateChild, setAddingChild, setEditingChild, setPage, children } = useAppStore();
+  const { addChild, updateChild, setAddingChild, setEditingChild, setPage, children, addingExpecting } = useAppStore();
   const canClose = !!editChild || children.length > 0;
   const close = () => editChild ? setEditingChild(null) : setAddingChild(false);
   const [step, setStep] = useState<'basics' | 'moments' | 'review'>('basics');
   const [quiz] = useState(() => editChild ? null : loadQuizResult());
   const [due] = useState(() => editChild ? null : savedDueDate());
   const [name, setName] = useState(editChild?.name ?? '');
-  const [born, setBorn] = useState(editChild ? !!editChild.dateOfBirth : !due);
+  const [born, setBorn] = useState(editChild ? !!editChild.dateOfBirth : !addingExpecting && !due);
   const [date, setDate] = useState(editChild?.dateOfBirth ?? editChild?.dueDate ?? due ?? '');
   // Only new explicit choices enter this draft. Skipping an edit cannot erase old answers.
   const [draft, setDraft] = useState<{ band: IntakeBand | null; answers: Answers }>({ band: null, answers: {} });

@@ -27,6 +27,7 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>Why we use it</h2>
+      <p>Your saved interest choices select age-appropriate activities in Today. Your recorded health dates, ongoing medication instructions and care notes appear in your private daily view. This does not send those records to an AI service or activate email or WhatsApp reminders.</p>
       <p>
         Only to give you parenting guidance tailored to your child, keep your history, run your subscription, and keep
         the service safe. We do not sell your data, use it for advertising, or share it with other parents.

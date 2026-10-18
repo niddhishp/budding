@@ -34,7 +34,7 @@ interface FeedItem {
 }
 
 // Cards are derived from the parent-reported temperament and the child's stage.
-// Phase 1 replaces these templates with a daily generated feed.
+// Saved interests and health plans are composed separately into Today.
 function buildFeed(child: Child): FeedItem[] {
   const { temperament: t, name, age } = child;
   const stage = stageInfo[age.stage];
@@ -203,6 +203,7 @@ export function DashboardPage() {
       )}
 
       <div className="space-y-6 md:space-y-8">
+        <button className="w-full text-left border-y py-5 text-clay" onClick={() => setPage('parent-space')}>Room for you, too: a reset, rest and sharing the load →</button>
         {isPregnancy && selectedChild.age.pregnancyWeek && (
           <WeekGuideCard
             key={selectedChild.age.pregnancyWeek}

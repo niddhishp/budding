@@ -10,13 +10,18 @@ import {
 import { CareFrame, CareError, fieldClass } from "@/components/care/CareFrame";
 import { useCare } from "@/components/care/useCare";
 import type { Child } from "@/types";
+import { growingBand } from '@/data/growing-changes';
+import { GrowingChanges } from '@/components/care/GrowingChanges';
+import { useTodayDate } from '@/components/care/useTodayDate';
 export function MilestonesPage() {
   const child = useAppStore((s) =>
     s.children.find((c) => c.id === s.selectedChildId),
   );
-  return child ? <MilestoneChild key={child.id} child={child} /> : null;
+  if (!child) return null;
+  if (!child.dateOfBirth) return <CareFrame title="A new chapter ahead" intro="Observations about your child become available after birth."><p>Your pregnancy preparations are in your parent space.</p></CareFrame>;
+  return growingBand(child.dateOfBirth) ? <GrowingChanges key={child.id} child={child} historyView={<MilestoneChild child={child} />} /> : <MilestoneChild key={child.id} child={child} />;
 }
-function MilestoneChild({ child }: { child: Child }) {
+export function MilestoneChild({ child }: { child: Child }) {
   const care = useCare(child.id);
   const window = child.dateOfBirth ? milestoneWindow(child.dateOfBirth) : null;
   const [month, setMonth] = useState(
@@ -186,11 +191,18 @@ function MilestoneChild({ child }: { child: Child }) {
 }
 export function MilestoneNotice({ child }: { child: Child }) {
   const care = useCare(child.id);
+  const date = useTodayDate();
   const setPage = useAppStore((s) => s.setPage);
   const s = care.data?.settings;
+  const band = growingBand(child.dateOfBirth, date);
+  if (band && s?.reminders) {
+    const day = Math.floor(Date.parse(date + 'T00:00:00Z') / 86400000);
+    const prompt = band.prompts[day % band.prompts.length];
+    return <aside className="mb-7 p-5 rounded-xl bg-paper-deep"><p className="text-sm text-clay">Notice the little changes · {band.label}</p><p className="mt-3">{prompt[2]}</p><button className="text-clay underline mt-3" onClick={() => setPage('milestones')}>A little support for this conversation →</button></aside>;
+  }
   const reminder =
     child.dateOfBirth && s?.reminders
-      ? milestoneReminders(child.dateOfBirth, s.dismissed)[0]
+      ? milestoneReminders(child.dateOfBirth, s.dismissed, date)[0]
       : null;
   if (!reminder) return null;
   return (

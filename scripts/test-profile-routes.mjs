@@ -1,7 +1,15 @@
 // Real route handlers, Next request cookies and local SQL through the disposable adapter.
+// Build first with NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54329 and
+// NEXT_PUBLIC_SUPABASE_ANON_KEY=synthetic-only: Next inlines public env at build time.
 import assert from "node:assert/strict";
 import { AsyncLocalStorage } from "node:async_hooks";
 globalThis.AsyncLocalStorage = AsyncLocalStorage;
+const localFetch = globalThis.fetch;
+globalThis.fetch = (input, init) => {
+  const url = new URL(input instanceof Request ? input.url : String(input));
+  assert.equal(url.origin, 'http://127.0.0.1:54329', 'Route test refused a non-disposable destination. Rebuild using the synthetic public env.');
+  return localFetch(input, init);
+};
 process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54329";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "synthetic-only";
 
@@ -155,6 +163,15 @@ const sibling = await run(
 );
 assert.equal(sibling.health.value.entries.length, 0);
 assert.equal(sibling.interests.value.selected.length, 0);
+const priorCare = await run(care, 'GET', `/api/care?childId=${childId}`);
+const careSettings = { ...priorCare.settings, observations: { ...priorCare.settings.observations, '60-0': 'noticed', 'growing-9-11-friendship': 'discuss' }, pregnancyNotes: 'Keep earlier notes' };
+const careReceipt = await run(care, 'PATCH', '/api/care', { childId, revision: priorCare.revision, settings: careSettings });
+const reloadedCare = await run(care, 'GET', `/api/care?childId=${childId}`);
+assert.deepEqual(reloadedCare.settings.observations, careSettings.observations);
+assert.equal(reloadedCare.settings.pregnancyNotes, 'Keep earlier notes');
+await run(care, 'PATCH', '/api/care', { childId, revision: priorCare.revision, settings: careSettings }, 409);
+assert.equal((await run(care, 'GET', '/api/care?childId=e0000000-0000-4000-8000-000000000011')).settings.observations['growing-9-11-friendship'], undefined);
+assert(careReceipt.revision > priorCare.revision);
 const entry = {
   id: crypto.randomUUID(),
   child_id: childId,

@@ -16,6 +16,8 @@ import {
 } from "@/lib/profile-notebook";
 import { todayDate } from "@/lib/family-care";
 import { interestAreas, scenes } from "@/data/interest-exploration";
+import { DailyInterestActivity } from '@/components/care/DailyInterestActivity';
+import { useTodayDate } from '@/components/care/useTodayDate';
 export function InterestsPage() {
   const child = useAppStore((s) =>
     s.children.find((c) => c.id === s.selectedChildId),
@@ -24,6 +26,7 @@ export function InterestsPage() {
 }
 function InterestChild({ child }: { child: Child }) {
   const book = useNotebook(child.id);
+  const date = useTodayDate();
   return (
     <CareFrame
       title={`${child.name}’s interests & talents`}
@@ -36,6 +39,9 @@ function InterestChild({ child }: { child: Child }) {
           exploring.
         </p>
       ) : book.data ? (
+        <>
+        <DailyInterestActivity key={`daily-${child.id}-${book.data.interests.revision}-${date}`} child={child} interests={book.data.interests.value} date={date} />
+        <p className="text-sm text-slate-600 mb-6">Saved interests shape the activity in Today. Email and WhatsApp delivery will follow after provider activation. Your free-text notes are not automatically sent to AI.</p>
         <InterestEditor
           key={`${child.id}-${book.data.interests.revision}`}
           child={child}
@@ -43,6 +49,7 @@ function InterestChild({ child }: { child: Child }) {
           busy={book.busy}
           save={(value) => book.save("interests", value)}
         />
+        </>
       ) : !book.error ? (
         <p role="status">Loading their interests…</p>
       ) : null}
