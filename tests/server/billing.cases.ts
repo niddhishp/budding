@@ -9,6 +9,7 @@ test('paid access expires even when provider status stays active; mandate is not
  assert.equal(hasAccess({...row,status:'authenticated'},new Date('2026-10-18')),false);
  assert.equal(hasAccess({...row,paid_through:null},new Date('2026-10-18')),false);
  assert.equal(hasAccess({...row,status:'cancelled'},new Date('2026-10-18')),true);
+ assert.equal(hasAccess({...row,status:'paused'},new Date('2026-10-18')),true);
 });
 test('only captured subscription charge events can extend access',()=>{
  const event=billingEventSchema.parse({event:'subscription.charged',created_at:12345,payload:{subscription:{entity:{id:'sub_synthetic',status:'active',current_end:123456}},payment:{entity:{status:'captured'}}}});

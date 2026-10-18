@@ -1,5 +1,11 @@
 -- Durable provider transport. No existing family rows are rewritten.
 set local lock_timeout='5s';
+-- Pausing future collections must not remove an already captured paid period.
+do $$ declare definition text; previous text:='''active'',''pending'',''halted'',''cancelled'',''completed'''; begin
+ select pg_get_functiondef('public.reserve_guidance(uuid,uuid,uuid,text,text,uuid,boolean)'::regprocedure) into definition;
+ if position(previous in definition)=0 then raise exception 'Unexpected entitlement definition'; end if;
+ execute replace(definition,previous,'''active'',''pending'',''halted'',''paused'',''cancelled'',''completed''');
+end $$;
 create table public.whatsapp_jobs (
  id text primary key check(id ~ '^SM[0-9a-fA-F]{32}$'),
  user_id uuid references auth.users on delete cascade,

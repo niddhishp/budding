@@ -22,7 +22,7 @@ export function planIdFor(interval: BillingInterval): string {
 }
 
 // Only a captured subscription charge grants a bounded paid period.
-const ACCESS_STATUSES = new Set(['active', 'pending', 'halted', 'cancelled', 'completed']);
+const ACCESS_STATUSES = new Set(['active', 'pending', 'halted', 'paused', 'cancelled', 'completed']);
 
 export interface SubscriptionRow {
   status: string;
