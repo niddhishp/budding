@@ -27,11 +27,12 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>Why we use it</h2>
+      <p>Optional shopping preferences, product feedback and gift/reward plans are private to your account. Shop for Kids uses the child’s age and the shopping choices you enter to order reviewed products; health records, conversations, horoscope and savings amounts are excluded. You can undo feedback or reset preferences in the shop. Catalogue searches use broad age bands and editorial shopping topics, never your child’s identity. Some clearly marked retailer or financial partner links may earn a referral fee. Following one opens the provider’s site under its own privacy terms; no family record is included in the link. A click is not treated as a purchase.</p>
       <p>Your optional family plan stores dates, savings goals, balances you enter and calculation assumptions. Private photo memories store a resized photo, date, title and caption. We remove embedded photo metadata during processing. These records are not sent to AI services, merchants or other parents. Savings calculations do not connect to banks or move money.</p>
       <p>Your saved interest choices select age-appropriate activities in Today. Your recorded health dates, ongoing medication instructions and care notes appear in your private daily view. This does not send those records to an AI service or activate email or WhatsApp reminders.</p>
       <p>
         Only to give you parenting guidance tailored to your child, keep your history, run your subscription, and keep
-        the service safe. We do not sell your data, use it for advertising, or share it with other parents.
+        the service safe. We do not sell your data, provide it for targeted advertising by other companies, or share it with other parents.
       </p>
 
       <h2>Children&apos;s data</h2>

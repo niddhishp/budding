@@ -41,7 +41,7 @@ export function Sidebar() {
       <nav className="p-2 space-y-0.5">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentPage === item.id || (item.id === 'child-profile' && ['growth','health','interests','photo-timeline'].includes(currentPage)) || (item.id === 'discover' && ['milestones','development','play','pregnancy','parent-space'].includes(currentPage)) || (item.id === 'ask-ai' && currentPage === 'library');
+          const isActive = currentPage === item.id || (item.id === 'child-profile' && ['growth','health','interests','photo-timeline'].includes(currentPage)) || (item.id === 'discover' && ['shop','gifts','milestones','development','play','pregnancy','parent-space'].includes(currentPage)) || (item.id === 'ask-ai' && currentPage === 'library');
 
           return (
             <button

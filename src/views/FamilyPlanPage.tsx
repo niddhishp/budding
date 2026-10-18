@@ -1,3 +1,4 @@
+import { FinancialPartners } from "@/components/care/FinancialPartners";
 import { useState } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { useFamilyPlan } from "@/components/care/useFamilyPlan";
@@ -119,6 +120,7 @@ export function FamilyPlanPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 pb-28">
       <p className="text-clay text-sm">A little looking ahead</p>
       <h1 className="font-heading text-4xl mt-3">Your family, in view</h1>
+      <div className="flex flex-wrap gap-5 text-sm text-clay my-5"><button className="underline" onClick={()=>setPage('gifts')}>Gifts & rewards →</button><button className="underline" onClick={()=>setPage('shop')}>Shop for Kids →</button></div>
       <p className="text-slate-600 mt-4 max-w-xl">
         Make room for the dates that matter and the things you’re saving
         towards. One family, at your pace.
@@ -356,6 +358,7 @@ export function FamilyPlanPage() {
         </>
       )}
       <SavingsGuide />
+      <FinancialPartners />
     </div>
   );
 }

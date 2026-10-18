@@ -21,6 +21,8 @@ import { ConsentGate } from '@/components/ConsentGate';
 import { PlanSheet } from '@/components/PlanSheet';
 import { ExpertSheet } from '@/components/ExpertSheet';
 const DiscoverPage=dynamic(()=>import('@/views/DiscoverPage').then(m=>m.DiscoverPage));
+const ShopPage=dynamic(()=>import('@/views/ShopPage').then(m=>m.ShopPage));
+const GiftsPage=dynamic(()=>import('@/views/GiftsPage').then(m=>m.GiftsPage));
 const FamilyPlanPage=dynamic(()=>import('@/views/FamilyPlanPage').then(m=>m.FamilyPlanPage));
 const PhotoTimelinePage=dynamic(()=>import('@/views/PhotoTimelinePage').then(m=>m.PhotoTimelinePage));
 const HealthPage=dynamic(()=>import('@/views/HealthPage').then(m=>m.HealthPage));
@@ -59,6 +61,8 @@ function PlatformApp() {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard': return <DashboardPage />;
+      case 'shop': return <ShopPage key={selectedChildId} />;
+      case 'gifts': return <GiftsPage key={selectedChildId} />;
       case 'family-plan': return <FamilyPlanPage />;
       case 'photo-timeline': return <PhotoTimelinePage key={selectedChildId} />;
       case 'ask-ai':

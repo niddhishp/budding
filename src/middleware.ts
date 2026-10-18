@@ -47,5 +47,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Public endpoints (OG images, Razorpay and Twilio webhooks) skip the session round-trip.
-  matcher: ['/app/:path*', '/admin/:path*', '/api/((?!og|billing/webhook|whatsapp/webhook|whatsapp/status|email/webhook|cron/delivery).*)', '/auth/:path*'],
+  matcher: ['/app/:path*', '/admin/:path*', '/api/((?!og|billing/webhook|whatsapp/webhook|whatsapp/status|email/webhook|cron/delivery|cron/shop).*)', '/auth/:path*'],
 };
