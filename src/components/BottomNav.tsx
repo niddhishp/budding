@@ -9,10 +9,10 @@ export function BottomNav() {
       className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 backdrop-blur border-t border-slate-200/60 pb-[env(safe-area-inset-bottom)]"
       aria-label="Main"
     >
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentPage === item.id || (item.id === 'child-profile' && ['growth','health','interests'].includes(currentPage)) || (item.id === 'discover' && ['milestones','development','play','pregnancy','parent-space'].includes(currentPage)) || (item.id === 'ask-ai' && currentPage === 'library');
+          const isActive = currentPage === item.id || (item.id === 'child-profile' && ['growth','health','interests','photo-timeline'].includes(currentPage)) || (item.id === 'discover' && ['milestones','development','play','pregnancy','parent-space'].includes(currentPage)) || (item.id === 'ask-ai' && currentPage === 'library');
           return (
             <button
               key={item.id}

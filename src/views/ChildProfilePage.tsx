@@ -58,6 +58,10 @@ export function ChildProfilePage() {
         </p>
       </motion.div>
 
+      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        <button onClick={()=>setPage('photo-timeline')} className="text-left border-y py-6 px-3"><span className="block font-heading text-2xl">Photo timeline →</span><span className="text-sm text-slate-600">Keep their milestones and your favourite moments.</span></button>
+        <button onClick={()=>setPage('family-plan')} className="text-left border-y py-6 px-3"><span className="block font-heading text-2xl">Family plan →</span><span className="text-sm text-slate-600">Dates to remember and goals to save towards.</span></button>
+      </div>
       {child.age.stage !== "pregnancy" && (
         <section className="mb-12">
           <GrowthSnapshot key={child.id} child={child} />

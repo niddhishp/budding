@@ -40,6 +40,16 @@ export async function POST() {
 
   const admin = getAdminSupabase();
 
+  // Flat, owner-prefixed keys include pending uploads as well as finished memories.
+  // Never complete erasure while private photos remain or their listing failed.
+  for (;;) {
+    const listed = await admin.storage.from('family-photos').list(user.id, { limit: 100 });
+    if (listed.error) return NextResponse.json({ error: 'Photo cleanup could not finish. Please retry account deletion.' }, { status: 503 });
+    if (!listed.data.length) break;
+    const removed = await admin.storage.from('family-photos').remove(listed.data.map(f=>`${user.id}/${f.name}`));
+    if (removed.error) return NextResponse.json({ error: 'Photo cleanup could not finish. Please retry account deletion.' }, { status: 503 });
+  }
+
   // Storage objects don't cascade with the database; remove narration audio explicitly.
   const { data: audioFiles } = await admin.storage.from('story-audio').list(user.id, { limit: 1000 });
   if (audioFiles?.length) {

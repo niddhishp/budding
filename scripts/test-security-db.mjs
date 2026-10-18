@@ -46,6 +46,8 @@ try {
   console.log('PASS: private care/growth ownership, consent, revisions, retry, archive/undo, billing replay/order and erasure. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/provider-delivery.sql','utf8'));
   await client.query(readFileSync('tests/sql/profile-notebooks.sql','utf8'));
+  await client.query(readFileSync('tests/sql/family-planner.sql','utf8'));
+  console.log('PASS: family planning ownership, revisions/retries, archive/restore, validation, private photos and erasure recovery.');
   console.log('PASS: profile notebooks enforce ownership, consent, revision/retry, date validation, archive/restore and child erasure. Fixtures rolled back.');
   console.log('PASS: provider transport permissions, atomic linking, receipts, leases, STOP/consent, delivery ordering, ambiguous sends and erasure. Fixtures rolled back.');
 } finally {

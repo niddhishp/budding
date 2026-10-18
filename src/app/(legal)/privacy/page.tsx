@@ -27,6 +27,7 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>Why we use it</h2>
+      <p>Your optional family plan stores dates, savings goals, balances you enter and calculation assumptions. Private photo memories store a resized photo, date, title and caption. We remove embedded photo metadata during processing. These records are not sent to AI services, merchants or other parents. Savings calculations do not connect to banks or move money.</p>
       <p>Your saved interest choices select age-appropriate activities in Today. Your recorded health dates, ongoing medication instructions and care notes appear in your private daily view. This does not send those records to an AI service or activate email or WhatsApp reminders.</p>
       <p>
         Only to give you parenting guidance tailored to your child, keep your history, run your subscription, and keep
@@ -58,6 +59,7 @@ export default function PrivacyPage() {
       <p>Some of these providers may process data outside India, under contracts that require them to protect it.</p>
 
       <h2>How long we keep it</h2>
+      <p>Archived plans and photo memories remain available to restore; archiving is not deletion. Account erasure removes your private photo files and family records. A retry worker removes any upload that was already in flight during erasure after a short delay. Keep your original photos: Kahiye stores resized copies, not an original-quality backup.</p>
       <p>Transient WhatsApp transport records are kept for up to seven days; message text is cleared once a reply is prepared and reply text once sending finishes. Saved guidance follows your account history settings. Email webhook receipts retain provider identifiers and delivery status for up to seven days; consultation delivery status stays with its request. Providers maintain their own records under their policies.</p>
       <p>Optional family records remain until you clear them or delete the account. Archived growth measurements and health diary entries remain available for undo; archiving is not deletion. Interests and their notes can be cleared and saved in the child profile. Pregnancy notes can be cleared and observations reset in their respective tools. Account deletion removes these records through the same child and account erasure process.</p>
       <p>For as long as your account is open. When you delete your account, your profile, children, notes and history are deleted immediately; backups roll off within [30] days.</p>

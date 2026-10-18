@@ -29,4 +29,5 @@ jobs:
       - run: npm run check
       - run: npm run test:security:bootstrap
       - run: npm run test:providers
+      - run: npx tsx --conditions=react-server scripts/test-family-plan-routes.mjs
       - run: npm run build

@@ -1,0 +1,42 @@
+begin;
+insert into auth.users(id,email,email_confirmed_at) values('f3000000-0000-4000-8000-000000000001','planner-a@example.invalid',now()),('f3000000-0000-4000-8000-000000000002','planner-b@example.invalid',now());
+insert into public.consents(user_id,policy_version) values('f3000000-0000-4000-8000-000000000001','2026-10-05'),('f3000000-0000-4000-8000-000000000002','2026-10-05');
+insert into public.children(id,user_id,name,dob) values('f3000000-0000-4000-8000-000000000011','f3000000-0000-4000-8000-000000000001','Planner child','2015-01-01'),('f3000000-0000-4000-8000-000000000012','f3000000-0000-4000-8000-000000000002','Other child','2020-01-01');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"f3000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+do $$ declare v jsonb:='{"title":"Goal","date":"2099-01-01","note":"","archived":false,"category":"other","cost":120000,"saved":12000,"monthly":4000,"inflation":0,"annualReturn":0,"photoHash":null}'; a jsonb; b jsonb; c uuid:='f3000000-0000-4000-8000-000000000011';id uuid:='f3000000-0000-4000-8000-000000000021';
+begin
+ a:=public.save_family_entry(id,c,'goal',0,v);b:=public.save_family_entry(id,c,'goal',0,v);if a<>b then raise exception 'retry changed data';end if;
+ begin perform public.save_family_entry(id,c,'goal',0,v||'{"saved":900}');raise exception 'stale accepted';exception when serialization_failure then null;end;
+ begin perform public.save_family_entry(gen_random_uuid(),'f3000000-0000-4000-8000-000000000012','goal',0,v);raise exception 'other child accepted';exception when insufficient_privilege then null;end;
+ begin perform public.save_family_entry(id,null,'goal',1,v);raise exception 'scope change accepted';exception when insufficient_privilege then null;end;
+ begin update public.family_entries set photo_ready=true;raise exception 'direct update accepted';exception when insufficient_privilege then null;end;
+ begin perform public.save_family_entry(gen_random_uuid(),c,'goal',0,v||'{"cost":-1}');raise exception 'invalid amount accepted';exception when raise_exception then if sqlerrm='invalid amount accepted' then raise;end if;end;
+ begin perform public.save_family_entry(gen_random_uuid(),c,'goal',0,v||'{"date":"2000-01-01"}');raise exception 'past goal accepted';exception when raise_exception then if sqlerrm='past goal accepted' then raise;end if;end;
+ a:=public.save_family_entry(id,c,'goal',1,v||'{"archived":true}');b:=public.save_family_entry(id,c,'goal',2,v);if b->>'revision'<>'3' then raise exception 'restore failed';end if;
+ v:=v||jsonb_build_object('cost',0,'saved',0,'monthly',0,'date','2026-01-01','photoHash',repeat('a',64));
+ a:=public.save_family_entry('f3000000-0000-4000-8000-000000000022',c,'memory',0,v);
+ if (a->>'photo_ready')::boolean then raise exception 'photo marked ready by parent';end if;
+ begin perform public.save_family_entry('f3000000-0000-4000-8000-000000000022',c,'memory',1,v||jsonb_build_object('photoHash',repeat('b',64)));raise exception 'photo replaced';exception when raise_exception then if sqlerrm='photo replaced' then raise;end if;end;
+end $$;
+select set_config('request.jwt.claims','{"sub":"f3000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+do $$ begin if exists(select 1 from public.family_entries) then raise exception 'family data leaked';end if;end $$;
+reset role;
+delete from public.consents where user_id='f3000000-0000-4000-8000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"f3000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+do $$ begin
+ begin perform public.save_family_entry(gen_random_uuid(),null,'event',0,'{}');raise exception 'consent bypass';exception when insufficient_privilege then null;end;
+ begin perform 1 from public.family_photo_cleanup;raise exception 'cleanup queue exposed';exception when insufficient_privilege then null;end;
+end $$;
+reset role;
+set local role anon;
+do $$ begin
+ begin perform public.save_family_entry(gen_random_uuid(),null,'event',0,'{}');raise exception 'anonymous RPC';exception when insufficient_privilege then null;end;
+ begin perform 1 from public.family_entries;raise exception 'anonymous read';exception when insufficient_privilege then null;end;
+end $$;
+reset role;
+do $$ begin if (select public from storage.buckets where id='family-photos') then raise exception 'photos public';end if;end $$;
+delete from auth.users where id='f3000000-0000-4000-8000-000000000001';
+do $$ begin if exists(select 1 from public.family_entries) then raise exception 'erasure failed';end if;if not exists(select 1 from public.family_photo_cleanup where path like 'f3000000-0000-4000-8000-000000000001/%') then raise exception 'erasure recovery missing';end if;end $$;
+rollback;

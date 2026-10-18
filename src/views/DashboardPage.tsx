@@ -204,6 +204,7 @@ export function DashboardPage() {
       )}
 
       <div className="space-y-6 md:space-y-8">
+        <button className="w-full text-left border-y py-5 text-clay" onClick={() => setPage('family-plan')}>Your family plan: upcoming dates and savings goals →</button>
         <button className="w-full text-left border-y py-5 text-clay" onClick={() => setPage('parent-space')}>Room for you, too: a reset, rest and sharing the load →</button>
         {isPregnancy && selectedChild.age.pregnancyWeek && (
           <WeekGuideCard
