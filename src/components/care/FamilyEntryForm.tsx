@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Child } from "@/types";
 import {
   entryValueSchema,
@@ -28,7 +28,14 @@ export function FamilyEntryForm({
 }) {
   const [draft, setDraft] = useState(initial),
     [file, setFile] = useState<File>(),
+    [preview, setPreview] = useState<string | null>(null),
     [message, setMessage] = useState("");
+  useEffect(
+    () => () => {
+      if (preview) URL.revokeObjectURL(preview);
+    },
+    [preview],
+  );
   const v = draft.value,
     isGoal = draft.kind === "goal",
     isMemory = draft.kind === "memory";
@@ -129,7 +136,9 @@ export function FamilyEntryForm({
             type="file"
             accept="image/jpeg,image/png,image/webp"
             onChange={(e) => {
-              setFile(e.target.files?.[0]);
+              const selected = e.target.files?.[0];
+              setFile(selected);
+              setPreview(selected ? URL.createObjectURL(selected) : null);
               setMessage("");
             }}
           />
@@ -145,6 +154,13 @@ export function FamilyEntryForm({
           The saved photo stays with this memory. To use a different photo, add
           a new memory.
         </p>
+      )}
+      {preview && (
+        <img
+          src={preview}
+          alt="Selected photo preview"
+          className="w-full max-h-80 object-contain rounded-xl bg-paper-deep"
+        />
       )}
       {isGoal && (
         <>
