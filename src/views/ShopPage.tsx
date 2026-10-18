@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Gift,
   Shirt,
@@ -37,6 +37,7 @@ const icons = {
   nature: Leaf,
 };
 export function ShopPage() {
+  const formRef = useRef<HTMLFormElement>(null);
   const { children, selectedChildId, setPage } = useAppStore(),
     child = children.find((c) => c.id === selectedChildId);
   const { data, error, busy, reload, save, remove } = useShop();
@@ -54,6 +55,9 @@ export function ShopPage() {
     } | null>(null),
     [savedOnly, setSavedOnly] = useState(false),
     [notice, setNotice] = useState("");
+  useEffect(() => {
+    formRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+  }, [feedback?.id]);
   if (!child) return null;
   const records = data?.records.filter((r) => r.childId === child.id) ?? [],
     pref = records.find((r) => r.kind === "preferences"),
@@ -278,6 +282,7 @@ export function ShopPage() {
       </div>
       {feedback && (
         <form
+          ref={formRef}
           className="border border-clay rounded-2xl p-5 my-6"
           onSubmit={(e) => {
             e.preventDefault();

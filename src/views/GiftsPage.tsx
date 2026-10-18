@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { useShop } from "@/components/care/useShop";
 import {
@@ -11,12 +11,16 @@ import { nextBirthday } from "@/lib/family-planner";
 import { useTodayDate } from "@/components/care/useTodayDate";
 type GiftRecord = Extract<ShopRecord, { kind: "gift" }>;
 export function GiftsPage() {
+  const formRef = useRef<HTMLFormElement>(null);
   const { children, selectedChildId, setPage } = useAppStore(),
     child = children.find((c) => c.id === selectedChildId);
   const { data, error, busy, reload, save } = useShop();
   const [draft, setDraft] = useState<GiftRecord | null>(null),
     [archived, setArchived] = useState(false);
   const today = useTodayDate();
+  useEffect(() => {
+    formRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+  }, [draft?.id]);
   if (!child) return null;
   const records = data?.records.filter((r) => r.childId === child.id) ?? [],
     pref = records.find((r) => r.kind === "preferences");
@@ -92,6 +96,7 @@ export function GiftsPage() {
       )}
       {draft && (
         <form
+          ref={formRef}
           className="border rounded-2xl p-5 my-7"
           onSubmit={async (e) => {
             e.preventDefault();

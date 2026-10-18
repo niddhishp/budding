@@ -133,6 +133,7 @@ function Field({
   );
 }
 export function ShopAdmin() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [data, setData] = useState<AdminData | null>(null),
     [kind, setKind] = useState<CatalogRecord["kind"]>("product"),
     [draft, setDraft] = useState<CatalogRecord | null>(null),
@@ -157,6 +158,9 @@ export function ShopAdmin() {
     void reload(c.signal);
     return () => c.abort();
   }, [reload]);
+  useEffect(() => {
+    formRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
+  }, [draft?.id]);
   async function send(path: string, method: string, body: unknown) {
     if (lock.current) return false;
     lock.current = true;
@@ -337,6 +341,7 @@ export function ShopAdmin() {
       )}
       {draft && (
         <form
+          ref={formRef}
           className="bg-paper-deep p-5 sm:p-7 rounded-2xl my-7"
           onSubmit={async (e) => {
             e.preventDefault();
