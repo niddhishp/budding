@@ -278,6 +278,7 @@ export function FamilyEntryForm({
           onClick={() => {
             setDraft(latest);
             setFile(undefined);
+            setPreview(null);
           }}
         >
           Replace this draft with the latest saved version
