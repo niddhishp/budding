@@ -84,6 +84,7 @@ begin
   if j.state not in ('pending','processing') or j.next_attempt_at>now() or (j.state='processing' and j.lease_until>now()) then return null; end if;
   if j.attempts>=3 then update public.whatsapp_jobs set state='needs_review',body='',last_error='Response preparation failed repeatedly.',updated_at=now() where id=p_id; return null; end if;
   -- Serialize generation per phone, so feedback/child context does not race.
+  if exists(select 1 from public.whatsapp_jobs where phone=j.phone and state in ('pending','processing') and (created_at,id)<(j.created_at,j.id)) then return null; end if;
   if exists(select 1 from public.whatsapp_jobs where phone=j.phone and id<>p_id and state='processing' and lease_until>now()) then return null; end if;
   update public.whatsapp_jobs set state='processing',attempts=attempts+1,lease=token,lease_until=now()+interval '120 seconds',updated_at=now() where id=p_id;
  end if;
