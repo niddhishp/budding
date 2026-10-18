@@ -1,0 +1,36 @@
+begin;
+insert into auth.users(id,email,email_confirmed_at) values ('f2000000-0000-4000-8000-000000000001','profile-a@example.invalid',now()),('f2000000-0000-4000-8000-000000000002','profile-b@example.invalid',now());
+insert into public.consents(user_id,policy_version) values('f2000000-0000-4000-8000-000000000001','2026-10-05');
+insert into public.children(id,user_id,name,dob) values('f2000000-0000-4000-8000-000000000011','f2000000-0000-4000-8000-000000000001','Notebook child','2015-01-01'),('f2000000-0000-4000-8000-000000000012','f2000000-0000-4000-8000-000000000002','Other child','2021-01-01');
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"f2000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+do $$ declare a jsonb; b jsonb; c uuid:='f2000000-0000-4000-8000-000000000011'; e jsonb:='{"id":"f2000000-0000-4000-8000-000000000021","kind":"vaccination","title":"Test record","status":"done","date":"2026-01-01","nextDate":null,"instructions":"","note":"","referenceId":null,"archived":false}';
+begin
+ a:=public.save_profile_notebook(c,'health',0,jsonb_build_object('entries',jsonb_build_array(e)));
+ b:=public.save_profile_notebook(c,'health',0,jsonb_build_object('entries',jsonb_build_array(e)));
+ if a<>b then raise exception 'Retry mutated the record';end if;
+ begin perform public.save_profile_notebook(c,'health',0,'{"entries":[]}');raise exception 'Stale overwrite accepted';exception when serialization_failure then null;end;
+ begin perform public.save_profile_notebook('f2000000-0000-4000-8000-000000000012','health',0,'{"entries":[]}');raise exception 'Other child accepted';exception when insufficient_privilege then null;end;
+ begin insert into public.child_profile_notebooks(child_id,user_id,section,value) values(c,auth.uid(),'interests','{}');raise exception 'Direct write accepted';exception when insufficient_privilege then null;end;
+ begin perform public.save_profile_notebook(c,'health',1,jsonb_build_object('entries',jsonb_build_array(e||'{"date":"2099-01-01"}')));raise exception 'future completion accepted';exception when raise_exception then if sqlerrm='future completion accepted' then raise;end if;end;
+ begin perform public.save_profile_notebook(c,'health',1,jsonb_build_object('entries',jsonb_build_array(e||'{"date":"2010-01-01"}')));raise exception 'prebirth accepted';exception when raise_exception then if sqlerrm='prebirth accepted' then raise;end if;end;
+ begin perform public.save_profile_notebook(c,'health',1,jsonb_build_object('entries',jsonb_build_array(e,e)));raise exception 'duplicate accepted';exception when raise_exception then if sqlerrm='duplicate accepted' then raise;end if;end;
+ a:=public.save_profile_notebook(c,'interests',0,'{"selected":["art","music"],"answers":[[],["art","music"],[]],"note":"Likes singing","band":"school","updatedOn":"2026-10-18"}');
+ if a->>'revision'<>'1' then raise exception 'Wrong revision';end if;
+ if (select count(*) from public.child_profile_notebooks)<>2 then raise exception 'Notebook sections overwrite one another';end if;
+ a:=public.save_profile_notebook(c,'health',1,jsonb_build_object('entries',jsonb_build_array(e||'{"archived":true}')));
+ a:=public.save_profile_notebook(c,'health',2,jsonb_build_object('entries',jsonb_build_array(e)));
+ if a->>'revision'<>'3' then raise exception 'Archive/undo failed';end if;
+end $$;
+select set_config('request.jwt.claims','{"sub":"f2000000-0000-4000-8000-000000000002","role":"authenticated"}',true);
+do $$ begin
+ if exists(select 1 from public.child_profile_notebooks) then raise exception 'Data leaked';end if;
+ begin perform public.save_profile_notebook('f2000000-0000-4000-8000-000000000012','health',0,'{"entries":[]}');raise exception 'Missing consent accepted';exception when insufficient_privilege then null;end;
+end $$;
+reset role;
+set local role anon;
+do $$ begin begin perform public.save_profile_notebook('f2000000-0000-4000-8000-000000000011','health',0,'{"entries":[]}');raise exception 'Anon function accepted';exception when insufficient_privilege then null;end;end $$;
+reset role;
+delete from public.children where id='f2000000-0000-4000-8000-000000000011';
+do $$ begin if exists(select 1 from public.child_profile_notebooks) then raise exception 'Child erasure failed';end if;end $$;
+rollback;

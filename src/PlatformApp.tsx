@@ -21,6 +21,8 @@ import { ConsentGate } from '@/components/ConsentGate';
 import { PlanSheet } from '@/components/PlanSheet';
 import { ExpertSheet } from '@/components/ExpertSheet';
 const DiscoverPage=dynamic(()=>import('@/views/DiscoverPage').then(m=>m.DiscoverPage));
+const HealthPage=dynamic(()=>import('@/views/HealthPage').then(m=>m.HealthPage));
+const InterestsPage=dynamic(()=>import('@/views/InterestsPage').then(m=>m.InterestsPage));
 const GrowthPage=dynamic(()=>import('@/views/GrowthPage').then(m=>m.GrowthPage));
 const MilestonesPage=dynamic(()=>import('@/views/MilestonesPage').then(m=>m.MilestonesPage));
 const PlayPage=dynamic(()=>import('@/views/PlayPage').then(m=>m.PlayPage));
@@ -61,6 +63,8 @@ function PlatformApp() {
       case 'milestones': return <MilestonesPage />;
       case 'discover': return <DiscoverPage />;
       case 'growth': return <GrowthPage />;
+      case 'health': return <HealthPage />;
+      case 'interests': return <InterestsPage />;
       case 'play': return <PlayPage />;
       case 'pregnancy': return <PregnancyPage />;
       case 'emotional-lab': return <EmotionalLabPage />;

@@ -1,14 +1,28 @@
-import { observedPatterns } from '@/lib/moments';
-import type { ReactNode } from 'react';
-import { useAppStore } from '@/stores/appStore';
-import { stageInfo } from '@/data/developmentalData';
-import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight, Brain, Heart, Quote, Flame, Sunrise } from 'lucide-react';
-import type { Child } from '@/types';
-import { WeekGuideCard } from '@/components/WeekGuideCard';
-import { MilestoneNotice } from '@/views/MilestonesPage';
+import { observedPatterns } from "@/lib/moments";
+import type { ReactNode } from "react";
+import { useAppStore } from "@/stores/appStore";
+import { stageInfo } from "@/data/developmentalData";
+import { motion } from "framer-motion";
+import {
+  Sparkles,
+  ArrowRight,
+  Brain,
+  Heart,
+  Quote,
+  Flame,
+  Sunrise,
+} from "lucide-react";
+import type { Child } from "@/types";
+import { WeekGuideCard } from "@/components/WeekGuideCard";
+import { GrowthSnapshot } from "@/components/care/GrowthSnapshot";
+import { HealthUpcoming } from "@/components/care/HealthUpcoming";
+import { MilestoneNotice } from "@/views/MilestonesPage";
 
-const SPRING_TRANSITION = { type: 'spring', stiffness: 100, damping: 20 } as const;
+const SPRING_TRANSITION = {
+  type: "spring",
+  stiffness: 100,
+  damping: 20,
+} as const;
 
 interface FeedItem {
   id: string;
@@ -24,62 +38,86 @@ interface FeedItem {
 function buildFeed(child: Child): FeedItem[] {
   const { temperament: t, name, age } = child;
   const stage = stageInfo[age.stage];
-  const known = new Set(observedPatterns(child).map(p => p.key));
+  const known = new Set(observedPatterns(child).map((p) => p.key));
 
-  if (age.stage === 'pregnancy') {
+  if (age.stage === "pregnancy") {
     // The week-by-week guide renders separately (WeekGuideCard); this is the reflection beneath it.
     return [
       {
-        id: 'reflection', icon: <Quote className="w-6 h-6 text-slate-700" />, color: 'bg-slate-100 border-slate-200',
-        title: 'For you, today',
-        content: 'Your own rest and emotional steadiness are the first environment your child experiences. What would make today 10% easier for you?',
+        id: "reflection",
+        icon: <Quote className="w-6 h-6 text-slate-700" />,
+        color: "bg-slate-100 border-slate-200",
+        title: "For you, today",
+        content:
+          "Your own rest and emotional steadiness are the first environment your child experiences. What would make today 10% easier for you?",
       },
     ];
   }
 
   const items: FeedItem[] = [];
 
-  if (known.has('sensitivity') && t.sensitivity >= 65) {
+  if (known.has("sensitivity") && t.sensitivity >= 65) {
     items.push({
-      id: 'sensitivity', icon: <Sunrise className="w-6 h-6 text-amber-500" />, color: 'bg-amber-50 border-amber-100',
-      title: 'A deep feeler',
+      id: "sensitivity",
+      icon: <Sunrise className="w-6 h-6 text-amber-500" />,
+      color: "bg-amber-50 border-amber-100",
+      title: "A deep feeler",
       content: `${name} takes in more than most children — sounds, tones, moods. Big reactions are often overload, not defiance. A quieter voice and fewer words go further than a firmer one.`,
     });
   } else {
     items.push({
-      id: 'stage', icon: <Sunrise className="w-6 h-6 text-amber-500" />, color: 'bg-amber-50 border-amber-100',
+      id: "stage",
+      icon: <Sunrise className="w-6 h-6 text-amber-500" />,
+      color: "bg-amber-50 border-amber-100",
       title: stage.focus,
       content: stage.description,
     });
   }
 
   items.push({
-    id: 'theme', icon: <Brain className="w-6 h-6 text-clay" />, color: 'bg-clay/10 border-clay/20',
+    id: "theme",
+    icon: <Brain className="w-6 h-6 text-clay" />,
+    color: "bg-clay/10 border-clay/20",
     title: `What ${age.label} is about`,
-    content: `Right now ${name} is working on ${stage.keyThemes.slice(0, 3).join(', ').toLowerCase()}. Much of the friction you see is that work in progress.`,
+    content: `Right now ${name} is working on ${stage.keyThemes.slice(0, 3).join(", ").toLowerCase()}. Much of the friction you see is that work in progress.`,
   });
 
-  if ((known.has('flexibility') && t.flexibility <= 40) || (known.has('emotionalIntensity') && t.emotionalIntensity >= 65)) {
+  if (
+    (known.has("flexibility") && t.flexibility <= 40) ||
+    (known.has("emotionalIntensity") && t.emotionalIntensity >= 65)
+  ) {
     items.push({
-      id: 'flashpoint', icon: <Flame className="w-6 h-6 text-rose-500" />, color: 'bg-rose-50 border-rose-100',
-      title: 'Likely flashpoint: transitions',
-      content: `With ${known.has('flexibility') && t.flexibility <= 40 ? 'a need for predictability' : 'big emotional reactions'}, sudden switches (leaving, screens off, bedtime) are where things tend to break down. A countdown and a choice keep ${name} in control.`,
-      microScript: age.years < 7
-        ? 'Instead of: "We are leaving right now!"\nTry: "Two more minutes, then shoes. Do you want to hop to the door or march?"'
-        : 'Instead of: "Turn it off now!"\nTry: "Ten minutes left. Do you want to finish this level or stop at a save point?"',
+      id: "flashpoint",
+      icon: <Flame className="w-6 h-6 text-rose-500" />,
+      color: "bg-rose-50 border-rose-100",
+      title: "Likely flashpoint: transitions",
+      content: `With ${known.has("flexibility") && t.flexibility <= 40 ? "a need for predictability" : "big emotional reactions"}, sudden switches (leaving, screens off, bedtime) are where things tend to break down. A countdown and a choice keep ${name} in control.`,
+      microScript:
+        age.years < 7
+          ? 'Instead of: "We are leaving right now!"\nTry: "Two more minutes, then shoes. Do you want to hop to the door or march?"'
+          : 'Instead of: "Turn it off now!"\nTry: "Ten minutes left. Do you want to finish this level or stop at a save point?"',
     });
   }
 
   items.push({
-    id: 'ritual', icon: <Heart className="w-6 h-6 text-leaf" />, color: 'bg-leaf/10 border-leaf/20',
-    title: age.years < 3 ? 'A familiar little ritual' : 'Tonight: Rose and Thorn',
-    content: age.years < 3 ? `Try a short familiar song with ${name}. Pause, notice their response, and let them decide whether to keep going. A few shared moments are enough.` : `At dinner, invite ${name} to share their "rose" (best part of the day) and "thorn" (hardest part), with room to pass. It can make feelings easier to talk about.`,
+    id: "ritual",
+    icon: <Heart className="w-6 h-6 text-leaf" />,
+    color: "bg-leaf/10 border-leaf/20",
+    title:
+      age.years < 3 ? "A familiar little ritual" : "Tonight: Rose and Thorn",
+    content:
+      age.years < 3
+        ? `Try a short familiar song with ${name}. Pause, notice their response, and let them decide whether to keep going. A few shared moments are enough.`
+        : `At dinner, invite ${name} to share their "rose" (best part of the day) and "thorn" (hardest part), with room to pass. It can make feelings easier to talk about.`,
   });
 
   items.push({
-    id: 'reflection', icon: <Quote className="w-6 h-6 text-slate-700" />, color: 'bg-slate-100 border-slate-200',
-    title: 'For you',
-    content: 'When was the last time you felt truly overwhelmed, and what did you wish someone had said to you? Your child likely needs that same grace today.',
+    id: "reflection",
+    icon: <Quote className="w-6 h-6 text-slate-700" />,
+    color: "bg-slate-100 border-slate-200",
+    title: "For you",
+    content:
+      "When was the last time you felt truly overwhelmed, and what did you wish someone had said to you? Your child likely needs that same grace today.",
   });
 
   return items;
@@ -89,10 +127,15 @@ export function DashboardPage() {
   const { selectedChildId, children, setPage } = useAppStore();
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
-  if (!selectedChild) return <div className="p-8 text-center text-slate-500">Select a child to view today's guidance</div>;
+  if (!selectedChild)
+    return (
+      <div className="p-8 text-center text-slate-500">
+        Select a child to view today's guidance
+      </div>
+    );
 
   const dailyFeed = buildFeed(selectedChild);
-  const isPregnancy = selectedChild.age.stage === 'pregnancy';
+  const isPregnancy = selectedChild.age.stage === "pregnancy";
 
   return (
     <div className="max-w-2xl mx-auto pt-8 md:pt-12 pb-32 px-4 sm:px-6">
@@ -103,7 +146,11 @@ export function DashboardPage() {
         className="mb-10 text-center"
       >
         <p className="text-sm font-medium text-clay mb-4 tracking-widest uppercase">
-          {new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' })}
+          {new Date().toLocaleDateString("en-IN", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
         </p>
         <h1 className="font-heading text-4xl md:text-5xl text-slate-850 leading-[1.1] mb-4">
           Today with {selectedChild.name}
@@ -113,14 +160,23 @@ export function DashboardPage() {
         </p>
       </motion.div>
 
-      {isPregnancy ? <button className="w-full text-left p-5 rounded-xl bg-paper-deep mb-7 text-clay" onClick={()=>setPage('pregnancy')}>Your pregnancy space: preparations, questions & support →</button> : <MilestoneNotice key={selectedChild.id} child={selectedChild}/>}
+      {isPregnancy ? (
+        <button
+          className="w-full text-left p-5 rounded-xl bg-paper-deep mb-7 text-clay"
+          onClick={() => setPage("pregnancy")}
+        >
+          Your pregnancy space: preparations, questions & support →
+        </button>
+      ) : (
+        <MilestoneNotice key={selectedChild.id} child={selectedChild} />
+      )}
 
       {!isPregnancy && (
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...SPRING_TRANSITION, delay: 0.05 }}
-          onClick={() => setPage('ask-ai')}
+          onClick={() => setPage("ask-ai")}
           className="w-full mb-10 p-6 rounded-[2rem] bg-slate-850 text-left text-white flex items-center gap-4 shadow-lg hover:bg-slate-800 transition-colors"
         >
           <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
@@ -128,14 +184,31 @@ export function DashboardPage() {
           </div>
           <div className="flex-1">
             <p className="font-heading text-xl">Hard moment right now?</p>
-            <p className="text-white/60 text-sm">Get the exact words to say in seconds.</p>
+            <p className="text-white/60 text-sm">
+              Get the exact words to say in seconds.
+            </p>
           </div>
           <ArrowRight className="w-5 h-5 text-white/60" />
         </motion.button>
       )}
 
+      {!isPregnancy && (
+        <>
+          <GrowthSnapshot key={selectedChild.id} child={selectedChild} />
+          <HealthUpcoming
+            key={`health-${selectedChild.id}`}
+            child={selectedChild}
+          />
+        </>
+      )}
+
       <div className="space-y-6 md:space-y-8">
-        {isPregnancy && selectedChild.age.pregnancyWeek && <WeekGuideCard key={selectedChild.age.pregnancyWeek} week={selectedChild.age.pregnancyWeek} />}
+        {isPregnancy && selectedChild.age.pregnancyWeek && (
+          <WeekGuideCard
+            key={selectedChild.age.pregnancyWeek}
+            week={selectedChild.age.pregnancyWeek}
+          />
+        )}
         {dailyFeed.map((item, index) => (
           <motion.div
             key={item.id}
@@ -149,12 +222,20 @@ export function DashboardPage() {
                 {item.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-heading font-semibold text-xl text-slate-850 mb-3">{item.title}</h3>
-                <p className="text-slate-700 leading-relaxed text-base md:text-lg">{item.content}</p>
+                <h3 className="font-heading font-semibold text-xl text-slate-850 mb-3">
+                  {item.title}
+                </h3>
+                <p className="text-slate-700 leading-relaxed text-base md:text-lg">
+                  {item.content}
+                </p>
                 {item.microScript && (
                   <div className="mt-5 p-5 bg-white/60 rounded-2xl border border-white/40 shadow-sm">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Micro-script</h4>
-                    <p className="text-slate-800 font-medium whitespace-pre-line leading-relaxed">{item.microScript}</p>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                      Micro-script
+                    </h4>
+                    <p className="text-slate-800 font-medium whitespace-pre-line leading-relaxed">
+                      {item.microScript}
+                    </p>
                   </div>
                 )}
               </div>

@@ -1,7 +1,9 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { GrowthForm } from "@/components/care/GrowthForm";
+import { GrowthVisual } from "@/components/care/GrowthVisual";
 import { useAppStore } from "@/stores/appStore";
-import { ageDays, todayDate, type GrowthEntry } from "@/lib/family-care";
+import { ageDays, type GrowthEntry } from "@/lib/family-care";
 import {
   percentile,
   referenceValue,
@@ -62,7 +64,7 @@ function GrowthChild({ child }: { child: import("@/types").Child }) {
   return (
     <CareFrame
       title={`${child.name}’s growth`}
-      intro="Keep a record to discuss with your clinician. A percentile describes a reference comparison; it is not a score, a target or a diagnosis."
+      intro="Height, weight and the little changes over time. Add a measurement, look back, and keep everything together."
     >
       {!born ? (
         <p>
@@ -71,21 +73,36 @@ function GrowthChild({ child }: { child: import("@/types").Child }) {
         </p>
       ) : (
         <>
-          <CareError error={care.error || error} reload={()=>{setError('');care.reload();}} />
+          <CareError
+            error={care.error || error}
+            reload={() => {
+              setError("");
+              care.reload();
+            }}
+          />
           {!care.data && !care.error && (
             <p role="status">Loading saved measurements…</p>
           )}
           {settings && (
             <>
-              <section className="border-y py-6 mb-8">
+              <GrowthVisual
+                child={child}
+                entries={active}
+                settings={settings}
+              />
+              <details className="border-y py-5 mb-6">
+                <summary className="cursor-pointer text-clay">
+                  Chart reference & BMI explanation
+                </summary>
                 <h2 className="font-heading text-2xl mb-4">
-                  Choose the reference together
+                  Choose their chart reference
                 </h2>
                 <p className="text-sm text-slate-600 mb-4">
-                  WHO charts use separate boys’ and girls’ reference data.
-                  Choose the reference used in your child’s clinical record; it
-                  is never inferred from their name. This chart supports birth
-                  to 730 days only.
+                  Growth references use separate boys’ and girls’ data. Choose
+                  the reference used in your child’s clinical record; it is
+                  never inferred from their name. WHO measurement comparisons
+                  cover birth to two years. BMI uses the CDC age-specific
+                  reference from 2 to 19 years.
                 </p>
                 <label>
                   Growth chart reference
@@ -106,8 +123,8 @@ function GrowthChild({ child }: { child: import("@/types").Child }) {
                     <option value="unknown">
                       Not selected · measurements only
                     </option>
-                    <option value="boys">WHO boys</option>
-                    <option value="girls">WHO girls</option>
+                    <option value="boys">Boys’ reference</option>
+                    <option value="girls">Girls’ reference</option>
                   </select>
                 </label>
                 <label className="flex items-start gap-3 mt-5">
@@ -128,7 +145,7 @@ function GrowthChild({ child }: { child: import("@/types").Child }) {
                   about corrected age and the right chart. Growth records stay
                   private to your account and are not added to AI memory.
                 </p>
-              </section>
+              </details>
               <div className="flex flex-wrap gap-4 items-end justify-between mb-5">
                 <label className="flex-1">
                   Measurement
@@ -163,13 +180,26 @@ function GrowthChild({ child }: { child: import("@/types").Child }) {
                 settings={settings}
                 metric={metric}
               />
-              <p className="text-sm text-slate-600 my-5">
-                Reference lines show the 3rd, 50th and 97th percentiles, not
-                boundaries for health. Missing percentiles can mean age,
-                measurement method, reference choice or an extreme value needs
-                review. Check surprising entries with the person who measured
-                your child. Trends need clinical context.
-              </p>
+              <details className="my-5 text-sm text-slate-600">
+                <summary className="cursor-pointer">
+                  About reference lines
+                </summary>
+                <p>
+                  Reference lines show the 3rd, 50th and 97th percentiles, not
+                  boundaries for health. Missing percentiles can mean age,
+                  measurement method, reference choice or an extreme value needs
+                  review. Check surprising entries with the person who measured
+                  your child. Trends need clinical context.
+                </p>
+                <a
+                  className="underline"
+                  href="https://www.cdc.gov/growthcharts/cdc-data-files.htm"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  BMI reference data and method ↗
+                </a>
+              </details>
               {showForm && (
                 <GrowthForm
                   key={editing?.id ?? "new"}
@@ -297,7 +327,11 @@ function GrowthChart({
       value: e[metric]!,
       method: e.method,
     }));
-  const compare = settings.reference !== "unknown" && !settings.preterm;
+  const compare =
+    settings.reference !== "unknown" &&
+    !settings.preterm &&
+    ageDays(born, new Date().toISOString().slice(0, 10)) <= 730 &&
+    (metric !== "length_cm" || points.every((p) => p.method === "lying"));
   const maxDay = Math.max(180, ...points.map((p) => p.day));
   const curves = compare
     ? [-1.880793608, 0, 1.880793608].map((z) =>
@@ -391,143 +425,14 @@ function GrowthChart({
       </svg>
       <figcaption className="text-xs text-slate-600">
         Clay dots: your records
-        {compare ? ' · Green: WHO reference through two years (lower: 3rd, middle: 50th, upper: 97th)' : ' · Reference comparison is off'}
+        {compare
+          ? " · Green: WHO reference through two years (lower: 3rd, middle: 50th, upper: 97th)"
+          : " · Reference comparison is off"}
         {metric === "length_cm"
           ? " (lying length only; standing measurements are not comparable)"
           : ""}
         . Age in months on the horizontal axis.
       </figcaption>
     </figure>
-  );
-}
-function GrowthForm({
-  childId,
-  born,
-  entry,
-  onSaved,
-  onCancel,
-}: {
-  childId: string;
-  born: string;
-  entry: GrowthEntry | null;
-  onSaved: () => void;
-  onCancel: () => void;
-}) {
-  const [date, setDate] = useState(entry?.measured_on ?? todayDate()),
-    [weight, setWeight] = useState(entry?.weight_kg?.toString() ?? ""),
-    [length, setLength] = useState(entry?.length_cm?.toString() ?? ""),
-    [head, setHead] = useState(entry?.head_cm?.toString() ?? ""),
-    [method, setMethod] = useState(entry?.method ?? "lying"),
-    [note, setNote] = useState(entry?.note ?? ""),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  const receipt = useRef<string | null>(entry?.id ?? null);
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    receipt.current ??= crypto.randomUUID();
-    try {
-      await careRequest("/api/care", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: receipt.current,
-          child_id: childId,
-          revision: entry?.revision ?? 0,
-          measured_on: date,
-          weight_kg: weight ? Number(weight) : null,
-          length_cm: length ? Number(length) : null,
-          head_cm: head ? Number(head) : null,
-          method,
-          note,
-          archived: entry?.archived ?? false,
-        }),
-      });
-      onSaved();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <form
-      onSubmit={save}
-      className="border border-clay rounded-2xl p-5 space-y-5 my-8"
-    >
-      <h2 className="font-heading text-2xl">
-        {entry ? "Correct measurement" : "Add measurement"}
-      </h2>
-      <fieldset disabled={busy} className="space-y-5">
-        <label className="block">
-          Measured on
-          <input
-            type="date"
-            required
-            min={born}
-            max={todayDate()}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={fieldClass}
-          />
-        </label>
-        <div className="grid sm:grid-cols-3 gap-4">
-          {[
-            ["Weight (kg)", weight, setWeight, 0.3, 300],
-            ["Length / height (cm)", length, setLength, 20, 250],
-            ["Head circumference (cm)", head, setHead, 15, 80],
-          ].map(([label, value, set, min, max]) => (
-            <label key={String(label)}>
-              {String(label)}
-              <input
-                type="number"
-                step="0.01"
-                min={Number(min)}
-                max={Number(max)}
-                value={String(value)}
-                onChange={(e) => (set as (v: string) => void)(e.target.value)}
-                className={fieldClass}
-              />
-            </label>
-          ))}
-        </div>
-        <label className="block">
-          Length / height method
-          <select
-            value={method}
-            onChange={(e) => setMethod(e.target.value as typeof method)}
-            className={fieldClass}
-          >
-            <option value="lying">Lying length</option>
-            <option value="standing">Standing height</option>
-          </select>
-        </label>
-        <label className="block">
-          Measurement note (optional)
-          <input
-            maxLength={300}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="For example: measured at the clinic"
-            className={fieldClass}
-          />
-        </label>
-        <div className="flex gap-5">
-          <button className={buttonClass}>
-            {busy ? "Saving…" : "Save measurement"}
-          </button>
-          <button type="button" onClick={onCancel} className="underline">
-            Cancel
-          </button>
-        </div>
-      </fieldset>
-      {error && (
-        <p role="alert" className="text-red-800">
-          {error}
-        </p>
-      )}
-    </form>
   );
 }

@@ -6,7 +6,7 @@ import type { Entitlement } from '@/lib/plans';
 import type { Child, FamilyRoutine, ParentWellbeingEntry, TemperamentProfile } from '@/types';
 
 export type Page =
-  | 'discover' | 'growth' | 'milestones' | 'play' | 'pregnancy'
+  | 'health' | 'interests' | 'discover' | 'growth' | 'milestones' | 'play' | 'pregnancy'
   | 'dashboard' | 'ask-ai' | 'library' | 'child-profile' | 'development' | 'emotional-lab'
   | 'parent-coach' | 'family-hub' | 'life-skills' | 'community' | 'wellbeing' | 'stories';
 

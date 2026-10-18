@@ -15,10 +15,19 @@ export function CareFrame({
     <div className="max-w-4xl mx-auto px-5 py-8 pb-28">
       {page !== "discover" && (
         <button
-          onClick={() => setPage("discover")}
+          onClick={() =>
+            setPage(
+              ["growth", "health", "interests"].includes(page)
+                ? "child-profile"
+                : "discover",
+            )
+          }
           className="text-clay underline text-sm mb-6"
         >
-          ← Discover
+          ←{" "}
+          {["growth", "health", "interests"].includes(page)
+            ? "Child profile"
+            : "Discover"}
         </button>
       )}
       <h1 className="font-heading text-4xl mb-4">{title}</h1>

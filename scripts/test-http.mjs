@@ -4,6 +4,9 @@ import assert from 'node:assert/strict';
 const base = process.env.TEST_APP_URL || 'http://127.0.0.1:3010';
 if (!['localhost','127.0.0.1','[::1]'].includes(new URL(base).hostname)) throw new Error('HTTP smoke tests require a local app.');
 const checks = [
+  ['/api/profile-notebook','GET',null,401],
+  ['/api/profile-notebook','PUT',base,401],
+  ['/api/profile-notebook','PUT','https://foreign.invalid',403],
   ['/api/admin/providers','GET',null,401],
   ['/api/cron/delivery','GET',null,401],
   ['/api/email/webhook','POST',null,503],
