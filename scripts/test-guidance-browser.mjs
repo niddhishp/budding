@@ -4,22 +4,24 @@ import http from 'node:http';
 import pg from 'pg';
 pg.types.setTypeParser(1082, value => value);
 const url=process.env.TEST_DATABASE_URL;
-if (!url || new URL(url).hostname!=='127.0.0.1' || !new URL(url).pathname.endsWith('/kahiye_guidance_test')) throw new Error('Requires the local guidance test database.');
+if (!url || new URL(url).hostname!=='127.0.0.1' || !['/kahiye_guidance_test','/kahiye_security_test'].includes(new URL(url).pathname)) throw new Error('Requires the local guidance test database.');
 const db=new pg.Client({connectionString:url}); await db.connect();
 if ((await db.query('select count(*)::int n from auth.users')).rows[0].n) throw new Error('Fixtures require an empty synthetic auth database.');
+pg.types.setTypeParser(1082,v=>v);pg.types.setTypeParser(1700,Number);
 await db.query('begin');
 const uid='e0000000-0000-4000-8000-000000000001';
 const child='e0000000-0000-4000-8000-000000000011';
 await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'parent@example.invalid',now());",[uid]);
 await db.query("insert into public.consents(user_id,policy_version) values($1,'2026-10-05')",[uid]);
-await db.query("insert into public.children(id,user_id,name,dob) values($1,$2,'Mira','2020-01-01'),('e0000000-0000-4000-8000-000000000012',$2,'Dev','2021-01-01')",[child,uid]);
+await db.query("insert into public.children(id,user_id,name,dob) values($1,$2,'Mira','2026-01-01'),('e0000000-0000-4000-8000-000000000012',$2,'Dev','2021-01-01')",[child,uid]);
+await db.query("insert into public.children(id,user_id,name,due_date) values('e0000000-0000-4000-8000-000000000013',$1,'Little one','2027-01-20')",[uid]);
 const user={id:uid,email:'parent@example.invalid',aud:'authenticated',role:'authenticated',app_metadata:{},user_metadata:{},created_at:new Date().toISOString()};
 const claims={sub:uid,role:'authenticated',aal:'aal1',exp:Math.floor(Date.now()/1000)+14400};
 const token=`${Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url')}.${Buffer.from(JSON.stringify(claims)).toString('base64url')}.synthetic-only`;
 const session={access_token:token,refresh_token:'synthetic-only',token_type:'bearer',expires_in:14400,expires_at:claims.exp,user};
 const cookie='sb-127-auth-token=base64-'+Buffer.from(JSON.stringify(session)).toString('base64url');
-const rpcs={reserve_guidance:['p_id','p_user','p_child','p_kind','p_fingerprint','p_refines','p_free'],complete_guidance:['p_id','p_lease','p_payload'],claim_guidance_job:['p_user'],finish_guidance_job:['p_decode','p_lease','p_memories'],record_decode_outcome:['p_id','p_outcome']};
-const tables=new Set(['consents','children','subscriptions','decodes','context_logs','memories','guidance_requests','guidance_jobs','stories','reports','safety_events']);
+const rpcs={save_child_care:['target','expected','content'],save_growth_entry:['payload'],record_billing_event:['p_id','p_subscription','p_event','p_created','p_status','p_period_end','p_paid'],reserve_guidance:['p_id','p_user','p_child','p_kind','p_fingerprint','p_refines','p_free'],complete_guidance:['p_id','p_lease','p_payload'],claim_guidance_job:['p_user'],finish_guidance_job:['p_decode','p_lease','p_memories'],record_decode_outcome:['p_id','p_outcome']};
+const tables=new Set(['child_care_state','growth_entries','billing_event_receipts','consents','children','subscriptions','decodes','context_logs','memories','guidance_requests','guidance_jobs','stories','reports','safety_events']);
 let queue=Promise.resolve(), mode='ordinary', calls=0, lastGuidanceInput='';
 const ident=s=>{if(!/^[a-z_]+$/.test(s))throw new Error('Invalid test identifier');return `"${s}"`;};
 const backend=http.createServer(async(req,res)=>{
@@ -31,7 +33,7 @@ const backend=http.createServer(async(req,res)=>{
   const chunks=[];for await(const c of req)chunks.push(c);const body=JSON.parse(Buffer.concat(chunks).toString()||'{}');
   if(u.pathname==='/__test/mode'){mode=body.mode;calls=0;res.end('{}');return;}
   if(u.pathname==='/__test/status'){res.end(JSON.stringify({mode,calls,lastGuidanceInput}));return;}
-  if(u.pathname==='/auth/v1/user'){res.end(JSON.stringify(user));return;}
+  if(u.pathname==='/auth/v1/user'){res.end(JSON.stringify(req.headers.authorization?.includes('synthetic-only')?user:null));return;}
   if(u.pathname==='/v1/messages'){
     calls++; const props=body.output_config?.format?.schema?.properties??{};
     if(props.sayThis)lastGuidanceInput=JSON.stringify(body.messages);
@@ -54,6 +56,7 @@ const backend=http.createServer(async(req,res)=>{
       await db.query("select set_config('request.jwt.claims',$1,true)",[JSON.stringify(claims)]);
       const rpc=u.pathname.replace('/rest/v1/rpc/','');let result;
       if(rpc in rpcs){
+        if(mode==='care-save-failure'&&['save_child_care','save_growth_entry'].includes(rpc))throw new Error('Synthetic care save failure');
         if(mode==='save-failure'&&rpc==='complete_guidance')throw new Error('Synthetic save failure');
         const values=rpcs[rpc].map(k=>body[k]??(k==='p_free'?false:null)).map(v=>v&&typeof v==='object'?JSON.stringify(v):v);
         result=(await db.query(`select public.${rpc}(${values.map((_,i)=>'$'+(i+1)).join(',')}) result`,values)).rows[0].result;

@@ -20,6 +20,7 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Your account:</strong> your email address.</li>
         <li><strong>About your child:</strong> first name or nickname, date of birth or due date, and your answers about their temperament.</li>
+        <li><strong>Optional family records:</strong> growth measurements, your chosen chart reference, milestone observations and reminder preferences, saved play activities, and pregnancy preparations and notes. These records stay separate from AI memory and are not automatically sent to an AI provider or clinician.</li>
         <li><strong>What you tell Kahiye:</strong> the situations you describe, notes you log, the guidance generated, and whether it worked.</li>
         <li><strong>Payments:</strong> handled by Razorpay. We store your subscription status and renewal date, never your card or UPI details.</li>
       </ul>
@@ -47,6 +48,7 @@ export default function PrivacyPage() {
       <p>Some of these providers may process data outside India, under contracts that require them to protect it.</p>
 
       <h2>How long we keep it</h2>
+      <p>Optional family records remain until you clear them or delete the account. Archived growth measurements remain available for undo; archiving is not deletion. Pregnancy notes can be cleared and observations reset in their respective tools. Account deletion removes these records through the same child and account erasure process.</p>
       <p>For as long as your account is open. When you delete your account, your profile, children, notes and history are deleted immediately; backups roll off within [30] days.</p>
 
       <h2>Your rights</h2>

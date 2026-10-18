@@ -303,6 +303,7 @@ export default function LandingPage() {
           <nav className="flex gap-6">
             <Link href="/quiz" className="hover:text-slate-900">Temperament quiz</Link>
             <Link href="/tools/due-date" className="hover:text-slate-900">Due date calculator</Link>
+            <Link href="/articles" className="hover:text-slate-900">Parenting guides</Link>
             <Link href="/privacy" className="hover:text-slate-900">Privacy</Link>
             <Link href="/terms" className="hover:text-slate-900">Terms</Link>
           </nav>

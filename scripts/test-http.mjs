@@ -4,6 +4,14 @@ import assert from 'node:assert/strict';
 const base = process.env.TEST_APP_URL || 'http://127.0.0.1:3010';
 if (!['localhost','127.0.0.1','[::1]'].includes(new URL(base).hostname)) throw new Error('HTTP smoke tests require a local app.');
 const checks = [
+  ['/articles','GET',null,200],
+  ['/articles/babys-first-shoes','GET',null,200],
+  ['/articles/not-a-real-guide','GET',null,404],
+  ['/admin/launch','GET',null,307],
+  ['/api/availability','GET',null,200],
+  ['/api/care','GET',null,401],
+  ['/api/care','POST',base,401],
+  ['/api/care','PATCH','https://foreign.invalid',403],
   ['/api/admin/consultations/a0000000-0000-4000-8000-000000000001/contact','POST',base,401],
   ['/api/admin/consultations/a0000000-0000-4000-8000-000000000001/contact','POST','https://foreign.invalid',403],
   ['/api/admin/consultations/a0000000-0000-4000-8000-000000000001/delivery','POST',base,401],

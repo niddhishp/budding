@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, Brain, Heart, Quote, Flame, Sunrise } from 'lucide-react';
 import type { Child } from '@/types';
 import { WeekGuideCard } from '@/components/WeekGuideCard';
+import { MilestoneNotice } from '@/views/MilestonesPage';
 
 const SPRING_TRANSITION = { type: 'spring', stiffness: 100, damping: 20 } as const;
 
@@ -71,8 +72,8 @@ function buildFeed(child: Child): FeedItem[] {
 
   items.push({
     id: 'ritual', icon: <Heart className="w-6 h-6 text-leaf" />, color: 'bg-leaf/10 border-leaf/20',
-    title: 'Tonight: Rose and Thorn',
-    content: `At dinner, ask ${name} for their "rose" (best part of the day) and "thorn" (hardest part). It builds emotional vocabulary and makes bad moments speakable.`,
+    title: age.years < 3 ? 'A familiar little ritual' : 'Tonight: Rose and Thorn',
+    content: age.years < 3 ? `Try a short familiar song with ${name}. Pause, notice their response, and let them decide whether to keep going. A few shared moments are enough.` : `At dinner, invite ${name} to share their "rose" (best part of the day) and "thorn" (hardest part), with room to pass. It can make feelings easier to talk about.`,
   });
 
   items.push({
@@ -111,6 +112,8 @@ export function DashboardPage() {
           Shaped around {selectedChild.name}'s age and what you share.
         </p>
       </motion.div>
+
+      {isPregnancy ? <button className="w-full text-left p-5 rounded-xl bg-paper-deep mb-7 text-clay" onClick={()=>setPage('pregnancy')}>Your pregnancy space: preparations, questions & support →</button> : <MilestoneNotice key={selectedChild.id} child={selectedChild}/>}
 
       {!isPregnancy && (
         <motion.button

@@ -1,0 +1,2 @@
+# Preserve the downloaded reference file byte-for-byte for its published checksum.
+data/reference/WHOref_d.csv binary

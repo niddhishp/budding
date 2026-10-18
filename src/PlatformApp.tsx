@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
@@ -7,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { DashboardPage } from '@/views/DashboardPage';
 import { AskAIPage } from '@/views/AskAIPage';
 import { ChildProfilePage } from '@/views/ChildProfilePage';
-import { DevelopmentTimelinePage } from '@/views/DevelopmentTimelinePage';
 import { EmotionalLabPage } from '@/views/EmotionalLabPage';
 import { ParentCoachPage } from '@/views/ParentCoachPage';
 import { FamilyHubPage } from '@/views/FamilyHubPage';
@@ -20,6 +20,11 @@ import { GenomeOnboarding } from '@/components/GenomeOnboarding';
 import { ConsentGate } from '@/components/ConsentGate';
 import { PlanSheet } from '@/components/PlanSheet';
 import { ExpertSheet } from '@/components/ExpertSheet';
+const DiscoverPage=dynamic(()=>import('@/views/DiscoverPage').then(m=>m.DiscoverPage));
+const GrowthPage=dynamic(()=>import('@/views/GrowthPage').then(m=>m.GrowthPage));
+const MilestonesPage=dynamic(()=>import('@/views/MilestonesPage').then(m=>m.MilestonesPage));
+const PlayPage=dynamic(()=>import('@/views/PlayPage').then(m=>m.PlayPage));
+const PregnancyPage=dynamic(()=>import('@/views/PregnancyPage').then(m=>m.PregnancyPage));
 
 function PlatformApp() {
   const { status, error, load, currentPage, addingChild, editingChildId, children, consentNeeded, expert, selectedChildId } = useAppStore();
@@ -52,7 +57,12 @@ function PlatformApp() {
       case 'ask-ai':
       case 'library': return <AskAIPage />;
       case 'child-profile': return <ChildProfilePage />;
-      case 'development': return <DevelopmentTimelinePage />;
+      case 'development':
+      case 'milestones': return <MilestonesPage />;
+      case 'discover': return <DiscoverPage />;
+      case 'growth': return <GrowthPage />;
+      case 'play': return <PlayPage />;
+      case 'pregnancy': return <PregnancyPage />;
       case 'emotional-lab': return <EmotionalLabPage />;
       case 'parent-coach': return <ParentCoachPage />;
       case 'family-hub': return <FamilyHubPage />;
@@ -65,7 +75,7 @@ function PlatformApp() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] bg-canvas"><Link href="/help-now" className="fixed bottom-2 right-3 z-[60] bg-paper px-3 py-2 rounded-full text-xs text-clay underline">Immediate support</Link>
+    <div className="relative min-h-[100dvh] bg-canvas"><Link href="/help-now" className="fixed bottom-20 left-4 md:bottom-3 md:left-auto md:right-24 z-[60] bg-paper px-3 py-2 rounded-full text-xs text-clay underline">Immediate support</Link>
       {consentNeeded ? <ConsentGate /> : editChild ? <GenomeOnboarding key={editChild.id} editChild={editChild} /> : addingChild && <GenomeOnboarding />}
       <PlanSheet />
       {expert.open && <ExpertSheet key={expert.concern ?? 'blank'} />}

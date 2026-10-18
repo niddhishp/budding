@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { launchStatus } from '@/lib/launch';
 import { after } from 'next/server';
 import { checkUserConsent } from '@/lib/access';
 import { getAdminSupabase } from '@/lib/supabase-admin';
@@ -23,6 +24,7 @@ const OUTCOMES = { '1': 'worked', '2': 'partly', '3': 'did_not_work' } as const;
  * acknowledge with empty TwiML at once and reply through the REST API from `after()`.
  */
 export async function POST(req: Request) {
+  if(!launchStatus().whatsapp)return new Response('Channel not enabled',{status:503});
   const form = await req.formData();
   const params = Object.fromEntries([...form.entries()].map(([k, v]) => [k, String(v)]));
 

@@ -27,6 +27,7 @@ export const FREE_FEATURES = [
 ];
 
 export interface Entitlement {
+  canCancel?: boolean;
   plan: PlanId;
   /** Decodes used in the current window (rolling week on Free, rolling day on Plus). */
   used: number;

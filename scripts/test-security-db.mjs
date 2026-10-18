@@ -42,6 +42,8 @@ try {
   await client.query(readFileSync('tests/sql/consultation-delivery.sql','utf8'));
   console.log('PASS: expert capacity, booking buffers, daily limits, overdue queues, contact receipts, delivery leases, retry limits and erasure. Fixtures rolled back.');
   await import('./test-capacity-db.mjs');
+  await client.query(readFileSync('tests/sql/family-resources.sql','utf8'));
+  console.log('PASS: private care/growth ownership, consent, revisions, retry, archive/undo, billing replay/order and erasure. Fixtures rolled back.');
 } finally {
   await client.query('rollback');
   await client.end();

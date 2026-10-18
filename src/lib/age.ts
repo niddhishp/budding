@@ -20,7 +20,7 @@ function stageForYears(years: number): DevelopmentalStage {
 export function computeAge(dob: string | null, dueDate: string | null, now = new Date()): AgeInfo {
   if (!dob || parseDate(dob) > now) {
     const due = dueDate ? parseDate(dueDate) : dob ? parseDate(dob) : now;
-    const daysUntilDue = Math.max(0, Math.round((due.getTime() - now.getTime()) / DAY_MS));
+    const daysUntilDue = Math.round((due.getTime() - now.getTime()) / DAY_MS);
     const week = Math.min(42, Math.max(1, Math.floor((PREGNANCY_DAYS - daysUntilDue) / 7)));
     return { years: 0, months: 0, days: 0, stage: 'pregnancy', pregnancyWeek: week, label: `Week ${week}` };
   }

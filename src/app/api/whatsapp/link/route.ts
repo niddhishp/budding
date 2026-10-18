@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { randomInt } from 'node:crypto';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
+import { launchStatus } from '@/lib/launch';
 
 const CODE_TTL_MS = 15 * 60_000;
 
@@ -13,13 +14,14 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Please sign in again.' }, { status: 401 });
 
   const { data } = await supabase.from('whatsapp_links').select('phone').eq('user_id', user.id).maybeSingle();
-  return NextResponse.json({ phone: data?.phone ?? null, number: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? null });
+  return NextResponse.json({ phone: data?.phone ?? null, number: launchStatus().whatsapp ? process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? null : null });
 }
 
 /** Issue a one-time code; the parent sends "LINK <code>" from WhatsApp to prove the number is theirs. */
 export async function POST() {
   const access = await requireParentAccess();
   if (access.response) return access.response;
+  if(!launchStatus().whatsapp)return NextResponse.json({error:'WhatsApp is not open yet. Please use your family space in Kahiye.'},{status:503});
   const { user } = access;
 
   const admin = getAdminSupabase();

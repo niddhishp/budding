@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Loader2, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,8 @@ export function PlanSheet() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const [available,setAvailable]=useState(false);
+  useEffect(()=>{if(paywall.open)void fetch('/api/availability',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>setAvailable(v?.billing===true)).catch(()=>setAvailable(false));},[paywall.open]);
   if (!paywall.open) return null;
   const isPlus = entitlement?.plan === 'plus';
 
@@ -75,7 +77,7 @@ export function PlanSheet() {
             return;
           }
           setEntitlement(result.entitlement);
-          setSuccess(true);
+          if(result.entitlement?.plan==='plus')setSuccess(true);else setError('Payment confirmation is still pending. Please check again shortly; contact support if your bank shows a charge.');
         },
       }).open();
     } catch (err) {
@@ -141,7 +143,7 @@ export function PlanSheet() {
             <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2 pr-8">
               {paywall.reason ?? 'The right words, every time you need them.'}
             </h2>
-            <p className="text-slate-500 mb-6">Less than a cup of chai a week.</p>
+            <p className="text-slate-500 mb-6">Choose a plan when paid access opens.</p>
 
             <div className="grid grid-cols-2 gap-2 mb-6" role="radiogroup" aria-label="Billing period">
               {(['monthly', 'yearly'] as const).map((value) => {
@@ -168,11 +170,12 @@ export function PlanSheet() {
             <FeatureList items={PLUS_FEATURES} />
 
             {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+            {entitlement?.canCancel&&<button onClick={cancel} disabled={busy} className="underline text-sm text-clay mt-4">Cancel the existing subscription</button>}
 
-            <Button onClick={upgrade} disabled={busy} className="mt-6 w-full h-14 rounded-full bg-slate-850 hover:bg-slate-800 text-white text-lg">
-              {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : `Get Plus · ${PRICES[interval].amount}`}
+            <Button onClick={upgrade} disabled={busy||!available} className="mt-6 w-full h-14 rounded-full bg-slate-850 hover:bg-slate-800 text-white text-lg">
+              {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : available ? `Get Plus · ${PRICES[interval].amount}` : 'Paid plans opening soon'}
             </Button>
-            <p className="mt-3 text-xs text-center text-slate-400">UPI, cards and netbanking via Razorpay. Cancel anytime.</p>
+            <p className="mt-3 text-xs text-center text-slate-400">{available ? 'Payments via Razorpay. Cancel anytime.' : 'Kahiye Free remains available. Checkout is currently closed.'}</p>
 
             <div className="mt-6 pt-6 border-t border-slate-100">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Free plan</p>

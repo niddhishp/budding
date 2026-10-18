@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { validatePaymentVerification } from 'razorpay/dist/utils/razorpay-utils';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getAdminSupabase } from '@/lib/supabase-admin';
-import { getEntitlement, getRazorpay, rowFromRazorpay } from '@/lib/billing';
+import { getEntitlement } from '@/lib/billing';
 
 const bodySchema = z.object({
   razorpay_payment_id: z.string().min(1),
@@ -21,6 +21,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid payment confirmation.' }, { status: 400 });
   const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature } = parsed.data;
 
+  if(!process.env.RAZORPAY_KEY_SECRET)return NextResponse.json({error:'Payment verification is unavailable.'},{status:503});
   const valid = validatePaymentVerification(
     { subscription_id: razorpay_subscription_id, payment_id: razorpay_payment_id },
     razorpay_signature,
@@ -36,15 +37,6 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (owned?.user_id !== user.id) return NextResponse.json({ error: 'Subscription not found.' }, { status: 404 });
 
-  try {
-    const subscription = await getRazorpay().subscriptions.fetch(razorpay_subscription_id);
-    const { row } = rowFromRazorpay(subscription);
-    const { error } = await admin.from('subscriptions').update(row).eq('user_id', user.id);
-    if (error) throw error;
-  } catch (error) {
-    console.error('[billing] verify sync failed', error);
-    return NextResponse.json({ error: 'Payment received, but we could not activate Plus yet. It will activate within a few minutes.' }, { status: 502 });
-  }
-
+  // The signed subscription.charged receipt grants access; a mandate alone does not.
   return NextResponse.json({ entitlement: await getEntitlement(supabase, user.id) });
 }
