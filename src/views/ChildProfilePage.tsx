@@ -55,6 +55,7 @@ export function ChildProfilePage() {
           {child.name}'s Journey
         </h1>
         <p className="text-slate-500 uppercase tracking-widest text-sm font-medium">
+          {child.gender && <>{child.gender === 'girl' ? 'Girl' : 'Boy'} &middot; </>}
           {child.age.label} &middot; {stage?.title}
         </p>
       </motion.div>

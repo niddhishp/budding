@@ -1,4 +1,5 @@
 import { GuidePreference } from "@/components/care/GuidePreference";
+import { pubertyGuideForChild } from "@/lib/child-profile";
 import { useState } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/stores/appStore";
@@ -18,7 +19,7 @@ export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
   const today = useTodayDate();
   const recommended = guideBand(ageMonths(child?.dateOfBirth ?? null, today));
   const [chosen, setChosen] = useState<GuideBand | "">("");
-  const path = child?.pubertyGuide ?? null;
+  const path = pubertyGuideForChild(child);
   const band = chosen || recommended;
   const guides = guidesForProfile(topic, band, path);
   return (
@@ -118,7 +119,7 @@ export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
       <p className="text-xs text-slate-500 mt-8 leading-6">
         Kahiye editorial · Sources checked {GUIDE_UPDATED}. General parent
         education; independent clinical and safeguarding review is still
-        pending. Age groups guide conversation, not diagnosis. Your guide preference is saved to this child’s profile. Exploring another age stays on this screen. Neither changes health measurements or shopping preferences.
+        pending. Age groups guide conversation, not diagnosis. Guidance follows your child’s profile. Exploring another age stays on this screen. Neither changes health measurements or shopping preferences.
       </p>
     </CareFrame>
   );

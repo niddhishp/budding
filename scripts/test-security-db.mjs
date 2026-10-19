@@ -37,6 +37,8 @@ try {
   await client.query(readFileSync('tests/sql/optional-intake.sql','utf8'));
   console.log('PASS: optional intake constraints and ownership. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/child-guide.sql','utf8'));
+  await client.query(readFileSync('tests/sql/child-profile-gender.sql','utf8'));
+  console.log('PASS: profile Boy/Girl persistence, editing, clearing, constraints, consent and family isolation. Fixtures rolled back.');
   console.log('PASS: guide preference isolation, consent, anonymous denial, validation and unrelated profile preservation. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/memory-continuity.sql','utf8'));
   console.log('PASS: memory revisions, ownership, corrections, stop/rerate, pause, pending extraction and continuity boundaries. Fixtures rolled back.');

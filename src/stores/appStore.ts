@@ -8,6 +8,7 @@ import {
 } from "@/lib/mappers";
 import { POLICY_VERSION } from "@/lib/consent";
 import { pageAfterChildSwitch } from "@/lib/family-navigation";
+import { profileGenderUpdate } from "@/lib/child-profile";
 import type { Entitlement } from "@/lib/plans";
 import type {
   Child,
@@ -45,7 +46,7 @@ export type Page =
   | "stories";
 
 export interface NewChildInput {
-  pubertyGuide?: Child['pubertyGuide'];
+  gender?: Child['gender'];
   name: string;
   dateOfBirth: string | null;
   dueDate: string | null;
@@ -64,7 +65,7 @@ function profileToRow(input: NewChildInput) {
     name: input.name.trim(),
     dob: input.dateOfBirth,
     due_date: input.dueDate,
-    ...(input.pubertyGuide !== undefined ? { puberty_guide: input.pubertyGuide } : {}),
+    ...profileGenderUpdate(input.gender),
     ...temperamentToRow(input.temperament),
     focus_areas: input.focusAreas ?? [],
     household: input.household ?? [],
@@ -119,7 +120,6 @@ interface AppState {
   selectChild: (id: string) => void;
   addChild: (input: NewChildInput) => Promise<Child>;
   updateChild: (id: string, input: NewChildInput) => Promise<Child>;
-  updateChildGuide: (id: string, guide: NonNullable<Child['pubertyGuide']>) => Promise<void>;
 
   // Onboarding: shown automatically when a parent has no children, or on demand.
   addingChild: boolean;
@@ -350,13 +350,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       editingChildId: null,
     });
     return child;
-  },
-
-  updateChildGuide: async (id, guide) => {
-    const { data, error } = await getSupabase().from('children')
-      .update({ puberty_guide: guide }).eq('id', id).select('id, puberty_guide').single<{ id: string; puberty_guide: 'girls' | 'boys' }>();
-    if (error) throw error;
-    set(s => ({ children: s.children.map(c => c.id === data.id ? { ...c, pubertyGuide: data.puberty_guide } : c) }));
   },
 
   addingChild: false,
