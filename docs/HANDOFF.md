@@ -1,6 +1,9 @@
 # Kahiye — engineering handoff (living document)
 
 
+**Latest deployed follow-up:** [Automatic puberty age](CHILD-PROFILE-GENDER.md#automatic-age-follow-up), application `f905c4d183f3a94a205cfff98ff4349343e7c146`. Puberty derives age from profile DOB/current India date with no conversation-age dropdown, while retaining automatic girls/boys matching. Read-only age summary replaces the selector; missing/out-of-range DOB has honest fallback text. No schema/data changes. All 85 tests, build and branch CI `39207091099` passed. Vercel `dpl_EGkut9yf8MMpFQyeibhjZwx8J2Wb` Ready on both domains; desktop/mobile verified with zero puberty selectors, correct Advika guidance, preserved Safety age control, no overflow/errors. Release notes record main CI and screenshots.
+
+
 **Latest deployed release:** [Profile-driven puberty guidance](CHILD-PROFILE-GENDER.md), application `1cae1f26db5c6ab92990a10ff8901806b7446c1d`, additive migration 023. Boy/Girl is a saved child-profile detail that automatically selects puberty content; the second guide choice is removed. Existing reading preferences remain fallback only, without gender inference. On the owner's explicit instruction and previously supplied daughter detail, Advika's existing profile was saved as Girl through the authenticated UI; her girls' guide persisted after reload. Other profile fields were fingerprint-verified unchanged, apart from the normal save timestamp. All 85 tests, SQL/provider/route regressions, local build and branch CI `39206339187` passed. Vercel `dpl_Fc4ETHS27D5w4bmYEryHpPwypMMu` Ready on both domains; live desktop/mobile verified. See release notes for main CI and evidence.
 
 
