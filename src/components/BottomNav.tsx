@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Menu } from "lucide-react";
 import { useAppStore } from "@/stores/appStore";
 import { navItemsForChild } from "./navItems";
@@ -14,6 +14,7 @@ import {
 export function BottomNav() {
   const { currentPage, setPage, children, selectedChildId } = useAppStore();
   const [open, setOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const today = useTodayDate();
   const child = children.find((c) => c.id === selectedChildId);
   const items = navItemsForChild(child, today);
@@ -44,6 +45,7 @@ export function BottomNav() {
             );
           })}
           <button
+            ref={menuButton}
             onClick={() => setOpen(true)}
             aria-expanded={open}
             aria-haspopup="dialog"
@@ -55,7 +57,7 @@ export function BottomNav() {
         </div>
       </nav>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[85dvh] overflow-y-auto rounded-3xl bg-canvas p-6">
+        <DialogContent onCloseAutoFocus={event => { event.preventDefault(); menuButton.current?.focus(); }} className="w-[calc(100%-2rem)] max-w-md max-h-[85dvh] overflow-y-auto rounded-3xl bg-canvas p-6">
           <DialogTitle className="font-heading text-3xl pr-8">
             Your family menu
           </DialogTitle>
