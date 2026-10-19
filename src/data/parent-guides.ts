@@ -7,6 +7,9 @@ export const GUIDE_BANDS = [
   "14–17 years",
 ] as const;
 export type GuideBand = (typeof GUIDE_BANDS)[number];
+export function guidesForProfile(topic: 'puberty' | 'safety', band: GuideBand | null, path?: 'girls' | 'boys' | null) {
+  return PARENT_GUIDES.filter(g => g.topic === topic && band && g.bands.includes(band) && (topic === 'safety' || g.path === 'all' || g.path === path));
+}
 export function guideBand(months: number | null): GuideBand | null {
   if (months === null || months < 0 || months >= 216) return null;
   return GUIDE_BANDS[

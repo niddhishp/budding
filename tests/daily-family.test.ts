@@ -27,9 +27,12 @@ test('new observations preserve earlier records and fit the existing validated p
   assert.equal(Object.keys(parsed.observations).length, 18);
 });
 
-test('Discover includes pregnancy only for an expecting profile, while parent space remains available', () => {
+test('Discover includes pregnancy only for an expecting profile, while promoted tools live in main navigation', () => {
   assert(!discoverTools(false).some(t => t.page === 'pregnancy'));
-  assert(discoverTools(false).some(t => t.page === 'parent-space'));
+  for (const page of ['parent-space', 'safety', 'gifts', 'play', 'puberty']) {
+    assert(!discoverTools(false).some(t => t.page === page));
+    assert(!discoverTools(true).some(t => t.page === page));
+  }
   assert(discoverTools(true).some(t => t.page === 'pregnancy'));
   assert(!discoverTools(true).some(t => t.page === 'growth' || t.page === 'milestones'));
 });

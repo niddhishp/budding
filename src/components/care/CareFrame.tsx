@@ -13,7 +13,7 @@ export function CareFrame({
   const page = useAppStore((s) => s.currentPage);
   return (
     <div className="max-w-4xl mx-auto px-5 py-8 pb-28">
-      {page !== "discover" && (
+      {!["discover", "puberty", "safety", "parent-space", "gifts", "play"].includes(page) && (
         <button
           onClick={() =>
             setPage(

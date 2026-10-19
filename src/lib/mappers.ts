@@ -2,6 +2,7 @@ import { computeAge } from '@/lib/age';
 import type { AgentAnalysis, Child, Decode, DecodeOutcome, Memory, MemoryKind, MemorySource, RiskLevel, Story, TemperamentProfile } from '@/types';
 
 export interface ChildRow {
+  puberty_guide?: 'girls' | 'boys' | null;
   id: string;
   name: string;
   dob: string | null;
@@ -35,12 +36,13 @@ export interface DecodeRow {
 }
 
 export const CHILD_COLUMNS =
-  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band, intake_answered, memory_enabled';
+  'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band, intake_answered, memory_enabled, puberty_guide';
 export const DECODE_COLUMNS = 'id, child_id, scenario, analysis, risk_level, safety_category, outcome, created_at, continuation_of, refines';
 
 export function childFromRow(row: ChildRow): Child {
   return {
     id: row.id,
+    pubertyGuide: row.puberty_guide ?? null,
     name: row.name,
     dateOfBirth: row.dob,
     dueDate: row.due_date,

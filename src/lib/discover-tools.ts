@@ -2,12 +2,6 @@ import type { Page } from "@/stores/appStore";
 export function discoverTools(
   expecting: boolean,
 ): { page: Page; title: string; description: string }[] {
-  const parent = {
-    page: "parent-space" as const,
-    title: "Room for you, too",
-    description:
-      "A small reset, room to rest and a practical way to share the load.",
-  };
   return expecting
     ? [
         {
@@ -16,32 +10,13 @@ export function discoverTools(
           description:
             "Your preparations, appointment questions and support, for this expecting profile.",
         },
-        parent,
       ]
     : [
-        {
-          page: "puberty",
-          title: "Guide to Puberty",
-          description:
-            "Changing bodies, periods and words to say, matched to their age.",
-        },
-        {
-          page: "safety",
-          title: "Safety",
-          description:
-            "Body boundaries, online pressure, friendships and finding help.",
-        },
         {
           page: "shop",
           title: "Shop for Kids",
           description:
             "Thoughtful finds for their age and your taste. Handpicked, with clear referral disclosures.",
-        },
-        {
-          page: "gifts",
-          title: "Gifts & little celebrations",
-          description:
-            "Plan an occasion, recognise effort or give them something money cannot buy.",
         },
         {
           page: "growth",
@@ -60,13 +35,6 @@ export function discoverTools(
           title: "Make room for what they love",
           description:
             "Notice their interests and find a small activity, game or tip in Today.",
-        },
-        parent,
-        {
-          page: "play",
-          title: "Make room for play",
-          description:
-            "Low-preparation invitations for movement, discovery and time together.",
         },
       ];
 }

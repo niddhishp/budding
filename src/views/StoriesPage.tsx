@@ -116,7 +116,7 @@ export function StoriesPage() {
         <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center mb-6">
           <Moon className="w-6 h-6 text-indigo-600" />
         </div>
-        <h1 className="font-heading text-4xl md:text-5xl text-slate-850 leading-tight mb-3">Tonight's story</h1>
+        <h1 className="font-heading text-4xl md:text-5xl text-slate-850 leading-tight mb-3">{child.age.years >= 13 ? 'Your story library' : "Tonight’s story"}</h1>
         <p className="text-slate-500 text-lg max-w-xl">
           {child.name} is the hero. Tell us what's on their mind, and the story helps them through it.
         </p>

@@ -8,7 +8,7 @@ export function DiscoverPage() {
   return (
     <CareFrame
       title="For the days in between"
-      intro={`A little reading, a little play, a place to notice ${child?.name ?? "your child"} growing. Explore at your own pace.`}
+      intro={`Thoughtful reading, useful finds and a place to notice ${child?.name ?? "your child"} growing. Explore at your own pace.`}
     >
       <Link
         href="/articles"

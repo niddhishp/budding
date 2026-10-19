@@ -72,7 +72,7 @@ function PlayChild({ child }: { child: import("@/types").Child }) {
           return (
             <article key={p.id} className="py-8">
               <p className="text-sm text-clay">
-                {p.kind} · {p.time} · {p.min}–{p.max} months
+                {p.kind} · {p.time} · {p.min >= 72 ? `${Math.floor(p.min / 12)}–${Math.floor(p.max / 12)} years` : `${p.min}–${p.max} months`}
               </p>
               <h2 className="font-heading text-3xl mt-2">{p.title}</h2>
               <p className="mt-4 text-slate-600">Bring: {p.materials}</p>

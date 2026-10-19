@@ -3,6 +3,8 @@ import type { Entitlement } from '@/lib/plans';
 // Core platform types
 
 export interface Child {
+  /** Parent-selected educational guide; never inferred or used as a clinical reference. */
+  pubertyGuide?: 'girls' | 'boys' | null;
   id: string;
   name: string;
   /** ISO date; null while the child is not yet born. */

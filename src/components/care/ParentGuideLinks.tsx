@@ -3,6 +3,7 @@ import { useAppStore } from "@/stores/appStore";
 import { useTodayDate } from "./useTodayDate";
 import { ageMonths } from "@/lib/shop";
 import { guideBand, PARENT_GUIDES } from "@/data/parent-guides";
+import { familyNavigation } from "@/lib/family-navigation";
 import type { Child } from "@/types";
 export function ParentGuideLinks({ child }: { child: Child }) {
   const setPage = useAppStore((s) => s.setPage);
@@ -25,12 +26,12 @@ export function ParentGuideLinks({ child }: { child: Child }) {
         >
           Safety & boundaries →
         </button>
-        <button
+        {familyNavigation(child, today).puberty && <button
           className="text-clay underline"
           onClick={() => setPage("puberty")}
         >
-          Guide to Puberty →
-        </button>
+          {child.name}’s puberty guide →
+        </button>}
         <Link className="text-clay underline" href="/articles">
           All parenting articles →
         </Link>

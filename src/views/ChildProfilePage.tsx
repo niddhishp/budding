@@ -82,6 +82,7 @@ export function ChildProfilePage() {
       {child.age.stage !== "pregnancy" && (
         <section className="mb-12">
           <ParentGuideLinks key={`guides-${child.id}`} child={child} />
+          <button className="text-clay underline mb-6" onClick={() => setPage("stories")}>Open {child.name}’s story library →</button>
           <GrowthSnapshot key={child.id} child={child} />
           <div className="grid sm:grid-cols-2 gap-4">
             <button

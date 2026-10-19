@@ -1,3 +1,4 @@
+import { GuidePreference } from "@/components/care/GuidePreference";
 import { useState } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/stores/appStore";
@@ -7,7 +8,7 @@ import { ageMonths } from "@/lib/shop";
 import {
   GUIDE_BANDS,
   GUIDE_UPDATED,
-  PARENT_GUIDES,
+  guidesForProfile,
   guideBand,
   type GuideBand,
 } from "@/data/parent-guides";
@@ -17,18 +18,12 @@ export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
   const today = useTodayDate();
   const recommended = guideBand(ageMonths(child?.dateOfBirth ?? null, today));
   const [chosen, setChosen] = useState<GuideBand | "">("");
-  const [path, setPath] = useState("all");
+  const path = child?.pubertyGuide ?? null;
   const band = chosen || recommended;
-  const guides = PARENT_GUIDES.filter(
-    (g) =>
-      g.topic === topic &&
-      band &&
-      g.bands.includes(band) &&
-      (path === "all" || g.path === "all" || g.path === path),
-  );
+  const guides = guidesForProfile(topic, band, path);
   return (
     <CareFrame
-      title={topic === "puberty" ? "Guide to Puberty" : "Safety"}
+      title={topic === "puberty" ? (child ? `${child.name}’s puberty guide` : "Guide to Puberty") : (child ? `Safety for ${child.name}` : "Safety")}
       intro={
         topic === "puberty"
           ? "Small, honest conversations about changing bodies. Prepare together, leave room for questions, and let your child grow at their own pace."
@@ -56,24 +51,7 @@ export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
               : "Choose the language and level of detail that fit your child."}
           </span>
         </label>
-        {topic === "puberty" && (
-          <label>
-            Explore a guide{" "}
-            <select
-              className={fieldClass}
-              value={path}
-              onChange={(e) => setPath(e.target.value)}
-            >
-              <option value="all">Girls & boys</option>
-              <option value="girls">Girls</option>
-              <option value="boys">Boys</option>
-            </select>
-            <span className="block text-xs text-slate-500 mt-2">
-              These describe common body changes, not a gender assignment.
-              Choose what fits your child.
-            </span>
-          </label>
-        )}
+        {topic === "puberty" && child && <GuidePreference key={child.id} child={child} />}
       </div>
       {!band && (
         <p className="py-10">
@@ -140,9 +118,7 @@ export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
       <p className="text-xs text-slate-500 mt-8 leading-6">
         Kahiye editorial · Sources checked {GUIDE_UPDATED}. General parent
         education; independent clinical and safeguarding review is still
-        pending. Age groups guide conversation, not diagnosis. Reading choices
-        stay on this screen and are not added to your child’s records or
-        shopping preferences.
+        pending. Age groups guide conversation, not diagnosis. Your guide preference is saved to this child’s profile. Exploring another age stays on this screen. Neither changes health measurements or shopping preferences.
       </p>
     </CareFrame>
   );

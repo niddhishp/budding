@@ -25,6 +25,7 @@ export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
   const [quiz] = useState(() => editChild ? null : loadQuizResult());
   const [due] = useState(() => editChild ? null : savedDueDate());
   const [name, setName] = useState(editChild?.name ?? '');
+  const [pubertyGuide, setPubertyGuide] = useState<Child['pubertyGuide']>(editChild?.pubertyGuide ?? null);
   const [born, setBorn] = useState(editChild ? !!editChild.dateOfBirth : !addingExpecting && !due);
   const [date, setDate] = useState(editChild?.dateOfBirth ?? editChild?.dueDate ?? due ?? '');
   // Only new explicit choices enter this draft. Skipping an edit cannot erase old answers.
@@ -47,7 +48,7 @@ export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
     if (!valid || saveLock.current) return;
     saveLock.current = true; setSaving(true); setError('');
     try {
-      const input = { name, dateOfBirth: born ? date : null, dueDate: born ? null : date,
+      const input = { name, dateOfBirth: born ? date : null, dueDate: born ? null : date, pubertyGuide: born ? pubertyGuide : null,
         ...mergeIntake(editChild, answers, band), focusAreas: focus, household, homeLanguages: languages, profileNotes: notes };
       if (editChild) await updateChild(editChild.id, input);
       else {
@@ -69,6 +70,7 @@ export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
         <div><label htmlFor="child-name" className="block mb-2">Name or nickname</label><input id="child-name" autoComplete="off" maxLength={60} value={name} disabled={saving} onChange={e => setName(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3" placeholder="e.g., Ira or Little One" /></div>
         <div className="flex gap-2">{[true, false].map(value => <button key={String(value)} disabled={saving} type="button" aria-pressed={born === value} onClick={() => { if (born !== value) { setBorn(value); setDate(''); } }} className={`flex-1 rounded-xl border px-3 py-3 ${born === value ? 'border-clay bg-clay/10' : 'border-slate-200 bg-white'}`}>{value ? 'Already born' : 'Expecting'}</button>)}</div>
         <div><label htmlFor="child-date" className="block mb-2">{born ? 'Date of birth' : 'Due date'}</label><input id="child-date" type="date" min={born ? undefined : todayISO()} max={born ? todayISO() : undefined} value={date} disabled={saving} onChange={e => setDate(e.target.value)} className="w-full min-w-0 bg-white border border-slate-200 rounded-xl px-4 py-3" /></div>
+        {born && <div><label htmlFor="child-guide" className="block mb-2">Puberty guide preference (optional)</label><select id="child-guide" value={pubertyGuide ?? ''} disabled={saving} onChange={e => setPubertyGuide((e.target.value || null) as Child['pubertyGuide'])} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3"><option value="">Choose later</option><option value="girls">Girls’ guide</option><option value="boys">Boys’ guide</option></select><p className="text-xs text-slate-500 mt-2">We’ll remember the guide that fits your child. Used only to tailor these conversations, not health measurements or shopping.</p></div>}
         <button disabled={!valid || saving} onClick={save} className="w-full rounded-full bg-clay text-white py-4 px-5 disabled:opacity-40">{saving ? 'Saving…' : editChild ? 'Save changes' : born ? 'Get help now' : 'Start my pregnancy journey'}</button>
         {born && <button disabled={!valid || saving} onClick={() => setStep('moments')} className="w-full border border-clay/40 rounded-full px-4 py-3 text-clay disabled:opacity-40">{editChild ? 'Update everyday moments' : 'Add four little moments'}</button>}
         <p className="text-sm text-slate-600">{editChild ? 'Any moments you skip keep their previous answers.' : 'You can add moments later. No quiz needed to begin.'}</p>

@@ -1,18 +1,33 @@
 import { useAppStore } from "@/stores/appStore";
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
 import { SproutMark } from "@/components/illustrations";
-import { navItems } from "./navItems";
+import { navItemsForChild } from "./navItems";
+import { activeNavigation } from "@/lib/family-navigation";
+import { useTodayDate } from "@/components/care/useTodayDate";
 
 export function Sidebar() {
-  const { currentPage, setPage, sidebarOpen, toggleSidebar } = useAppStore();
+  const {
+    currentPage,
+    setPage,
+    sidebarOpen,
+    toggleSidebar,
+    children,
+    selectedChildId,
+  } = useAppStore();
+  const today = useTodayDate();
+  const navItems = navItemsForChild(
+    children.find((c) => c.id === selectedChildId),
+    today,
+  );
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-white border-r border-slate-200/60 z-40 transition-all duration-300 ${sidebarOpen ? "w-64" : "w-16"}`}
+      className={`fixed left-0 top-0 h-dvh flex flex-col bg-white border-r border-slate-200/60 z-40 transition-all duration-300 ${sidebarOpen ? "w-64" : "w-16"}`}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-slate-100">
+      <div className="flex items-center justify-between h-16 shrink-0 px-4 border-b border-slate-100">
         <button
+          aria-label="Kahiye Today"
           onClick={() => setPage("dashboard")}
           className={`flex items-center gap-2.5 ${!sidebarOpen && "justify-center w-full"}`}
         >
@@ -44,34 +59,20 @@ export function Sidebar() {
       )}
 
       {/* Nav Items */}
-      <nav className="p-2 space-y-0.5">
+      <nav
+        aria-label="Main"
+        className="p-2 space-y-0.5 flex-1 min-h-0 overflow-y-auto"
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            currentPage === item.id ||
-            (item.id === "child-profile" &&
-              ["growth", "health", "interests", "photo-timeline"].includes(
-                currentPage,
-              )) ||
-            (item.id === "discover" &&
-              [
-                "puberty",
-                "safety",
-                "shop",
-                "gifts",
-                "milestones",
-                "development",
-                "play",
-                "pregnancy",
-                "parent-space",
-              ].includes(currentPage)) ||
-            (item.id === "ask-ai" && currentPage === "library");
+          const isActive = activeNavigation(currentPage) === item.id;
 
           return (
             <button
               key={item.id}
               onClick={() => setPage(item.id)}
               aria-current={isActive ? "page" : undefined}
+              aria-label={item.label}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
                   ? "bg-clay/10 text-clay"
@@ -82,7 +83,16 @@ export function Sidebar() {
               <Icon
                 className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? "text-clay" : ""}`}
               />
-              {sidebarOpen && <span>{item.label}</span>}
+              {sidebarOpen && (
+                <>
+                  <span>{item.label}</span>
+                  {item.highlight && (
+                    <span className="ml-auto rounded-full bg-leaf/10 px-2 py-1 text-[10px] text-leaf">
+                      For this age
+                    </span>
+                  )}
+                </>
+              )}
             </button>
           );
         })}
@@ -99,7 +109,7 @@ function ChildSelector() {
     useAppStore();
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-slate-100 bg-white/80 backdrop-blur">
+    <div className="shrink-0 max-h-[30dvh] overflow-y-auto p-3 border-t border-slate-100 bg-white/80 backdrop-blur">
       <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-2 px-1">
         Your Children
       </p>

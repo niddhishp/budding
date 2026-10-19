@@ -1,5 +1,35 @@
 export const PLAY = [
   {
+    id: "comic-switch", title: "A comic with a surprise ending", min: 72, max: 155,
+    kind: "Quiet", time: "10–15 minutes", materials: "Paper and pencils",
+    steps: ["Fold a page into four panels and invent a character together.", "Take turns drawing one panel, or let your child draw while you describe.", "Let them choose a surprising final panel. Share only if they want to."],
+    safety: "Keep characters fictional if the story could embarrass someone. Drawing ability is not being scored; words or simple shapes count too.",
+  },
+  {
+    id: "rhythm-relay", title: "Pass the rhythm", min: 72, max: 215,
+    kind: "Movement", time: "5–10 minutes", materials: "A comfortable seat or clear floor space",
+    steps: ["Start a short pattern with gentle claps or taps on your knees.", "Take turns copying it, then adding one sound or comfortable movement.", "Switch leader whenever you like. Make a new pattern if the old one gets tricky."],
+    safety: "Keep the volume comfortable, adapt movements for each person and stay seated if preferred. Stop for discomfort; avoid striking objects or people.",
+  },
+  {
+    id: "paper-programmer", title: "Be my paper robot", min: 72, max: 155,
+    kind: "Explore", time: "10 minutes", materials: "Paper, a pencil and a drawn grid",
+    steps: ["Draw a start and finish on a small grid, with a few imaginary obstacles.", "One person writes arrows to guide a pencil robot while the other follows them.", "If the route goes somewhere unexpected, change one instruction and try again. Swap roles."],
+    safety: "Keep this a tabletop game with a pencil, not blindfolded movement. Treat unexpected results as experiments, never as a test of intelligence.",
+  },
+  {
+    id: "soundtrack-studio", title: "Make a soundtrack for an imaginary scene", min: 120, max: 215,
+    kind: "Quiet", time: "10–20 minutes", materials: "Your voices and optional paper for notes",
+    steps: ["Let your child choose an imaginary scene: a rainstorm, a space journey or a busy market.", "Build a short soundtrack using voices, gentle claps or taps. You can be their sound assistant.", "Perform it once, change it, or leave it unfinished. Recording is optional, and sharing needs everyone's agreement."],
+    safety: "Keep sound levels comfortable. Ask before recording anyone and avoid posting personal details or someone else's voice without permission.",
+  },
+  {
+    id: "walk-and-notice", title: "A walk with a tiny mission", min: 96, max: 215,
+    kind: "Outdoor", time: "10–20 minutes", materials: "A familiar accessible route and optional notebook",
+    steps: ["Choose a small mission together: notice three shapes, colours or interesting shadows.", "Let your child choose what to point out, without a race or collection target.", "At the end, compare one favourite discovery. A window view or garden works too."],
+    safety: "Use a familiar route with appropriate adult supervision, safe crossings and weather protection. Do not enter private places, collect unknown plants or photograph strangers.",
+  },
+  {
     id: "hello-face",
     title: "Hello, familiar face",
     min: 0,
