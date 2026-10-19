@@ -1,6 +1,6 @@
 # Shop media, puberty, safety and public reading
 
-Implementation date: 2026-10-19. Release evidence is recorded below after deployment.
+Deployed 2026-10-19. Application commit `732bd54519a1e0ea88ec5294692fb4c9e10038b9` on `main`.
 
 ## Scope and design
 
@@ -38,6 +38,14 @@ NHS, AAP HealthyChildren and NSPCC sources are linked per guide and were checked
 - `npm run test:security:bootstrap`: fresh disposable PostgreSQL, all security/ownership/consent/MFA/revision/erasure suites.
 - Actual Next route handlers exercised against disposable SQL: unauthenticated/invalid/unpublished/paused media requests; not-configured fallback; simulated Amazon media success and cache reuse; existing shop, family plan and private-photo flows.
 - `npm run test:providers`: existing Razorpay/Resend/Twilio signature, receipt and concurrency contracts; no provider sends.
-- Production build and hosted UI evidence: pending release checks below.
+- `npm run build`: passed; 84 generated pages, including all 32 public articles.
+- Exact-commit GitHub CI: branch run `39201480622` and main run `39201691773` both successful.
+- Vercel production `dpl_fqSLAAa3Q2eYdh8hVXG4vjpmXYVH` Ready; exact commit above, aliases `www.kahiye.app` and `kahiye.app`.
+- Protected preview HTTP: homepage and article 200, crawlable featured links, indexable article metadata and valid Article JSON-LD. Preview authenticated routes have no Supabase preview environment and returned the existing setup-unavailable response; no configuration/security changes were made to work around it.
+- Live production: anonymous media endpoint 401, public article 200. Signed-in Today → Puberty selected the existing 11–13 age band correctly; switching to boys/14–17, expanding a response, Child → Safety, younger age selection, mobile scenario expansion and Discover → Shop were verified without saving parent data.
+- Mobile 390×844: no horizontal overflow in guides, shop, homepage or article. Homepage Articles navigation, article search (three period results) and source links worked. No Kahiye console errors; an earlier Vercel login FedCM error was unrelated to the app.
+- The live catalogue remains unpopulated; real Amazon photo/price rendering and provider authentication are still pending credentials and reviewed products. Provider behaviour was tested with simulated payloads, not claimed live-verified. No production fixtures were created.
+- Disposable SQL ended with zero test users, shop records and family entries; the task-owned Docker container was stopped and removed.
+- Screenshot evidence: `C:/Users/Admin/.codex/visualizations/2026/10/17/01a14a81-9a08-7f22-ab03-d2a79055ac2f/puberty-guide-live.png` and `safety-guide-mobile-live.png`. Temporary browser tab closed; viewport reset; original user tab left untouched.
 
 Rollback: redeploy the previous application commit. No migration rollback is needed. Preserve the existing photo erasure/cleanup routes.
