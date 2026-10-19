@@ -1,5 +1,9 @@
 # Profile-driven puberty guidance
 
+## Automatic age follow-up
+
+Puberty now always derives its conversation band from the selected child's date of birth and current India-calendar date, without a conversation-age selector or a manual override. The existing date hook refreshes on focus and every minute, so a birthday can change the band without editing the profile. A read-only age summary explains the match. Missing/invalid DOB directs to the profile; ages beyond the guide library show an honest library limit and article link. Safety retains its existing age exploration. No schema changes or production data writes are needed. Deployment verification for this follow-up is pending.
+
 The parent requested Boy/Girl in the child profile and clarified that there must be no second guide choice. Add/Edit child now provides an optional Boy/Girl field. The profile displays the saved value. Puberty automatically chooses the corresponding content; the separate girls/boys guide buttons and save action are removed.
 
 `children.gender` is nullable, constrained to `boy`/`girl`, and parent-supplied. Migration 023 is additive and leaves all existing rows unset. A legacy reading preference is preserved as a fallback, never converted into a gender. New profile values take precedence and also update the compatibility reading-preference field. Unrelated edits omit the new field; explicitly clearing it also clears the legacy fallback. The value does not change growth-chart references, medical measurements, shopping preferences or AI prompts.
