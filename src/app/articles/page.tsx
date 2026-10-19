@@ -4,7 +4,7 @@ import { ArticleLibrary } from "@/components/ArticleLibrary";
 export const metadata: Metadata = {
   title: "Parenting guides | Kahiye",
   description:
-    "Practical, gentle guides for everyday baby care, development, play and family life.",
+    "Practical, gentle guides for baby care, puberty, periods, body safety, peer pressure and family life.",
   alternates: { canonical: "https://www.kahiye.app/articles" },
 };
 export default function ArticlesPage() {
@@ -29,8 +29,9 @@ export default function ArticlesPage() {
           Thoughtful answers.
         </h1>
         <p className="max-w-2xl mt-6 text-lg text-slate-600">
-          Practical reading for life with your baby. Take what helps, leave room
-          for your family, and bring health concerns to your clinician.
+          Practical reading from babyhood to the teenage years. Take what helps,
+          leave room for your family, and bring health concerns to your
+          clinician.
         </p>
         <ArticleLibrary />
         <p className="text-sm text-slate-600 border-t pt-6 mt-10">

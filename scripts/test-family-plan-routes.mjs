@@ -244,7 +244,17 @@ process.env.NEXT_PUBLIC_SUPABASE_URL = base;
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "synthetic-only";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "synthetic-service-only";
 const originalFetch = globalThis.fetch;
+let amazonFixture = false, amazonCalls = 0;
 globalThis.fetch = (input, init) => {
+  const target = String(input);
+  if (amazonFixture && target === 'https://api.amazon.co.uk/auth/o2/token') return Promise.resolve(Response.json({ access_token: 'fixture-token', expires_in: 3600 }));
+  if (amazonFixture && target === 'https://creatorsapi.amazon/catalog/v1/getItems') {
+    amazonCalls++;
+    const payload = JSON.parse(String(init.body));
+    assert.deepEqual(payload.itemIds, ['B012345678']);
+    assert.equal(payload.marketplace, 'www.amazon.in');
+    return Promise.resolve(Response.json({ itemsResult: { items: [{ asin: 'B012345678', images: { primary: { large: { url: 'https://m.media-amazon.com/images/I/fixture.jpg', width: 500, height: 500 } } }, offersV2: { listings: [{ price: { money: { amount: 799.5, currency: 'INR' } } }] } }] } }));
+  }
   assert.equal(
     new URL(input instanceof Request ? input.url : String(input)).origin,
     base,
@@ -297,11 +307,12 @@ async function run(
   status = 200,
   owner = uid,
   id = "unused",
+  query = "",
 ) {
   const cookies = new RequestCookies(
     new Headers(owner ? { cookie: cookie(owner) } : {}),
   );
-  const req = new Request("http://localhost/api/test", {
+  const req = new Request("http://localhost/api/test" + query, {
     method,
     headers: { origin: "http://localhost" },
     ...(payload
@@ -332,6 +343,10 @@ async function run(
 }
 try {
   const shop = await import("../src/app/api/shop/route.ts");
+  const media = await import("../src/app/api/shop/media/route.ts");
+  await run(media, "GET", null, 401, null);
+  await run(media, "GET", null, 400);
+  await run(media, "GET", null, 404, uid, "unused", "?asins=B012345678");
   const shopAdmin = await import("../src/app/api/admin/shop/route.ts");
   const { emptyPreferences, emptyProduct } = await import("../src/lib/shop.ts");
   await run(shop, "GET", null, 401, null);
@@ -375,6 +390,33 @@ try {
       },
     ],
   );
+  const mediaResult = await run(
+    media,
+    "GET",
+    null,
+    200,
+    uid,
+    "unused",
+    "?asins=B012345678",
+  );
+  assert.equal(mediaResult.headers.get("cache-control"), "private, no-store");
+  assert.equal((await mediaResult.json()).status, "not_configured");
+  await run(
+    media,
+    "GET",
+    null,
+    400,
+    uid,
+    "unused",
+    "?asins=" + Array(11).fill("B012345678").join(","),
+  );
+  amazonFixture = true;
+  Object.assign(process.env, { AMAZON_CREATORS_CLIENT_ID: 'route-fixture', AMAZON_CREATORS_CLIENT_SECRET: 'fixture', AMAZON_ASSOCIATE_TAG: 'fixture-21', AMAZON_CREATORS_VERSION: '3.2' });
+  const withMedia = await (await run(media, 'GET', null, 200, uid, 'unused', '?asins=B012345678')).json();
+  assert.equal(withMedia.status, 'ready'); assert.equal(withMedia.items[0].price, 799.5); assert(withMedia.items[0].image);
+  await run(media, 'GET', null, 200, uid, 'unused', '?asins=B012345678'); assert.equal(amazonCalls, 1);
+  for (const key of ['AMAZON_CREATORS_CLIENT_ID', 'AMAZON_CREATORS_CLIENT_SECRET', 'AMAZON_ASSOCIATE_TAG', 'AMAZON_CREATORS_VERSION']) delete process.env[key];
+  amazonFixture = false;
   const shopPayload = {
     id: crypto.randomUUID(),
     childId: child,
@@ -432,6 +474,7 @@ try {
     [catalogId],
   );
   assert.equal((await (await run(shop, "GET")).json()).products.length, 0);
+  await run(media, "GET", null, 404, uid, "unused", "?asins=B012345678");
   console.log(
     "PASS: actual shop routes preserve revisions, validate choices, isolate families, redact evidence, pause products and undo feedback.",
   );

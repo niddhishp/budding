@@ -1,5 +1,5 @@
-import { useAppStore } from '@/stores/appStore';
-import { navItems } from './navItems';
+import { useAppStore } from "@/stores/appStore";
+import { navItems } from "./navItems";
 
 export function BottomNav() {
   const { currentPage, setPage } = useAppStore();
@@ -12,13 +12,31 @@ export function BottomNav() {
       <div className="grid grid-cols-6">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentPage === item.id || (item.id === 'child-profile' && ['growth','health','interests','photo-timeline'].includes(currentPage)) || (item.id === 'discover' && ['shop','gifts','milestones','development','play','pregnancy','parent-space'].includes(currentPage)) || (item.id === 'ask-ai' && currentPage === 'library');
+          const isActive =
+            currentPage === item.id ||
+            (item.id === "child-profile" &&
+              ["growth", "health", "interests", "photo-timeline"].includes(
+                currentPage,
+              )) ||
+            (item.id === "discover" &&
+              [
+                "puberty",
+                "safety",
+                "shop",
+                "gifts",
+                "milestones",
+                "development",
+                "play",
+                "pregnancy",
+                "parent-space",
+              ].includes(currentPage)) ||
+            (item.id === "ask-ai" && currentPage === "library");
           return (
             <button
               key={item.id}
               onClick={() => setPage(item.id)}
-              aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 py-3 text-[11px] font-medium ${isActive ? 'text-clay' : 'text-slate-500'}`}
+              aria-current={isActive ? "page" : undefined}
+              className={`flex flex-col items-center gap-1 py-3 text-[11px] font-medium ${isActive ? "text-clay" : "text-slate-500"}`}
             >
               <Icon className="w-5 h-5" />
               {item.label}

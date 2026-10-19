@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useAppStore } from "@/stores/appStore";
-import { discoverTools } from '@/lib/discover-tools';
+import { discoverTools } from "@/lib/discover-tools";
 import { CareFrame } from "@/components/care/CareFrame";
 export function DiscoverPage() {
   const { children, selectedChildId, setPage } = useAppStore();
@@ -15,7 +15,7 @@ export function DiscoverPage() {
         className="block bg-paper-deep rounded-2xl p-6 sm:p-8 mb-8 group"
       >
         <p className="text-sm text-clay mb-3">
-          The reading room · Early-years collection
+          The reading room · Babyhood to the teenage years
         </p>
         <h2 className="font-heading text-3xl">
           Small questions.
@@ -23,29 +23,31 @@ export function DiscoverPage() {
           Thoughtful answers. ↗
         </h2>
         <p className="mt-4 text-slate-600 max-w-xl">
-          From first shoes and cups to naps, connection and starting daycare.
-          Browse by topic or find what you need today.
+          From first shoes to periods, body boundaries and peer pressure. Browse
+          by topic or find what you need today.
         </p>
       </Link>
       <div className="divide-y">
-        {discoverTools(child?.age.stage === 'pregnancy').map((t, index) => (
-            <button
-              key={t.page}
-              className="w-full text-left grid grid-cols-[36px_1fr_20px] gap-4 py-7 group"
-              onClick={() => setPage(t.page)}
-            >
-              <span className="text-sm text-clay pt-1">{String(index + 1).padStart(2, '0')}</span>
-              <span>
-                <span className="font-heading text-2xl group-hover:text-clay">
-                  {t.title}
-                </span>
-                <span className="block mt-2 text-slate-600 leading-relaxed">
-                  {t.description}
-                </span>
+        {discoverTools(child?.age.stage === "pregnancy").map((t, index) => (
+          <button
+            key={t.page}
+            className="w-full text-left grid grid-cols-[36px_1fr_20px] gap-4 py-7 group"
+            onClick={() => setPage(t.page)}
+          >
+            <span className="text-sm text-clay pt-1">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span>
+              <span className="font-heading text-2xl group-hover:text-clay">
+                {t.title}
               </span>
-              <span aria-hidden="true">→</span>
-            </button>
-          ))}
+              <span className="block mt-2 text-slate-600 leading-relaxed">
+                {t.description}
+              </span>
+            </span>
+            <span aria-hidden="true">→</span>
+          </button>
+        ))}
       </div>
       <p className="text-xs text-slate-500 mt-8">
         Growth records, observations and pregnancy notes are private to your

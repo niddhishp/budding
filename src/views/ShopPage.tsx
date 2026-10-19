@@ -1,3 +1,5 @@
+import { useShopMedia } from "@/components/care/useShopMedia";
+import { ProductPicture } from "@/components/care/ProductPicture";
 import { useEffect, useRef, useState } from "react";
 import {
   Gift,
@@ -58,13 +60,13 @@ export function ShopPage() {
   useEffect(() => {
     formRef.current?.scrollIntoView({ block: "center", behavior: "auto" });
   }, [feedback?.id]);
-  if (!child) return null;
-  const records = data?.records.filter((r) => r.childId === child.id) ?? [],
+  const [page, setPageNumber] = useState(0);
+  const records = data?.records.filter((r) => r.childId === child?.id) ?? [],
     pref = records.find((r) => r.kind === "preferences"),
     p = pref?.kind === "preferences" ? pref.value : emptyPreferences;
   const ranked = rankProducts(
     data?.products ?? [],
-    ageMonths(child.dateOfBirth, today),
+    ageMonths(child?.dateOfBirth ?? null, today),
     p,
     records,
     today,
@@ -78,6 +80,11 @@ export function ShopPage() {
           r.value.choice === "saved",
       ),
   );
+  const lastPage = Math.max(0, Math.ceil(ranked.length / 10) - 1);
+  const currentPage = Math.min(page, lastPage);
+  const visible = ranked.slice(currentPage * 10, currentPage * 10 + 10);
+  const media = useShopMedia(visible.map((v) => v.asin).join(","));
+  if (!child) return null;
   async function recordFeedback() {
     if (!feedback || !child) return;
     if (
@@ -206,15 +213,39 @@ export function ShopPage() {
         </div>
       )}
       <div className="divide-y mt-8">
-        {ranked.map((v) => {
+        {visible.map((v) => {
           const Icon = icons[v.category];
+          const offer = media.items.find((item) => item.asin === v.asin);
           return (
             <article
               key={v.id}
-              className="py-8 sm:grid sm:grid-cols-[100px_1fr] gap-7"
+              className="py-8 sm:grid sm:grid-cols-[180px_1fr] gap-7"
             >
-              <div className="bg-paper-deep rounded-2xl w-20 h-20 flex items-center justify-center text-clay mb-4">
-                <Icon size={38} />
+              <div className="bg-paper rounded-2xl w-full h-48 flex items-center justify-center text-clay mb-4 border border-slate-200">
+                {offer?.image ? (
+                  <a
+                    href={v.url}
+                    target="_blank"
+                    rel="sponsored noopener noreferrer"
+                    aria-label={`Buy ${v.title} on Amazon${v.affiliate ? " (paid link)" : ""}`}
+                    className="block w-full p-2"
+                  >
+                    <ProductPicture
+                      key={offer.image.url}
+                      item={offer}
+                      title={v.title}
+                    />
+                  </a>
+                ) : (
+                  <div className="text-center">
+                    <Icon size={38} className="mx-auto mb-3" />
+                    <p className="text-xs text-slate-500">
+                      {media.status === "loading"
+                        ? "Loading picture…"
+                        : "Picture unavailable"}
+                    </p>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-clay">
@@ -224,6 +255,49 @@ export function ShopPage() {
                     : `${v.minMonths}+ months`}
                 </p>
                 <h2 className="font-heading text-2xl mt-2">{v.title}</h2>
+                <div className="mt-3">
+                  {offer?.price ? (
+                    <>
+                      <a
+                        href={v.url}
+                        target="_blank"
+                        rel="sponsored noopener noreferrer"
+                        className="text-xl font-semibold"
+                        aria-label={`Buy ${v.title} on Amazon for the listed price`}
+                      >
+                        ₹
+                        {offer.price.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </a>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Amazon.in price · As of{" "}
+                        {new Date(offer.checkedAt).toLocaleString("en-IN", {
+                          timeZone: "Asia/Kolkata",
+                        })}{" "}
+                        IST
+                      </p>
+                      <details className="text-xs text-slate-500 mt-2">
+                        <summary className="cursor-pointer underline">
+                          Price & availability details
+                        </summary>
+                        <p className="mt-2">
+                          Prices and availability can change. The price and
+                          availability shown on Amazon when you purchase apply.
+                          Delivery charges, seller and selected size or colour
+                          may differ.
+                        </p>
+                      </details>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {media.status === "loading"
+                        ? "Checking price…"
+                        : "Price unavailable here. Check the current offer when you buy."}
+                    </p>
+                  )}
+                </div>
                 <p className="mt-3">{v.reason}</p>
                 <p className="text-sm text-slate-600 mt-2">{v.match}</p>
                 <details className="text-sm mt-3">
@@ -244,7 +318,7 @@ export function ShopPage() {
                     rel="sponsored noopener noreferrer"
                     className="text-clay underline"
                   >
-                    View on Amazon ↗ {v.affiliate ? "(paid link)" : ""}
+                    Buy on Amazon ↗ {v.affiliate ? "(paid link)" : ""}
                   </a>
                   {v.affiliate && (
                     <a
@@ -280,6 +354,54 @@ export function ShopPage() {
           );
         })}
       </div>
+      {ranked.length > 10 && (
+        <nav
+          aria-label="Product pages"
+          className="flex flex-wrap gap-5 items-center my-6"
+        >
+          <button
+            className="underline text-clay disabled:opacity-40"
+            disabled={currentPage === 0}
+            onClick={() => setPageNumber(currentPage - 1)}
+          >
+            Previous products
+          </button>
+          <span className="text-sm">
+            {currentPage + 1} / {lastPage + 1}
+          </span>
+          <button
+            className="underline text-clay disabled:opacity-40"
+            disabled={currentPage === lastPage}
+            onClick={() => setPageNumber(currentPage + 1)}
+          >
+            Next products
+          </button>
+        </nav>
+      )}
+      {visible.length > 0 && media.status !== "loading" && (
+        <div className="text-sm text-slate-500 my-5">
+          <p>
+            {media.status === "not_configured"
+              ? "Product pictures and prices will appear here once our Amazon connection is ready."
+              : "Pictures and prices come from Amazon. Your child’s details are not shared."}
+          </p>
+          {media.status !== "not_configured" && (
+            <button
+              className="underline text-clay mt-2"
+              onClick={media.refresh}
+            >
+              Refresh pictures & prices
+            </button>
+          )}
+        </div>
+      )}
+      {media.items.some((i) => i.image || i.price) && (
+        <p className="text-xs text-slate-500 my-5">
+          Certain content on this site comes from Amazon Seller Services Private
+          Limited. It is provided as is and may change or be removed at any
+          time.
+        </p>
+      )}
       {feedback && (
         <form
           ref={formRef}

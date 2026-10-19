@@ -1,3 +1,4 @@
+import { ParentGuideLinks } from "@/components/care/ParentGuideLinks";
 import { observedPatterns } from "@/lib/moments";
 import type { ReactNode } from "react";
 import { useAppStore } from "@/stores/appStore";
@@ -17,7 +18,7 @@ import { WeekGuideCard } from "@/components/WeekGuideCard";
 import { GrowthSnapshot } from "@/components/care/GrowthSnapshot";
 import { HealthUpcoming } from "@/components/care/HealthUpcoming";
 import { MilestoneNotice } from "@/views/MilestonesPage";
-import { HoroscopeCard } from '@/components/care/HoroscopeCard';
+import { HoroscopeCard } from "@/components/care/HoroscopeCard";
 
 const SPRING_TRANSITION = {
   type: "spring",
@@ -195,6 +196,10 @@ export function DashboardPage() {
 
       {!isPregnancy && (
         <>
+          <ParentGuideLinks
+            key={`guides-${selectedChild.id}`}
+            child={selectedChild}
+          />
           <GrowthSnapshot key={selectedChild.id} child={selectedChild} />
           <HealthUpcoming
             key={`health-${selectedChild.id}`}
@@ -204,8 +209,18 @@ export function DashboardPage() {
       )}
 
       <div className="space-y-6 md:space-y-8">
-        <button className="w-full text-left border-y py-5 text-clay" onClick={() => setPage('family-plan')}>Your family plan: upcoming dates and savings goals →</button>
-        <button className="w-full text-left border-y py-5 text-clay" onClick={() => setPage('parent-space')}>Room for you, too: a reset, rest and sharing the load →</button>
+        <button
+          className="w-full text-left border-y py-5 text-clay"
+          onClick={() => setPage("family-plan")}
+        >
+          Your family plan: upcoming dates and savings goals →
+        </button>
+        <button
+          className="w-full text-left border-y py-5 text-clay"
+          onClick={() => setPage("parent-space")}
+        >
+          Room for you, too: a reset, rest and sharing the load →
+        </button>
         {isPregnancy && selectedChild.age.pregnancyWeek && (
           <WeekGuideCard
             key={selectedChild.age.pregnancyWeek}
@@ -247,7 +262,9 @@ export function DashboardPage() {
         ))}
 
         <div className="text-center pt-6">
-          {!isPregnancy && <HoroscopeCard key={selectedChild.id} child={selectedChild} />}
+          {!isPregnancy && (
+            <HoroscopeCard key={selectedChild.id} child={selectedChild} />
+          )}
           <Sparkles className="w-6 h-6 text-slate-300 mx-auto mb-4" />
           <p className="text-slate-400 text-sm">You are caught up for today.</p>
         </div>

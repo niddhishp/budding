@@ -8,7 +8,7 @@ export function ArticleLibrary() {
   const matches = ARTICLES.filter(
     (a) =>
       (category === "All" || a.category === category) &&
-      `${a.title} ${a.summary}`
+      `${a.title} ${a.summary} ${a.age} ${a.category}`
         .toLowerCase()
         .includes(query.trim().toLowerCase()),
   );
@@ -21,7 +21,7 @@ export function ArticleLibrary() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Try sleep, play or teeth"
+            placeholder="Try periods, safety or sleep"
             className="block w-full bg-paper border border-slate-300 rounded-xl p-3 mt-2"
           />
         </label>
@@ -39,7 +39,8 @@ export function ArticleLibrary() {
         </label>
       </div>
       <p role="status" className="text-sm text-slate-600 mb-6">
-        {matches.length} {matches.length===1?'guide':'guides'} · Start wherever you are today.
+        {matches.length} {matches.length === 1 ? "guide" : "guides"} · Start
+        wherever you are today.
       </p>
       <div className="divide-y divide-slate-200">
         {matches.map((a) => (

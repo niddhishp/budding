@@ -1,16 +1,47 @@
-import { create } from 'zustand';
-import { getSupabase } from '@/lib/supabase';
-import { CHILD_COLUMNS, childFromRow, temperamentToRow, type ChildRow } from '@/lib/mappers';
-import { POLICY_VERSION } from '@/lib/consent';
-import type { Entitlement } from '@/lib/plans';
-import type { Child, FamilyRoutine, ParentWellbeingEntry, TemperamentProfile } from '@/types';
+import { create } from "zustand";
+import { getSupabase } from "@/lib/supabase";
+import {
+  CHILD_COLUMNS,
+  childFromRow,
+  temperamentToRow,
+  type ChildRow,
+} from "@/lib/mappers";
+import { POLICY_VERSION } from "@/lib/consent";
+import type { Entitlement } from "@/lib/plans";
+import type {
+  Child,
+  FamilyRoutine,
+  ParentWellbeingEntry,
+  TemperamentProfile,
+} from "@/types";
 
 export type Page =
-  | 'shop' | 'gifts'
-  | 'family-plan' | 'photo-timeline'
-  | 'parent-space' | 'health' | 'interests' | 'discover' | 'growth' | 'milestones' | 'play' | 'pregnancy'
-  | 'dashboard' | 'ask-ai' | 'library' | 'child-profile' | 'development' | 'emotional-lab'
-  | 'parent-coach' | 'family-hub' | 'life-skills' | 'community' | 'wellbeing' | 'stories';
+  | "puberty"
+  | "safety"
+  | "shop"
+  | "gifts"
+  | "family-plan"
+  | "photo-timeline"
+  | "parent-space"
+  | "health"
+  | "interests"
+  | "discover"
+  | "growth"
+  | "milestones"
+  | "play"
+  | "pregnancy"
+  | "dashboard"
+  | "ask-ai"
+  | "library"
+  | "child-profile"
+  | "development"
+  | "emotional-lab"
+  | "parent-coach"
+  | "family-hub"
+  | "life-skills"
+  | "community"
+  | "wellbeing"
+  | "stories";
 
 export interface NewChildInput {
   name: string;
@@ -37,14 +68,16 @@ function profileToRow(input: NewChildInput) {
     home_languages: input.homeLanguages ?? [],
     profile_notes: input.profileNotes?.trim() || null,
     intake_band: input.intakeBand ?? null,
-    ...(input.intakeAnswered !== undefined ? { intake_answered: input.intakeAnswered } : {}),
+    ...(input.intakeAnswered !== undefined
+      ? { intake_answered: input.intakeAnswered }
+      : {}),
     intake_at: new Date().toISOString(),
   };
 }
 
 interface AppState {
   // Session
-  status: 'loading' | 'ready' | 'error';
+  status: "loading" | "ready" | "error";
   error: string | null;
   userEmail: string | null;
   load: () => Promise<void>;
@@ -59,8 +92,12 @@ interface AppState {
   closePaywall: () => void;
 
   // Expert consultation request sheet
-  expert: { open: boolean; source: 'menu' | 'safety' | 'report'; concern: string | null };
-  openExpert: (source: 'menu' | 'safety' | 'report', concern?: string) => void;
+  expert: {
+    open: boolean;
+    source: "menu" | "safety" | "report";
+    concern: string | null;
+  };
+  openExpert: (source: "menu" | "safety" | "report", concern?: string) => void;
   closeExpert: () => void;
 
   // DPDP consent
@@ -95,50 +132,119 @@ interface AppState {
   addWellbeingEntry: (entry: ParentWellbeingEntry) => void;
 }
 
-const SELECTED_CHILD_KEY = 'budding.selectedChild';
+const SELECTED_CHILD_KEY = "budding.selectedChild";
 
 function rememberSelection(id: string) {
-  try { localStorage.setItem(SELECTED_CHILD_KEY, id); } catch { /* storage unavailable */ }
+  try {
+    localStorage.setItem(SELECTED_CHILD_KEY, id);
+  } catch {
+    /* storage unavailable */
+  }
 }
 function recallSelection(): string | null {
-  try { return localStorage.getItem(SELECTED_CHILD_KEY); } catch { return null; }
+  try {
+    return localStorage.getItem(SELECTED_CHILD_KEY);
+  } catch {
+    return null;
+  }
 }
 
 const defaultRoutines: FamilyRoutine[] = [
-  { id: 'r1', title: 'Morning gratitude', emoji: '🌅', frequency: 'daily', description: 'Share one thing you\'re grateful for', completed: false, streak: 0 },
-  { id: 'r2', title: 'Reading time', emoji: '📚', frequency: 'daily', description: '15 minutes of shared reading', completed: false, streak: 0 },
-  { id: 'r3', title: 'Emotion check-in', emoji: '💬', frequency: 'weekly', description: 'How is everyone feeling today?', completed: false, streak: 0 },
-  { id: 'r4', title: 'Family walk', emoji: '🌿', frequency: 'weekly', description: '30-minute walk together', completed: false, streak: 0 },
-  { id: 'r5', title: 'Bedtime ritual', emoji: '🌙', frequency: 'daily', description: 'Same calming routine every night', completed: false, streak: 0 },
-  { id: 'r6', title: 'Game night', emoji: '🎲', frequency: 'weekly', description: 'Play a board game together', completed: false, streak: 0 },
+  {
+    id: "r1",
+    title: "Morning gratitude",
+    emoji: "🌅",
+    frequency: "daily",
+    description: "Share one thing you're grateful for",
+    completed: false,
+    streak: 0,
+  },
+  {
+    id: "r2",
+    title: "Reading time",
+    emoji: "📚",
+    frequency: "daily",
+    description: "15 minutes of shared reading",
+    completed: false,
+    streak: 0,
+  },
+  {
+    id: "r3",
+    title: "Emotion check-in",
+    emoji: "💬",
+    frequency: "weekly",
+    description: "How is everyone feeling today?",
+    completed: false,
+    streak: 0,
+  },
+  {
+    id: "r4",
+    title: "Family walk",
+    emoji: "🌿",
+    frequency: "weekly",
+    description: "30-minute walk together",
+    completed: false,
+    streak: 0,
+  },
+  {
+    id: "r5",
+    title: "Bedtime ritual",
+    emoji: "🌙",
+    frequency: "daily",
+    description: "Same calming routine every night",
+    completed: false,
+    streak: 0,
+  },
+  {
+    id: "r6",
+    title: "Game night",
+    emoji: "🎲",
+    frequency: "weekly",
+    description: "Play a board game together",
+    completed: false,
+    streak: 0,
+  },
 ];
 
 export const useAppStore = create<AppState>((set, get) => ({
-  status: 'loading',
+  status: "loading",
   error: null,
   userEmail: null,
 
   load: async () => {
-    set({ status: 'loading', error: null });
+    set({ status: "loading", error: null });
     try {
       const supabase = getSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        window.location.href = '/login?next=/app';
+        window.location.href = "/login?next=/app";
         return;
       }
       const [{ data, error }, consentRes] = await Promise.all([
-        supabase.from('children').select(CHILD_COLUMNS).order('created_at', { ascending: true }).returns<ChildRow[]>(),
-        supabase.from('consents').select('policy_version').eq('user_id', user.id).maybeSingle(),
+        supabase
+          .from("children")
+          .select(CHILD_COLUMNS)
+          .order("created_at", { ascending: true })
+          .returns<ChildRow[]>(),
+        supabase
+          .from("consents")
+          .select("policy_version")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
       if (error) throw error;
       get().refreshEntitlement();
 
       const children = (data ?? []).map(childFromRow);
       const remembered = recallSelection();
-      const selectedChildId = children.find((c) => c.id === remembered)?.id ?? children[0]?.id ?? null;
+      const selectedChildId =
+        children.find((c) => c.id === remembered)?.id ??
+        children[0]?.id ??
+        null;
       set({
-        status: 'ready',
+        status: "ready",
         userEmail: user.email ?? null,
         children,
         selectedChildId,
@@ -146,43 +252,55 @@ export const useAppStore = create<AppState>((set, get) => ({
         consentNeeded: consentRes.data?.policy_version !== POLICY_VERSION,
       });
     } catch (err) {
-      console.error('[store] load failed', err);
-      set({ status: 'error', error: 'We could not load your family profile. Check your connection and try again.' });
+      console.error("[store] load failed", err);
+      set({
+        status: "error",
+        error:
+          "We could not load your family profile. Check your connection and try again.",
+      });
     }
   },
 
   signOut: async () => {
     await getSupabase().auth.signOut();
-    window.location.href = '/';
+    window.location.href = "/";
   },
 
   entitlement: null,
   setEntitlement: (entitlement) => set({ entitlement }),
   refreshEntitlement: async () => {
     try {
-      const res = await fetch('/api/me');
+      const res = await fetch("/api/me");
       if (res.ok) set({ entitlement: (await res.json()).entitlement });
-    } catch { /* non-critical; the server enforces limits regardless */ }
+    } catch {
+      /* non-critical; the server enforces limits regardless */
+    }
   },
   paywall: { open: false, reason: null },
-  openPaywall: (reason) => set({ paywall: { open: true, reason: reason ?? null } }),
+  openPaywall: (reason) =>
+    set({ paywall: { open: true, reason: reason ?? null } }),
   closePaywall: () => set({ paywall: { open: false, reason: null } }),
 
-  expert: { open: false, source: 'menu', concern: null },
-  openExpert: (source, concern) => set({ expert: { open: true, source, concern: concern ?? null } }),
+  expert: { open: false, source: "menu", concern: null },
+  openExpert: (source, concern) =>
+    set({ expert: { open: true, source, concern: concern ?? null } }),
   closeExpert: () => set((s) => ({ expert: { ...s.expert, open: false } })),
 
   consentNeeded: false,
   giveConsent: async () => {
-    const response = await fetch('/api/consent', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/consent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ policyVersion: POLICY_VERSION, accepted: true }),
     });
-    if (!response.ok) throw new Error('Your privacy choice could not be saved. Please try again.');
+    if (!response.ok)
+      throw new Error(
+        "Your privacy choice could not be saved. Please try again.",
+      );
     set({ consentNeeded: false });
   },
 
-  currentPage: 'dashboard',
+  currentPage: "dashboard",
   setPage: (page) => set({ currentPage: page }),
   sidebarOpen: true,
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -195,7 +313,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   addChild: async (input) => {
     const { data, error } = await getSupabase()
-      .from('children')
+      .from("children")
       .insert(profileToRow(input))
       .select(CHILD_COLUMNS)
       .single<ChildRow>();
@@ -203,34 +321,46 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const child = childFromRow(data);
     rememberSelection(child.id);
-    set({ children: [...get().children, child], selectedChildId: child.id, addingChild: false });
+    set({
+      children: [...get().children, child],
+      selectedChildId: child.id,
+      addingChild: false,
+    });
     return child;
   },
 
   updateChild: async (id, input) => {
     const { data, error } = await getSupabase()
-      .from('children')
+      .from("children")
       .update(profileToRow(input))
-      .eq('id', id)
+      .eq("id", id)
       .select(CHILD_COLUMNS)
       .single<ChildRow>();
     if (error) throw error;
 
     const child = childFromRow(data);
-    set({ children: get().children.map((c) => c.id === id ? child : c), editingChildId: null });
+    set({
+      children: get().children.map((c) => (c.id === id ? child : c)),
+      editingChildId: null,
+    });
     return child;
   },
 
   addingChild: false,
   addingExpecting: false,
-  setAddingChild: (val, expecting = false) => set({ addingChild: val, addingExpecting: val && expecting }),
+  setAddingChild: (val, expecting = false) =>
+    set({ addingChild: val, addingExpecting: val && expecting }),
   editingChildId: null,
   setEditingChild: (id) => set({ editingChildId: id }),
 
   routines: defaultRoutines,
-  toggleRoutine: (id) => set((s) => ({
-    routines: s.routines.map((r) => r.id === id ? { ...r, completed: !r.completed } : r),
-  })),
+  toggleRoutine: (id) =>
+    set((s) => ({
+      routines: s.routines.map((r) =>
+        r.id === id ? { ...r, completed: !r.completed } : r,
+      ),
+    })),
   wellbeingEntries: [],
-  addWellbeingEntry: (entry) => set((s) => ({ wellbeingEntries: [...s.wellbeingEntries, entry] })),
+  addWellbeingEntry: (entry) =>
+    set((s) => ({ wellbeingEntries: [...s.wellbeingEntries, entry] })),
 }));

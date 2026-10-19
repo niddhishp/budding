@@ -1,3 +1,4 @@
+import { PARENT_GUIDES, GUIDE_UPDATED } from "./parent-guides";
 export type Article = {
   slug: string;
   category: string;
@@ -10,6 +11,21 @@ export type Article = {
 const source = (title: string, url: string) => ({ title, url });
 const section = (heading: string, body: string) => ({ heading, body });
 export const ARTICLES: Article[] = [
+  ...PARENT_GUIDES.map((g) => ({
+    slug: g.slug,
+    category: g.topic === "puberty" ? "Puberty" : "Safety",
+    title: g.title,
+    summary: g.summary,
+    age: g.bands.join(" / "),
+    sections: [
+      section("What to know", g.explain),
+      section("Words you can borrow", g.say),
+      section("Try together", g.practice),
+      section("A small practice moment", `${g.scenario} ${g.response}`),
+      section("Care and support", g.care),
+    ],
+    sources: g.sources,
+  })),
   {
     slug: "babys-first-shoes",
     category: "Development",
@@ -573,7 +589,7 @@ export const ARTICLES: Article[] = [
     ],
   },
 ];
-export const ARTICLE_UPDATED = "2026-10-18";
+export const ARTICLE_UPDATED = GUIDE_UPDATED;
 export function readingMinutes(article: Article) {
   return Math.max(
     1,

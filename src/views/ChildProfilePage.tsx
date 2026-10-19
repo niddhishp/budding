@@ -1,3 +1,4 @@
+import { ParentGuideLinks } from "@/components/care/ParentGuideLinks";
 import { GrowthSnapshot } from "@/components/care/GrowthSnapshot";
 import { observedPatterns } from "@/lib/moments";
 import { useAppStore } from "@/stores/appStore";
@@ -11,7 +12,7 @@ import { Star, Circle, Target, RefreshCw } from "lucide-react";
 import { WeeklyReportCard } from "@/components/WeeklyReportCard";
 import { MemoryPanel } from "@/components/MemoryPanel";
 import { intakeBandForAge } from "@/lib/temperament";
-import { HoroscopeCard } from '@/components/care/HoroscopeCard';
+import { HoroscopeCard } from "@/components/care/HoroscopeCard";
 
 const SPRING_TRANSITION = {
   type: "spring",
@@ -59,11 +60,28 @@ export function ChildProfilePage() {
       </motion.div>
 
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
-        <button onClick={()=>setPage('photo-timeline')} className="text-left border-y py-6 px-3"><span className="block font-heading text-2xl">Photo timeline →</span><span className="text-sm text-slate-600">Keep their milestones and your favourite moments.</span></button>
-        <button onClick={()=>setPage('family-plan')} className="text-left border-y py-6 px-3"><span className="block font-heading text-2xl">Family plan →</span><span className="text-sm text-slate-600">Dates to remember and goals to save towards.</span></button>
+        <button
+          onClick={() => setPage("photo-timeline")}
+          className="text-left border-y py-6 px-3"
+        >
+          <span className="block font-heading text-2xl">Photo timeline →</span>
+          <span className="text-sm text-slate-600">
+            Keep their milestones and your favourite moments.
+          </span>
+        </button>
+        <button
+          onClick={() => setPage("family-plan")}
+          className="text-left border-y py-6 px-3"
+        >
+          <span className="block font-heading text-2xl">Family plan →</span>
+          <span className="text-sm text-slate-600">
+            Dates to remember and goals to save towards.
+          </span>
+        </button>
       </div>
       {child.age.stage !== "pregnancy" && (
         <section className="mb-12">
+          <ParentGuideLinks key={`guides-${child.id}`} child={child} />
           <GrowthSnapshot key={child.id} child={child} />
           <div className="grid sm:grid-cols-2 gap-4">
             <button
@@ -95,7 +113,9 @@ export function ChildProfilePage() {
       {child.age.stage !== "pregnancy" && (
         <WeeklyReportCard key={child.id} child={child} />
       )}
-      {child.age.stage !== 'pregnancy' && <HoroscopeCard key={`sign-${child.id}`} child={child} profile />}
+      {child.age.stage !== "pregnancy" && (
+        <HoroscopeCard key={`sign-${child.id}`} child={child} profile />
+      )}
 
       <div className="grid md:grid-cols-12 gap-12">
         {/* Left Column - The Memory Timeline */}

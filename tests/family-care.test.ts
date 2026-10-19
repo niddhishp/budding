@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { ageDays,ageMonths,careSchema,DEFAULT_CARE,growthSchema,type GrowthEntry } from '../src/lib/family-care';
 import { normalCDF,percentile,referenceValue } from '../src/lib/growth-reference';
 import { milestoneReminders,milestoneWindow } from '../src/data/milestones';
+import { PARENT_GUIDES } from '../src/data/parent-guides';
 import { ARTICLES,readingMinutes } from '../src/data/articles';
 import { PLAY } from '../src/data/play';
 const record:GrowthEntry={id:'a0000000-0000-4000-8000-000000000001',child_id:'a0000000-0000-4000-8000-000000000002',revision:0,measured_on:'2026-01-01',weight_kg:3.3464000225,length_cm:49.88420105,head_cm:34.461799622,method:'lying',note:'',archived:false};
@@ -41,7 +42,8 @@ test('care validation bounds private notes and rejects empty or invalid growth',
  assert.equal(DEFAULT_CARE.reminders,false);
 });
 test('all twenty authored guides have distinct routes, substantive copy and sources; play has safety cues',()=>{
- assert.equal(ARTICLES.length,20);assert.equal(new Set(ARTICLES.map(a=>a.slug)).size,20);
- for(const a of ARTICLES){assert.ok(a.sections.length>=3);assert.ok(a.sections.map(s=>s.body).join(' ').split(/\s+/).length>=170,a.slug);assert.ok(a.sources.every(s=>s.url.startsWith('https://')));assert.ok(readingMinutes(a)>=1);}
+ const originalGuides=ARTICLES.filter(a=>!PARENT_GUIDES.some(g=>g.slug===a.slug));
+ assert.equal(originalGuides.length,20);assert.equal(new Set(originalGuides.map(a=>a.slug)).size,20);
+ for(const a of originalGuides){assert.ok(a.sections.length>=3);assert.ok(a.sections.map(s=>s.body).join(' ').split(/\s+/).length>=170,a.slug);assert.ok(a.sources.every(s=>s.url.startsWith('https://')));assert.ok(readingMinutes(a)>=1);}
  assert.equal(new Set(PLAY.map(p=>p.id)).size,PLAY.length);assert.ok(PLAY.every(p=>p.steps.length>=3&&p.safety.length>50));
 });

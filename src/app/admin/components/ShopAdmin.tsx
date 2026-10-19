@@ -238,8 +238,10 @@ export function ShopAdmin() {
           <p>
             Only ASINs are imported. Open the Amazon listing to verify age,
             safety, sizing, seller and returns, then write original editorial
-            copy. No Amazon images, prices or reviews are copied into storage.
-            Review dates expire the listing automatically.
+            copy. Product pictures and INR prices load inside the parent shop
+            after API setup, with a ten-minute refresh. Image files and reviews
+            are never copied into storage. Publish a reviewed product to check
+            the complete display. Review dates expire the listing automatically.
           </p>
           <p>
             Financial partners need registration verification, a professionally

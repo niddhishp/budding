@@ -13,6 +13,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? {
         title: `${a.title} | Kahiye`,
         description: a.summary,
+        openGraph: {
+          type: "article",
+          title: a.title,
+          description: a.summary,
+          url: `https://www.kahiye.app/articles/${a.slug}`,
+          modifiedTime: ARTICLE_UPDATED,
+        },
+        twitter: { card: "summary", title: a.title, description: a.summary },
         alternates: { canonical: `https://www.kahiye.app/articles/${a.slug}` },
       }
     : {};
@@ -26,6 +34,21 @@ export default async function ArticlePage({ params }: Props) {
   ).slice(0, 3);
   return (
     <main className="min-h-screen bg-canvas px-5 py-10 text-slate-850">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: a.title,
+            description: a.summary,
+            dateModified: ARTICLE_UPDATED,
+            author: { "@type": "Organization", name: "Kahiye editorial" },
+            publisher: { "@type": "Organization", name: "Kahiye" },
+            mainEntityOfPage: `https://www.kahiye.app/articles/${a.slug}`,
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <article className="max-w-2xl mx-auto">
         <Link href="/articles" className="text-clay underline">
           ← All guides
