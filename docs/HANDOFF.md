@@ -1,5 +1,8 @@
 # Kahiye — engineering handoff (living document)
 
+
+**Latest deployed release:** [Personalised family navigation](PERSONALIZED-FAMILY-NAVIGATION.md), application `511b6ee63046be5526ff33662046084e7ae4e560`, migration 022. Safety, Your Space, Gifts and Play move from Discover to primary navigation; mobile has a focus-restoring Menu dialog. Puberty highlights ages 8–17. Stories remains prominent through 12, with the story library retained in Child afterwards. A nullable parent-chosen girls/boys guide preference persists per child, with no inferred gender or medical/shopping use. Existing profiles need one explicit choice; no backfill. Five older-child Play invitations added. All 82 tests, isolated SQL/provider/route checks, build and exact branch/main CI (`39203948985`, `39204174385`) passed. Production `dpl_75YPyH34XvUsPar1nq8hezWDae9T` Ready on both domains. Existing application/auth/storage fingerprints matched across migration. Live desktop/mobile navigation, age defaults, profile edit cancellation, retained stories, no overflow and focus restoration verified without saving production family data. See release record for limitations and evidence.
+
 Read this first when resuming work. Update it at the end of every working session.
 Last updated: 2026-10-19.
 
