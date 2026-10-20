@@ -15,6 +15,7 @@ import {
   type HealthEntry,
 } from "@/lib/profile-notebook";
 import { todayDate } from "@/lib/family-care";
+import { PartnerOffers } from "@/components/partners/PartnerOffers";
 import {
   vaccines,
   HEALTH_REFERENCE_URL,
@@ -296,6 +297,13 @@ function HealthChild({ child }: { child: Child }) {
                   Plan a check-up →
                 </button>
               </section>
+              <PartnerOffers
+                child={child}
+                placement="health"
+                heading="Care services near you"
+                intro="Some services can come to you. Your diary only decides whether these appear; nothing in it is shared with a partner. Follow your own clinician’s advice on what your child needs."
+                className="mt-8"
+              />
               <p className="text-xs text-slate-500 mt-6">
                 Private to your account. These records are not sent to AI or
                 shared with experts automatically. Dates appear in Today; no

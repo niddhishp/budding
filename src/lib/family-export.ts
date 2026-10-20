@@ -9,7 +9,7 @@ export const FAMILY_EXPORT_TABLES = [
   'children', 'consents', 'consent_events', 'subscriptions', 'whatsapp_links',
   'context_logs', 'decodes', 'memories', 'stories', 'reports', 'growth_entries',
   'child_care_state', 'child_profile_notebooks', 'family_entries', 'shop_records', 'expert_requests',
-  'family_checkins', 'programme_enrolments', 'sponsored_access',
+  'family_checkins', 'programme_enrolments', 'sponsored_access', 'partner_leads',
 ] as const;
 
 export const FAMILY_EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
@@ -47,7 +47,9 @@ const pick = (row: Row, keys: readonly string[]): Row => Object.fromEntries(keys
 const obj = (v: unknown): Row => (v && typeof v === 'object' && !Array.isArray(v) ? v as Row : {});
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
 
-const CHILD = ['id', 'name', 'dob', 'due_date', 'gender', 'puberty_guide', 'curiosity', 'persistence', 'sensitivity', 'sociability', 'emotional_intensity', 'flexibility', 'focus_areas', 'household', 'home_languages', 'profile_notes', 'intake_band', 'intake_at', 'intake_answered', 'memory_enabled', 'created_at'];
+const CHILD = ['id', 'name', 'dob', 'due_date', 'gender', 'puberty_guide', 'curiosity', 'persistence', 'sensitivity', 'sociability', 'emotional_intensity', 'flexibility', 'focus_areas', 'household', 'home_languages', 'profile_notes', 'city', 'intake_band', 'intake_at', 'intake_answered', 'memory_enabled', 'created_at'];
+// Who received what: the provider, the offer, the exact fields shared and the consent text version.
+const ENQUIRY = ['id', 'provider_name', 'offer_title', 'shared', 'consent_version', 'status', 'created_at'];
 const NOTE = ['id', 'log_type', 'content', 'created_at'];
 const DECODE = ['id', 'channel', 'scenario', 'analysis', 'risk_level', 'safety_category', 'outcome', 'outcome_at', 'refines', 'continuation_of', 'created_at'];
 const MEMORY = ['id', 'kind', 'content', 'source', 'confidence', 'sensitive', 'archived', 'decode_id', 'created_at', 'confirmed_at', 'edited_at', 'expires_at'];
@@ -75,7 +77,7 @@ async function owned(supabase: SupabaseClient, table: (typeof FAMILY_EXPORT_TABL
 }
 
 export async function collectFamilyExport(supabase: SupabaseClient, sign: LinkSigner, user: ExportUser, now = new Date()) {
-  const [children, consents, consentEvents, subscriptions, whatsapp, notes, decodes, memories, stories, reports, growth, care, notebooks, entries, shop, requests, checkins, programmes, sponsorships] =
+  const [children, consents, consentEvents, subscriptions, whatsapp, notes, decodes, memories, stories, reports, growth, care, notebooks, entries, shop, requests, checkins, programmes, sponsorships, enquiries] =
     await Promise.all(FAMILY_EXPORT_TABLES.map(table => owned(supabase, table, user.id)));
   // Storage keys are always rebuilt or checked against the parent's own prefix before signing.
   const mine = (path: string | null) => (path && path.startsWith(`${user.id}/`) && !path.includes('..') ? path : null);
@@ -154,6 +156,7 @@ export async function collectFamilyExport(supabase: SupabaseClient, sign: LinkSi
         photo_timeline: plan(byChild(entries, c.id).filter(e => e.kind === 'memory')),
         gifts_and_shop: sorted(byChild(shop, c.id), 'id').map(s => ({ id: s.id, kind: s.kind, ...obj(s.value), updated_at: s.updated_at ?? null })),
         expert_requests: sorted(byChild(requests, c.id), 'created_at').map(r => pick(r, REQUEST)),
+        partner_enquiries: sorted(byChild(enquiries, c.id), 'created_at').map(e => pick(e, ENQUIRY)),
       };
     }),
     family: {

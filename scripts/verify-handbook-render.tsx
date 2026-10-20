@@ -15,6 +15,8 @@ import { MemoryStrip } from "../src/components/child/MemoryStrip";
 import { BottomNav } from "../src/components/BottomNav";
 import { ChildProfilePage } from "../src/views/ChildProfilePage";
 import { ProgrammePage } from "../src/views/ProgrammePage";
+import { PartnerOfferList, PartnerOffers } from "../src/components/partners/PartnerOffers";
+import type { PartnerOffer } from "../src/lib/partner-services";
 Object.assign(globalThis, { React });
 const initial = useAppStore.getInitialState(), original = { ...initial }, today = todayDate();
 const profile = (years: number) => childFromRow({
@@ -75,6 +77,21 @@ try {
     assert(emptyStrip.includes("Example") && emptyStrip.includes(`Add ${child.name}’s first memory`), "An empty photo strip shows labelled example prints");
     assert(!emptyStrip.includes("/api/family-photos/"), "Examples never request a real photo");
   }
+  // Partner offers: labelled with provider, fee and terms when present; nothing at all when empty.
+  const child = profile(11);
+  const fixture: PartnerOffer = { id: "00000000-0000-4000-8000-0000000000aa", title: "Maths circle", summary: "Small-group problem solving.", category: "tuition", moment: "always", trigger_value: null, price_label: "From Rs 1,200 a month", cta: "enquiry", url: null, online: false, provider: "Synthetic Tutors", terms_url: "https://tutors.example.invalid/terms", grievance_contact: "care@tutors.example.invalid", fee_model: "listing_fee" };
+  const link: PartnerOffer = { ...fixture, id: "00000000-0000-4000-8000-0000000000ab", title: "Online reading", cta: "link", url: "https://tutors.example.invalid/reading?ref=kahiye", online: true };
+  const offersHtml = renderToStaticMarkup(<PartnerOfferList offers={[fixture, link]} child={child} ageBand="9–12 years" city="Pune" heading={`For ${child.name} now`} />);
+  assert.equal(offersHtml.split("Partner offer · Kahiye may earn a fee · Synthetic Tutors provides this service under its own terms").length - 1, 2, "Every offer carries the full label");
+  assert.equal(offersHtml.split('href="https://tutors.example.invalid/terms"').length - 1, 2, "Every offer links the provider's own terms");
+  assert(offersHtml.includes("care@tutors.example.invalid") && offersHtml.includes('href="/privacy#grievance"'), "Provider and Kahiye grievance routes");
+  assert(offersHtml.includes("Kahiye is paid a listing fee by Synthetic Tutors") && offersHtml.includes("never by fee"));
+  assert(offersHtml.includes("Ask Synthetic Tutors to contact you") && offersHtml.includes('rel="noopener noreferrer sponsored"'));
+  assert.equal(renderToStaticMarkup(<PartnerOfferList offers={[]} child={child} ageBand={null} city={null} heading="Empty" />), "", "No offers, no section");
+  assert.equal(renderToStaticMarkup(<PartnerOffers child={child} placement="child" heading="For you" />), "", "Nothing renders before offers load");
+  Object.assign(initial, { children: [child], selectedChildId: child.id, currentPage: "child-profile" });
+  assert(!renderToStaticMarkup(<ChildProfilePage />).includes("Partner services"), "No partner section without active offers");
+  console.log("PASS: partner offers show provider, fee label, terms and grievance routes on every offer, and render nothing when there are none.");
   console.log("PASS: real Handbook/Today/Ask/Child components for ages 1, 4, 11 and 16; exactly five mobile destinations, age relevance, fiction/AI labels, preserved family tools and no fixed temperament claims.");
 
   // Guided programmes: age-matched in the Handbook, with a readable detail page and no paywall.

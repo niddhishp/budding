@@ -27,7 +27,7 @@ account     – email, consent {current, history}, subscription, whatsapp {linke
 children[]  – profile, care_settings, handbook_progress, health_notebook, interests, growth,
               notes, guidance (type: guidance | chat | practice), memories (incl. archived),
               stories (+ narration link), reports, family_plan, photo_timeline (+ photo link),
-              gifts_and_shop, expert_requests
+              gifts_and_shop, expert_requests, checkins, partner_enquiries
 family      – family_plan entries not tied to a child, and expert requests whose child was removed
 ```
 
@@ -37,7 +37,7 @@ The source of truth is what erasure removes. `POST /api/account/delete` deletes 
 
 The lists live in `src/lib/family-export.ts`: `FAMILY_EXPORT_TABLES`, `FAMILY_EXPORT_EXCLUSIONS` and `FAMILY_EXPORT_FILES`.
 
-### Exported (16 tables + 2 storage buckets)
+### Exported (18 tables + 2 storage buckets)
 
 | Table | Fields left out |
 |---|---|
@@ -56,6 +56,8 @@ The lists live in `src/lib/family-export.ts`: `FAMILY_EXPORT_TABLES`, `FAMILY_EX
 | family_entries (dates, savings goals, photo memories) | `revision`, `photo_ready`, `value.photoHash` |
 | shop_records (preferences, gifts, feedback) | `revision` |
 | expert_requests | `expert_id`, `version`, `next_follow_up_at` (team scheduling) |
+| family_checkins | `user_id`, `child_id` (grouped under the child) |
+| partner_leads (partner enquiries: provider, offer, exact fields shared, consent version, status) | `user_id`, `offer_id`, `updated_at` |
 | storage `family-photos`, `story-audio` | bytes are not inlined; each file gets a signed link that lasts one hour |
 
 ### Excluded (10 tables), with the reason carried in the file

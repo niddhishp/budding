@@ -5,7 +5,7 @@ import { publicMetadata } from '@/lib/seo';
 
 export const metadata = publicMetadata('Privacy policy | Kahiye', 'Understand what Kahiye collects, how family information is used and the choices available for consent, saved memories, account access and deletion.', '/privacy');
 
-// DRAFT — have counsel review before launch. Replace every [bracketed] placeholder.
+// Have counsel review before paid plans open. Operator details come from src/lib/legal-identity.ts.
 export default function PrivacyPage() {
   return (
     <>
@@ -149,6 +149,15 @@ export default function PrivacyPage() {
           reference and protected workspace link, not your concern or child
           details.
         </li>
+        <li>
+          <strong>Partner services you contact</strong>: only when you send an
+          enquiry and confirm the details on that screen. The partner receives
+          your name, the phone number or email you choose, your child&apos;s age
+          band, your city if you saved one, and any message you write. Never
+          your child&apos;s name, health diary, notes or conversations. Each
+          partner provides its service under its own terms; you can see every
+          enquiry you sent in your family export.
+        </li>
       </ul>
       <p>
         Some of these providers may process data outside India, under contracts
@@ -190,7 +199,7 @@ export default function PrivacyPage() {
       <p>
         For as long as your account is open. When you delete your account, your
         profile, children, notes and history are deleted immediately; backups
-        roll off within [30] days.
+        roll off within 30 days.
       </p>
 
       <h2>Your rights</h2>
@@ -204,7 +213,7 @@ export default function PrivacyPage() {
         <li>Nominate someone to exercise these rights on your behalf.</li>
       </ul>
 
-      <h2>Grievance Officer</h2>
+      <h2 id="grievance">Grievance Officer</h2>
       <p>
         {LEGAL_IDENTITY.grievanceName && LEGAL_IDENTITY.grievanceEmail
           ? <>{LEGAL_IDENTITY.grievanceName}, <a href={`mailto:${LEGAL_IDENTITY.grievanceEmail}`}>{LEGAL_IDENTITY.grievanceEmail}</a>{LEGAL_IDENTITY.grievancePhone ? `, ${LEGAL_IDENTITY.grievancePhone}` : ''}.</>

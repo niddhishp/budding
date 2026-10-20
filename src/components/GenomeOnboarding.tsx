@@ -6,6 +6,7 @@ import { MomentQuiz, MomentReflection } from '@/components/MomentQuiz';
 import { computeAge } from '@/lib/age';
 import { mergeIntake } from '@/lib/moments';
 import { FOCUS_AREAS, HOUSEHOLD_OPTIONS, HOME_LANGUAGES, intakeBandForAge, loadQuizResult, clearQuizResult, type Answers, type IntakeBand } from '@/lib/temperament';
+import { CITY_OPTIONS, cityField } from '@/lib/partner-services';
 import type { Child } from '@/types';
 
 const todayISO = () => {
@@ -35,6 +36,11 @@ export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
   const [household, setHousehold] = useState(editChild?.household ?? []);
   const [languages, setLanguages] = useState(editChild?.homeLanguages ?? []);
   const [notes, setNotes] = useState(editChild?.profileNotes ?? '');
+  const savedCity = editChild?.city ?? '';
+  const [cityChoice, setCityChoice] = useState(!savedCity ? '' : (CITY_OPTIONS as readonly string[]).includes(savedCity) ? savedCity : 'other');
+  const [otherCity, setOtherCity] = useState(cityChoice === 'other' ? savedCity : '');
+  const city = cityChoice === 'other' ? otherCity.trim() : cityChoice;
+  const cityValid = !city || cityField.safeParse(city).success;
   const [saving, setSaving] = useState(false);
   const saveLock = useRef(false);
   const [error, setError] = useState('');
@@ -42,7 +48,7 @@ export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
   const age = validDate && born ? computeAge(date, null) : null;
   const band = age ? intakeBandForAge(age.years, age.months) : null;
   const answers = draft.band === band ? draft.answers : {};
-  const valid = !!name.trim() && validDate;
+  const valid = !!name.trim() && validDate && cityValid;
   const setAnswers = (answers: Answers) => setDraft({ band, answers });
 
   const save = async () => {
@@ -50,7 +56,8 @@ export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
     saveLock.current = true; setSaving(true); setError('');
     try {
       const input = { name, dateOfBirth: born ? date : null, dueDate: born ? null : date, ...(!editChild || genderChanged ? { gender: born ? gender : null } : {}),
-        ...mergeIntake(editChild, answers, band), focusAreas: focus, household, homeLanguages: languages, profileNotes: notes };
+        ...mergeIntake(editChild, answers, band), focusAreas: focus, household, homeLanguages: languages, profileNotes: notes,
+        ...(!editChild || city !== savedCity ? { city: city || null } : {}) };
       if (editChild) await updateChild(editChild.id, input);
       else {
         await addChild(input);
@@ -88,11 +95,23 @@ export function GenomeOnboarding({ editChild }: { editChild?: Child }) {
           <ChipGroup label="What would help right now?" options={[...new Set([...FOCUS_AREAS[band ?? 'pregnancy'], ...focus])]} value={focus} setValue={setFocus} />
           <ChipGroup label="At home" options={HOUSEHOLD_OPTIONS} value={household} setValue={setHousehold} />
           <ChipGroup label="Home languages" options={HOME_LANGUAGES} value={languages} setValue={setLanguages} />
+          <div>
+            <label htmlFor="child-city" className="block mb-2">Your city (optional)</label>
+            <select id="child-city" value={cityChoice} onChange={e => setCityChoice(e.target.value)} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3">
+              <option value="">Prefer not to say</option>
+              {CITY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+              <option value="other">Other</option>
+            </select>
+            {cityChoice === 'other' && <><label htmlFor="child-city-other" className="sr-only">Your city</label><input id="child-city-other" maxLength={60} value={otherCity} onChange={e => setOtherCity(e.target.value)} placeholder="Type your city" className="mt-2 w-full bg-white border border-slate-200 rounded-xl px-4 py-3" /></>}
+            {!cityValid && <p role="alert" className="text-sm text-red-700 mt-2">Use letters for the city name.</p>}
+            <p className="text-xs text-slate-500 mt-2">Only used to show local services that fit this age. It is never shared with a partner unless you send them an enquiry yourself.</p>
+          </div>
           <div><label htmlFor="child-notes" className="block mb-2">Anything else you would like us to know?</label><textarea id="child-notes" maxLength={500} rows={3} value={notes} onChange={e => setNotes(e.target.value)} className="w-full border border-slate-200 bg-white rounded-xl px-4 py-3" /></div>
         </fieldset>
       </details>}
       {step === 'review' && <button disabled={saving} onClick={save} className="mt-6 w-full bg-clay rounded-full text-white px-5 py-4 disabled:opacity-40">{saving ? 'Saving…' : editChild ? 'Save changes' : 'Save and get help'}</button>}
       {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
+      {!cityValid && <p className="mt-4 text-sm text-red-700">Check the city under “A little about home” before saving.</p>}
       <p className="text-xs text-slate-500 mt-6">Saved to your family account. <Link href="/privacy" className="underline">Privacy</Link> · <Link href="/help-now" className="underline">Need urgent support?</Link></p>
     </DialogContent>
   </Dialog>;

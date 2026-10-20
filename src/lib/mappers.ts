@@ -21,6 +21,7 @@ export interface ChildRow {
   intake_band?: string | null;
   intake_answered?: (keyof TemperamentProfile)[] | null;
   memory_enabled?: boolean;
+  city?: string | null;
 }
 
 export interface DecodeRow {
@@ -38,6 +39,8 @@ export interface DecodeRow {
 
 export const CHILD_COLUMNS =
   'id, name, dob, due_date, curiosity, persistence, sensitivity, sociability, emotional_intensity, flexibility, focus_areas, household, home_languages, profile_notes, intake_band, intake_answered, memory_enabled, puberty_guide, gender';
+/** The parent's own app shell also loads the optional city. Guidance, stories and reports use CHILD_COLUMNS, so the city never enters AI context. */
+export const PARENT_CHILD_COLUMNS = `${CHILD_COLUMNS}, city`;
 export const DECODE_COLUMNS = 'id, child_id, scenario, analysis, risk_level, safety_category, outcome, created_at, continuation_of, refines';
 
 export function childFromRow(row: ChildRow): Child {
@@ -64,6 +67,7 @@ export function childFromRow(row: ChildRow): Child {
     intakeBand: row.intake_band ?? null,
     intakeAnswered: row.intake_answered ?? null,
     memoryEnabled: row.memory_enabled ?? true,
+    ...(row.city !== undefined ? { city: row.city } : {}),
   };
 }
 
