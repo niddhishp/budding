@@ -6,7 +6,7 @@ Audit and implementation date: 20 October 2026.
 
 Public marketing, educational and policy pages at https://www.kahiye.app. Family records, private photographs, authentication, billing gates, clinical logic and database schema are preserved. No production data writes or outreach sends were part of the SEO work.
 
-Release validation and deployment results are recorded below as they complete. Do not read an implementation checklist as a promise of ranking, clinical approval or field performance.
+**Live release:** `47bc595e48959bcfb34fe1070b29db00e3294b1c`, Vercel production `dpl_7FL9chbSRQghy4c83xGCFXYGukY2`, verified READY with `www.kahiye.app` and `kahiye.app` aliases. Both branch and main CI passed. Final public crawl: 41 pages, zero detected SEO issues. Do not read an implementation checklist as a promise of ranking, clinical approval or field performance.
 
 ## What changed
 
@@ -30,6 +30,8 @@ The existing article slugs are descriptive and stable. They were retained to pro
 Baseline HTTP crawl: 38/38 sitemap pages returned 200, each had one H1, no accidental public noindex, and no broken internal links or orphan sitemap pages were found within the public crawl. Missing canonicals were `/`, `/quiz`, `/privacy`, `/terms`.
 
 Baseline external checks: 25 of 27 unique linked URLs returned 200; two NSPCC source URLs returned 403 to the audit client. A 403 is an unverified destination, not proof of a broken link. The HealthyChildren source was changed to its final `www` URL to remove an unnecessary source-link redirect. The final crawl also covers external links on the newly linked support page.
+
+After the release, 26 of 30 external destinations returned 200. The two NSPCC links still returned 403; the PANTS page also showed an explicit access block in the browser. `https://112.gov.in/` and the existing Tele-MANAS source link timed out in the HTTP checker. These four remain **unverified**, not confirmed dead links. No confirmed external 404 was found. Their source attribution and contact information were preserved.
 
 No private path was opened to indexing. Login is crawlable so Google can read its `noindex`; authenticated app/admin/API/auth routes remain disallowed and have `X-Robots-Tag` protection. Robots directives are not authentication; the existing auth checks remain in force.
 
@@ -86,6 +88,8 @@ http://kahiye.app/articles       → 308 → https://kahiye.app/articles
 ```
 
 The HTTP apex has a two-hop platform redirect. All published internal links use the canonical host/path, so normal site navigation avoids it. This remaining platform chain must not be described as eliminated. Do not add middleware redirects that duplicate Vercel's TLS/host handling.
+
+Vercel's domain configuration confirms a permanent 308 from the verified apex to the verified `www` domain. Live responses also retain `Strict-Transport-Security: max-age=63072000`. Anonymous `/app` and `/admin` redirect to sign-in; `/api/me` returns 401; login/results carry noindex headers; unknown ordinary and article URLs return 404; the old portrait JPEG URL returns 308 to its WebP variant.
 
 ## Structured data — exact representative output
 
@@ -167,19 +171,27 @@ Baseline mobile [PageSpeed report](https://pagespeed.web.dev/analysis/https-www-
 
 | Measurement | Before | After |
 | --- | ---: | ---: |
-| Performance | 87 | Pending release measurement |
-| Accessibility | 94 | Pending release measurement |
-| Best practices | 100 | Pending release measurement |
-| SEO | 100 | Pending release measurement |
-| FCP | 1.4 s | Pending release measurement |
-| LCP | 3.7 s | Pending release measurement |
-| CLS | 0 | Pending release measurement |
-| TBT | 0 ms | Pending release measurement |
-| Speed index | 4.5 s | Pending release measurement |
+| Performance | 87 | 95 |
+| Accessibility | 94 | 100 |
+| Best practices | 100 | 100 |
+| SEO | 100 | 100 |
+| FCP | 1.4 s | 1.5 s |
+| LCP | 3.7 s | 2.6 s |
+| CLS | 0 | 0 |
+| TBT | 0 ms | 10 ms (rounded display) |
+| Speed index | 4.5 s | 4.0 s |
+
+Final [mobile report](https://pagespeed.web.dev/analysis/https-www-kahiye-app/w6c79iejzh?form_factor=mobile), 20 October 2026, 20:18 IST, same device/throttling: precise LCP 2,575 ms, FCP 1,501 ms, TBT 6 ms and speed index 4,012 ms. This is an improvement, **not a pass of the requested <2 s mobile target**, and LCP remains slightly above the 2.5 s good threshold in this single lab run.
+
+Final [desktop report](https://pagespeed.web.dev/analysis/https-www-kahiye-app/w6c79iejzh?form_factor=desktop): performance/accessibility/best practices/SEO all 100; LCP 612 ms, FCP 334 ms, TBT 7 ms, CLS 0 and speed index 735 ms. These measurements cover the homepage; they are not universal timing claims for every private feature or network.
 
 The baseline LCP element was the header wordmark, with a large rendering delay. Changes target font rendering and hero visibility, rather than hiding content. Article catalogue payload is reduced by excluding full bodies from the client bundle. All public content remains rendered in the initial HTML.
 
-The first hosted retest on `ce86fbf` scored 91 performance and 100 accessibility, best practices and SEO, with LCP 3.038 s, FCP 1.698 s, CLS 0, TBT 0 ms and speed index 4.399 s. [Initial release measurement](https://pagespeed.web.dev/analysis/https-www-kahiye-app/ndw7uz5j70?form_factor=mobile). Its remaining blocking CSS requests justified one further pass: merge the tiny shared App.css rules into the existing stylesheet and stop background prefetch from homepage links. No experimental CSS inlining was enabled; Next's documentation still labels it unsuitable for production.
+The first hosted retest on `ce86fbf` scored 91 performance and 100 accessibility, best practices and SEO, with LCP 3.038 s, FCP 1.698 s, CLS 0, TBT 0 ms and speed index 4.399 s. [Initial release measurement](https://pagespeed.web.dev/analysis/https-www-kahiye-app/ndw7uz5j70?form_factor=mobile). Its remaining blocking CSS requests justified one further pass: merge the tiny shared App.css rules into the existing stylesheet and stop background prefetch from homepage links. No experimental CSS inlining was enabled; [Next's documentation](https://nextjs.org/docs/app/api-reference/config/next-config-js/inlineCss) still does not recommend it for production.
+
+The article library's initial script inventory fell from 524,321 to 475,825 uncompressed bytes, or from 165,567 to 147,738 bytes using the same local gzip estimator: 48,496 raw bytes / 17,829 gzip bytes saved. This is about 11% of its compressed initial script payload. It does not include later navigation or the HTML/RSC payload, which now carries the small preview records. The homepage's initial JS inventory is essentially unchanged; preventing speculative navigation is a separate optimisation.
+
+Remaining performance work should profile a public-page stylesheet split to reduce the shared CSS unused on marketing pages, then test the public and signed-in app together. Do not sacrifice readable fallback fonts, older-device compatibility or stable navigation just to increase a Lighthouse score. No promise of universal <2 s loading is made.
 
 There is no CrUX field data available for this origin in the baseline report. A lab test does not establish real-user INP, universal two-second loading or a field CWV pass. Google's good thresholds are assessed at the 75th percentile: LCP ≤2.5 s, INP ≤200 ms and CLS ≤0.1. The requested <2 s target is stricter; report observed results rather than promise it for every connection. [CWV thresholds](https://web.dev/articles/defining-core-web-vitals-thresholds).
 
@@ -216,6 +228,7 @@ Search Console submission and ownership verification have not been performed in 
 3. **Search operations:** owner completes Search Console DNS verification and sitemap submission.
 4. **Delivery/commercial activation:** previous payment, email, WhatsApp and Amazon provider acceptance requirements remain. This SEO release does not activate them.
 5. **Authority:** approve factual founder materials and the separate targeted outreach draft. No message will be sent without instruction.
+6. **Measured technical gaps:** <2 s slow-mobile LCP is not achieved; the HTTP apex retains its platform redirect chain; four external sources could not be independently reached. No CrUX field pass, Google indexing outcome, ranking gain or backlink acquisition is established.
 
 For email, a monitored existing Gmail address can be temporary if the owner wants it public. A professional `support@kahiye.app` mailbox can be created through [Google Workspace](https://workspace.google.com/solutions/business-email/) or [Zoho Mail](https://www.zoho.com/mail/custom-domain-email.html). The domain is already owned; an inbox service and DNS configuration are what remain. Do not publish the address before send/receive tests pass.
 
@@ -227,4 +240,14 @@ For email, a monitored existing Gmail address can be temporary if the owner want
 - Production build: passed during implementation.
 - Generated HTML SEO gate: passed for 41 pages.
 - `scripts/audit-seo.mjs` provides repeatable, anonymous public HTTP validation.
-- CI, hosted crawl, responsive browser checks and post-release PageSpeed results: to be appended after deployment.
+- Initial release branch CI [39439997611](https://github.com/niddhishp/budding/actions/runs/39439997611) and main CI [39440408911](https://github.com/niddhishp/budding/actions/runs/39440408911): passed.
+- Final release branch CI [39441768565](https://github.com/niddhishp/budding/actions/runs/39441768565) and main CI [39442267989](https://github.com/niddhishp/budding/actions/runs/39442267989): passed on exact commit `47bc595e48959bcfb34fe1070b29db00e3294b1c`. Includes lint, typecheck, 106 unit/server tests, disposable database security/bootstrap, provider/concurrency regressions, family/photo routes, parenting-flow SSR, production build and SEO build gate.
+- Final live HTTP crawl: `.playwright-mcp/seo-final-crawl.json`, all 41 sitemap URLs 200, one H1, unique metadata verified in the build, self-referencing canonicals, valid JSON-LD, no accidental noindex, no orphan or broken internal destination detected.
+- External checks: `.playwright-mcp/seo-after.json`, 26 successful / 4 unverified as described above.
+- Responsive checks: `.playwright-mcp/seo-responsive-final.json`, 40 combinations across 320, 390, 768 and 1440 px viewport overrides. Routes: home, catalogue, representative article, About, Editorial, quiz, calculator, immediate support, privacy and terms. No horizontal document overflow; exactly one H1/main in each. The browser reserves an 8 px scrollbar within those viewport sizes.
+- Functional browser checks: article search for “period” gives three guides; combined Safety filter correctly gives zero; clearing search shows eight safety guides. Quiz age selection and back navigation work with a single H1. Native date editing recalculates the public due-date example. FAQ disclosures and narrow footer links are usable. No quiz result or family record was saved.
+- Browser console errors: none observed in the verification tab. Production error-log query for the final deployment returned zero records for the checked 10-minute window.
+- PageSpeed evidence: `.playwright-mcp/seo-pagespeed-final-mobile.txt` and `seo-pagespeed-final-desktop.txt`; direct reports linked above.
+- Screenshot: `.playwright-mcp/seo-home-final-desktop.jpg`. Original research remains untracked and unmodified; no database migrations or data deletion occurred.
+
+Automated accessibility 100 is not a full assistive-technology audit, and sampled viewport checks are not proof of perfection on every device. The scope and evidence above are the basis for this release's claims.
