@@ -40,14 +40,29 @@ export function hasAccess(sub: SubscriptionRow | null, now = new Date()): boolea
 
 /** Resolve plan and usage for the signed-in parent. `supabase` must be the user-scoped client. */
 export async function getEntitlement(supabase: SupabaseClient, userId: string): Promise<Entitlement> {
-  const { data: sub, error: subscriptionError } = await supabase
-    .from('subscriptions')
-    .select('status, interval, current_period_end, paid_through, cancel_at_period_end, razorpay_subscription_id')
-    .eq('user_id', userId)
-    .maybeSingle<SubscriptionRow>();
+  const now = new Date();
+  const [{ data: sub, error: subscriptionError }, { data: sponsored, error: sponsorError }] = await Promise.all([
+    supabase
+      .from('subscriptions')
+      .select('status, interval, current_period_end, paid_through, cancel_at_period_end, razorpay_subscription_id')
+      .eq('user_id', userId)
+      .maybeSingle<SubscriptionRow>(),
+    // Sponsored access (supabase/033): at most one sponsorship runs at a time. Mirrors reserve_guidance.
+    supabase
+      .from('sponsored_access')
+      .select('organisation_name, access_until')
+      .eq('user_id', userId)
+      .gt('access_until', now.toISOString())
+      .order('access_until', { ascending: false })
+      .limit(1)
+      .maybeSingle<SponsoredAccessRow>(),
+  ]);
 
   if (subscriptionError) throw new Error('Subscription lookup unavailable');
-  const plus = hasAccess(sub);
+  if (sponsorError) throw new Error('Sponsorship lookup unavailable');
+  const paid = hasAccess(sub, now);
+  const sponsor = hasSponsoredAccess(sponsored, now) ? { name: sponsored!.organisation_name, until: sponsored!.access_until } : null;
+  const plus = paid || !!sponsor;
   const windowMs = plus ? 86_400_000 : 7 * 86_400_000;
   const { count, error: usageError } = await supabase
     .from('decodes')
@@ -69,9 +84,20 @@ export async function getEntitlement(supabase: SupabaseClient, userId: string): 
     used: count ?? 0,
     limit: plus ? PLUS_DECODES_PER_DAY : FREE_DECODES_PER_WEEK,
     window: plus ? 'day' : 'week',
-    renewsAt: plus ? sub?.paid_through ?? null : null,
-    cancelAtPeriodEnd: plus ? !!sub?.cancel_at_period_end : false,
+    renewsAt: paid ? sub?.paid_through ?? null : null,
+    cancelAtPeriodEnd: paid ? !!sub?.cancel_at_period_end : false,
+    sponsor,
   };
+}
+
+export interface SponsoredAccessRow {
+  organisation_name: string;
+  access_until: string;
+}
+
+/** Plus is paid OR sponsored; a sponsorship counts only until its access_until. */
+export function hasSponsoredAccess(row: SponsoredAccessRow | null | undefined, now = new Date()): boolean {
+  return !!row?.access_until && new Date(row.access_until) > now;
 }
 
 /** Map a Razorpay subscription entity onto our row shape, plus the user id we attached in notes. */

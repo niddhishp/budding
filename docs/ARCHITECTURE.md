@@ -45,7 +45,8 @@ This is the two-page map for anyone joining the codebase. `HANDOFF.md` is the re
   - **Not for AI:** photos are private and never used for guidance.
   - **Not exposed in aggregate:** admin metrics are aggregate only, and any figure built from fewer than 5 families is suppressed.
   - **Portable and erasable:** every erasable table is either exported or listed with a reason (`src/lib/family-export.ts`, with a test guard).
-- **Additive migrations only.** Edits to existing functions use the guarded text replacement in 017, 018, 025 and 029, which aborts if the live definition is unexpected.
+- **Additive migrations only.** Edits to existing functions use the guarded text replacement in 017, 018, 025, 029 and 033, which aborts if the live definition is unexpected.
+- **Plus is paid or sponsored.** `reserve_guidance` (SQL) and `getEntitlement` (`src/lib/billing.ts`) must agree: a captured paid period, or a `sponsored_access` row whose `access_until` is in the future. Sponsors see only suppressed aggregates. See `SPONSORED-ACCESS.md`.
 
 ## Checks before every release
 

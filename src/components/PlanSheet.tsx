@@ -4,6 +4,7 @@ import { Check, Loader2, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/stores/appStore';
 import { FREE_FEATURES, PLUS_FEATURES, PRICES, type BillingInterval } from '@/lib/plans';
+import { SponsorCode } from '@/components/SponsorCode';
 
 // Razorpay Checkout is loaded only when a parent decides to pay.
 type RazorpayHandlerResponse = {
@@ -124,14 +125,16 @@ export function PlanSheet() {
         ) : isPlus ? (
           <>
             <h2 id="plan-title" className="font-heading text-3xl text-slate-850 mb-2">Kahiye Plus</h2>
-            <p className="text-slate-500 mb-6">
+            {entitlement?.sponsor && <SponsorCode className="mb-4" />}
+            {(entitlement?.renewsAt || !entitlement?.sponsor) && <p className="text-slate-500 mb-6">
               {entitlement?.cancelAtPeriodEnd
                 ? `Cancelled. Access continues until ${formatDate(entitlement.renewsAt)}.`
                 : entitlement?.renewsAt ? `Renews on ${formatDate(entitlement.renewsAt)}.` : 'Active.'}
-            </p>
+            </p>}
             <FeatureList items={PLUS_FEATURES} />
             {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-            {!entitlement?.cancelAtPeriodEnd && (
+            {/* Only a paid subscription can be cancelled; a sponsorship ends with the sponsor's term. */}
+            {!!entitlement?.renewsAt && !entitlement.cancelAtPeriodEnd && (
               <button onClick={cancel} disabled={busy} className="mt-8 text-sm text-slate-500 hover:text-red-600 underline underline-offset-4">
                 {busy ? 'Cancelling…' : 'Cancel subscription'}
               </button>
@@ -176,6 +179,7 @@ export function PlanSheet() {
               {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : available ? `Get Plus · ${PRICES[interval].amount}` : 'Paid plans opening soon'}
             </Button>
             <p className="mt-3 text-xs text-center text-slate-400">{available ? 'Payments via Razorpay. Cancel anytime.' : 'Kahiye Free remains available. Checkout is currently closed.'}</p>
+            <SponsorCode className="mt-5 w-full" />
 
             <div className="mt-6 pt-6 border-t border-slate-100">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Free plan</p>

@@ -154,6 +154,13 @@ export default function PrivacyPage() {
         Some of these providers may process data outside India, under contracts
         that require them to protect it.
       </p>
+      <p>
+        If a school, employer, clinic or community pays for your access with a
+        sponsor code, it sees only totals across its families, such as how
+        many joined or used Kahiye in the last month. Totals below five
+        families are hidden. It never sees your name, your child, your
+        questions or your answers.
+      </p>
 
       <h2>How long we keep it</h2>
       <p>

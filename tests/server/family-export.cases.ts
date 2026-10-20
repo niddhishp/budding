@@ -30,6 +30,7 @@ const rows: Record<string, Record<string, unknown>[]> = {
   shop_records: [{ id: 'p1', child_id: child, user_id: me, kind: 'preferences', revision: 0, value: { materials: [] } }],
   programme_enrolments: [{ id: 'pe1', child_id: child, user_id: me, programme_id: 'potty-training', status: 'completed', started_on: '2026-10-01', progress: { 1: '2026-10-01' }, baseline: 4, final: 2, revision: 7, created_at: '2026-10-01', updated_at: '2026-10-08' }],
   expert_requests: [{ id: 'x1', child_id: child, user_id: me, concern: 'Sleep', status: 'new', expert_id: 'internal', version: 3, next_follow_up_at: '2026-10-10', created_at: '2026-10-06' }],
+  sponsored_access: [{ id: 'sp1', user_id: me, organisation_id: 'org-internal-id', organisation_name: 'Synthetic School', code: 'ABCDE23456', redeemed_at: '2026-10-07', access_until: '2027-04-01T18:30:00Z' }],
 };
 
 function database(failing?: string) {
@@ -56,6 +57,8 @@ test('export reads every family table as the parent, organised by child, without
     assert(!text.includes(internal), `export leaked ${internal}`);
   assert.equal(out.account.email, 'parent@example.invalid');
   assert.equal(out.account.subscription?.status, 'active');
+  assert.deepEqual(out.account.sponsorships, [{ organisation_name: 'Synthetic School', code: 'ABCDE23456', redeemed_at: '2026-10-07', access_until: '2027-04-01T18:30:00Z' }]);
+  assert(!text.includes('org-internal-id'), 'Internal organisation id is not exported');
   assert.deepEqual(out.account.whatsapp, { linked: true, phone: '+910000000000', linked_at: '2026-10-01' });
   const [c] = out.children;
   assert.deepEqual(c.guidance.map(g => g.type), ['guidance', 'chat', 'practice']);

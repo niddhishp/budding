@@ -85,6 +85,10 @@ function PlatformApp() {
       ...child, age: computeAge(child.dateOfBirth, child.dueDate, new Date(`${today}T00:00:00`)),
     })) }));
   }, [today, status]);
+  useEffect(() => {
+    // A sponsor's link (/app?sponsor=CODE) opens You, where the code waits for the parent to confirm.
+    if (status === "ready" && new URLSearchParams(window.location.search).has("sponsor")) useAppStore.getState().setPage("parent-space");
+  }, [status]);
 
   if (status === "loading") {
     return (
