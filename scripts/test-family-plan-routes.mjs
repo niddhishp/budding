@@ -39,7 +39,7 @@ await db.query(
   "insert into public.admin_memberships(user_id,role) values($1,'operations')",
   [other],
 );
-const objects = new Map();
+const objects = new Map(), signRequests = [];
 let failUpload = false,
   queue = Promise.resolve();
 const server = createServer((req, res) => {
@@ -70,6 +70,16 @@ const server = createServer((req, res) => {
           app_metadata: {},
           user_metadata: {},
         });
+        return;
+      }
+      // Batch link signing for the family export: service role only, private keys, one hour at most.
+      if (path.startsWith("/storage/v1/object/sign/") && req.method === "POST") {
+        assert.equal(token, "synthetic-service-only");
+        const bucket = path.replace("/storage/v1/object/sign/", ""), p = JSON.parse(bytes);
+        assert(["family-photos", "story-audio"].includes(bucket));
+        assert(p.expiresIn > 0 && p.expiresIn <= 3600, "Export links last at most one hour");
+        signRequests.push({ bucket, ...p });
+        send(p.paths.map(key => ({ path: key, error: null, signedURL: `/object/sign/${bucket}/${key}?token=synthetic-${p.expiresIn}` })));
         return;
       }
       if (path.startsWith("/storage/v1/object/")) {
@@ -184,6 +194,8 @@ const server = createServer((req, res) => {
               "shop_records",
               "shop_catalog",
               "shop_discovery_runs",
+              // Family export reads, each filtered by user_id under RLS.
+              "consent_events", "whatsapp_links", "memories", "stories", "expert_requests",
             ].includes(table),
           );
           const values = [],
@@ -715,6 +727,43 @@ try {
     },
     400,
   );
+  // Family export: actual handler, parent RLS reads, private photo links, isolation and erasure inventory.
+  const exporter = await import("../src/app/api/account/export/route.ts");
+  const { FAMILY_EXPORT_TABLES, FAMILY_EXPORT_EXCLUSIONS } = await import("../src/lib/family-export.ts");
+  const otherChild = "f4000000-0000-4000-8000-000000000012";
+  await db.query("insert into public.children(id,user_id,name,dob) values($1,$2,'Other family child','2016-01-01')", [otherChild, other]);
+  await db.query("insert into public.context_logs(child_id,user_id,content,log_type) values($1,$2,'Other family secret','observation')", [otherChild, other]);
+  await db.query("insert into public.stories(child_id,user_id,theme,language,title,body,audio_path) values($1,$2,'courage','en','Synthetic story','Once upon a time',$3)", [child, uid, `${uid}/story.mp3`]);
+  await db.query("insert into public.memories(child_id,user_id,kind,content,source,confidence,archived) values($1,$2,'fact','Archived synthetic memory','parent_said',1,true)", [child, uid]);
+  await db.query("insert into public.expert_requests(user_id,child_id,concern,phone) values($1,$2,'Synthetic sleep concern','+910000000001')", [uid, child]);
+  await db.query("insert into public.whatsapp_links(user_id,phone) values($1,'+910000000002')", [uid]);
+  await run(exporter, "GET", null, 401, null);
+  signRequests.length = 0;
+  const download = await run(exporter, "GET", null);
+  assert.match(download.headers.get("content-disposition"), /^attachment; filename="kahiye-family-records-\d{4}-\d{2}-\d{2}\.json"$/);
+  assert.equal(download.headers.get("cache-control"), "no-store");
+  const exportText = await download.text(), records = JSON.parse(exportText);
+  assert.equal(records.children.length, 1);
+  const exported = records.children[0];
+  assert.equal(exported.profile.id, child);
+  assert(exported.guidance.some(g => g.type === "chat") && exported.guidance.some(g => g.type === "practice"), "Chat and practice history is exported");
+  assert(exported.memories.some(m => m.archived === true && m.content === "Archived synthetic memory"));
+  assert.equal(exported.photo_timeline.find(p => p.id === memory.id).photo.url.includes(`/family-photos/${uid}/${memory.id}-`), true);
+  assert.match(exported.stories[0].narration.url, /story-audio/);
+  assert.equal(exported.expert_requests[0].concern, "Synthetic sleep concern");
+  assert.equal(records.account.whatsapp.linked, true);
+  assert.equal(records.account.subscription.status, "active");
+  assert(exported.gifts_and_shop.length > 0 && exported.notes !== undefined);
+  for (const leak of ["Other family", "sub_handbook_fixture", "photoHash", '"lease"', '"fingerprint"', '"attempts"', '"embedding"', '"model"', '"reviewer_note"'])
+    assert(!exportText.includes(leak), `Export leaked ${leak}`);
+  assert.deepEqual(signRequests.map(r => r.bucket).sort(), ["family-photos", "story-audio"]);
+  assert(signRequests.every(r => r.paths.every(key => key.startsWith(`${uid}/`))), "Only the parent's own storage keys are signed");
+  const erased = (await db.query(`with recursive fk as (select conrelid::regclass::text child, confrelid::regclass::text parent from pg_constraint where contype='f' and confdeltype='c'),
+    reach(tbl) as (select child from fk where parent='auth.users' union select fk.child from fk join reach on fk.parent=reach.tbl)
+    select tbl from reach where tbl not like 'auth.%'`)).rows.map(r => r.tbl.replace(/^public\./, ""));
+  const uncovered = erased.filter(t => !FAMILY_EXPORT_TABLES.includes(t) && !(t in FAMILY_EXPORT_EXCLUSIONS));
+  assert.deepEqual(uncovered, [], `Erased tables missing from the export inventory: ${uncovered.join(", ")}`);
+  console.log(`PASS: family export handler, parent-only reads, chat/practice history, archived memories, one-hour photo and narration links, family isolation and erasure inventory (${erased.length} erased tables covered).`);
   console.log(
     "PASS: actual family plan/photo handlers, SQL persistence, tenant isolation, stale revisions, upload outage/retry, immutable photos, private image delivery and archive/restore. Storage transport simulated; no production records.",
   );
