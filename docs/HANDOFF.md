@@ -1,6 +1,12 @@
 # Kahiye — engineering handoff (living document)
 
-**Latest release (20 October):** [Fair charging, free allowance 10, evidence check-in](EVIDENCE-LOOP.md), migrations 029–030.
+**Latest release (20 October), engineering hygiene.** No schema or behaviour change for parents.
+- **Hindi and Hinglish safety lint:** diagnosis, physical punishment and shaming are now caught per clause, with negation and softener handling.
+- **Unused code removed:** 7 unreachable views, 49 unused UI-kit files and helpers; 6,883 lines, about 22% of `src`.
+- **New docs:** [docs/ARCHITECTURE.md](ARCHITECTURE.md), the map and invariants, and a pull-request checklist in `.github/`.
+- **Verified:** 135 tests, 19 database suites, 7 route suites, providers, render, build and SEO.
+
+**Previous release (20 October):** [Fair charging, free allowance 10, evidence check-in](EVIDENCE-LOOP.md), migrations 029–030.
 - **Fair charging:** an answer missing its explanation through Kahiye's own failure is not counted; a parent cancelling after "Say this" still is.
 - **Safety line:** "Talk to a professional if" now arrives with "Say this".
 - **Free allowance:** 10 Ask turns a week until checkout opens.
