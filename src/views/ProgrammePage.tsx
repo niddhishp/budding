@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { filmEmbed } from "@/data/handbook-films";
 import { useState } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { PROGRAMMES_VERSION, RATING_LABELS, type Programme, type ProgrammeStep } from "@/data/programmes";
@@ -156,7 +157,7 @@ function Running({ programme, enrolment, child, plan, onFinished }: { programme:
 function StepBody({ step, day, word, ticked, busy, onToggle }: { step: ProgrammeStep; day: number; word: string; ticked: boolean; busy: boolean; onToggle: () => void }) {
   const { openAsk } = useAppStore();
   return <div className="pb-6 pl-10">
-    {step.film && <video className="w-full rounded-xl mb-5 bg-paper-deep" controls preload="none" src={step.film}><a href={step.film}>Watch the film</a></video>}
+    {step.film && filmEmbed(step.film) && <div className="relative mb-5 aspect-video overflow-hidden rounded-xl bg-slate-900"><iframe src={filmEmbed(step.film)!} title={step.title} loading="lazy" className="absolute inset-0 h-full w-full" allow="fullscreen; picture-in-picture" allowFullScreen /></div>}
     <section className="bg-paper-deep rounded-2xl p-6">
       <p className="text-sm text-clay mb-3">Words to say</p>
       <p className="font-heading text-2xl leading-relaxed">“{step.words}”</p>

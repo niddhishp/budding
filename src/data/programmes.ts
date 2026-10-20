@@ -12,7 +12,7 @@ export const PROGRAMMES_VERSION = "2026-10-21";
 export type ProgrammeStep = {
   /** Short heading for the day or session. */
   title: string;
-  /** Film for this step. Empty until the founder supplies films; the slot is hidden while null. */
+  /** Vimeo or YouTube link for this step (see filmEmbed). Empty until the founder supplies films; the slot is hidden while null. */
   film: string | null;
   /** Words the parent can say, in their own way. */
   words: string;
