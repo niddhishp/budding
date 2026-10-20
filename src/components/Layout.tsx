@@ -12,8 +12,9 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const sidebarOpen = useAppStore((s) => s.sidebarOpen);
   const currentPage = useAppStore(s=>s.currentPage);
+  const handbookCardId = useAppStore(s=>s.handbookCardId);
   const scrollArea = useRef<HTMLElement>(null);
-  useEffect(()=>{scrollArea.current?.scrollTo({top:0});},[currentPage]);
+  useEffect(()=>{scrollArea.current?.scrollTo({top:0});},[currentPage, handbookCardId]);
 
   return (
     <div className="flex h-[100dvh] overflow-hidden">
