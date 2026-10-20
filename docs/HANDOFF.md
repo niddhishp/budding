@@ -1,5 +1,7 @@
 # Kahiye — engineering handoff (living document)
 
+**Current release work (20 October):** [Safety and Play profile age](SAFETY-PLAY-PROFILE-AGE.md). Both now derive age from the selected child's DOB, without an age override. Play keeps energy and saved-activity filters; invalid/missing dates direct to profile correction. Local check (85 tests), actual component fixture rendering and production build passed. No schema or data changes. Release CI/deployment verification pending. The owner has separately requested a research-led product critique and Brag video; broader implementation awaits agreement. Preserve the untracked `docs/Parenting Research/` material.
+
 
 **Latest deployed follow-up:** [Automatic puberty age](CHILD-PROFILE-GENDER.md#automatic-age-follow-up), application `f905c4d183f3a94a205cfff98ff4349343e7c146`. Puberty derives age from profile DOB/current India date with no conversation-age dropdown, while retaining automatic girls/boys matching. Read-only age summary replaces the selector; missing/out-of-range DOB has honest fallback text. No schema/data changes. All 85 tests, build and branch CI `39207091099` passed. Vercel `dpl_EGkut9yf8MMpFQyeibhjZwx8J2Wb` Ready on both domains; desktop/mobile verified with zero puberty selectors, correct Advika guidance, preserved Safety age control, no overflow/errors. Release notes record main CI and screenshots.
 

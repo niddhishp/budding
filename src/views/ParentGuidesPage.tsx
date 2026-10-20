@@ -1,27 +1,22 @@
 import { GuidePreference } from "@/components/care/GuidePreference";
 import { pubertyGuideForChild } from "@/lib/child-profile";
-import { useState } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/stores/appStore";
-import { CareFrame, fieldClass } from "@/components/care/CareFrame";
+import { CareFrame } from "@/components/care/CareFrame";
 import { useTodayDate } from "@/components/care/useTodayDate";
 import { ageMonths } from "@/lib/shop";
 import {
-  GUIDE_BANDS,
   GUIDE_UPDATED,
   guidesForProfile,
   guideBand,
-  type GuideBand,
 } from "@/data/parent-guides";
 export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
   const { children, selectedChildId, setEditingChild } = useAppStore();
   const child = children.find((c) => c.id === selectedChildId);
   const today = useTodayDate();
   const months = ageMonths(child?.dateOfBirth ?? null, today);
-  const recommended = guideBand(months);
-  const [chosen, setChosen] = useState<GuideBand | "">("");
   const path = pubertyGuideForChild(child);
-  const band = topic === "puberty" ? recommended : chosen || recommended;
+  const band = guideBand(months);
   const guides = guidesForProfile(topic, band, path);
   return (
     <CareFrame
@@ -33,37 +28,18 @@ export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
       }
     >
       <div className="border-y py-6 mb-8 grid sm:grid-cols-2 gap-6">
-        {topic === "puberty" ? <div>
+        <div>
           <p className="font-heading text-xl">{band ? `For ages ${band}` : 'Guidance for their age'}</p>
           <p className="text-sm text-slate-600 mt-2">Based on the date of birth in {child ? `${child.name}’s` : 'your child’s'} profile. Updates automatically as they grow.</p>
-        </div> : <label>
-          Conversation age{" "}
-          <select
-            className={fieldClass}
-            value={band ?? ""}
-            onChange={(e) => setChosen(e.target.value as GuideBand)}
-          >
-            <option value="" disabled>
-              Choose an age group
-            </option>
-            {GUIDE_BANDS.map((b) => (
-              <option key={b}>{b}</option>
-            ))}
-          </select>
-          <span className="block text-xs text-slate-500 mt-2">
-            {recommended && !chosen
-              ? "Starts with the selected child’s age. Explore another age anytime."
-              : "Choose the language and level of detail that fit your child."}
-          </span>
-        </label>}
+        </div>
         {topic === "puberty" && child && band && <GuidePreference key={child.id} child={child} />}
       </div>
       {!band && (
         <div className="py-10">
-          {topic === "puberty" ? months === null ? <>
+          {months === null ? <>
             <p>Add or check the date of birth in your child’s profile so we can show guidance for their age.</p>
             {child && <button className="text-clay underline mt-3" onClick={() => setEditingChild(child.id)}>Update child profile</button>}
-          </> : <p>These guides cover childhood through age 17. <Link className="text-clay underline" href="/articles">Explore our parenting articles →</Link></p> : <p>Choose an age group to begin. You can explore without adding a birth date.</p>}
+          </> : <p>These guides cover childhood through age 17. <Link className="text-clay underline" href="/articles">Explore our parenting articles →</Link></p>}
         </div>
       )}
       <div className="space-y-12">
@@ -125,7 +101,7 @@ export function ParentGuidesPage({ topic }: { topic: "puberty" | "safety" }) {
       <p className="text-xs text-slate-500 mt-8 leading-6">
         Kahiye editorial · Sources checked {GUIDE_UPDATED}. General parent
         education; independent clinical and safeguarding review is still
-        pending. Age groups guide conversation, not diagnosis. Guidance follows your child’s profile. {topic === "safety" && 'Exploring another age stays on this screen. '}Reading these guides does not change health measurements or shopping preferences.
+        pending. Age groups guide conversation, not diagnosis. Guidance follows your child’s profile. Reading these guides does not change health measurements or shopping preferences.
       </p>
     </CareFrame>
   );

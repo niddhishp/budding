@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { PLAY } from "@/data/play";
-import { ageMonths } from "@/lib/family-care";
+import { ageMonths } from "@/lib/shop";
+import { useTodayDate } from "@/components/care/useTodayDate";
 import { useAppStore } from "@/stores/appStore";
 import { useCare } from "@/components/care/useCare";
 import { CareFrame, CareError, fieldClass } from "@/components/care/CareFrame";
@@ -13,15 +14,15 @@ export function PlayPage() {
 }
 function PlayChild({ child }: { child: import("@/types").Child }) {
   const care = useCare(child.id);
+  const setEditingChild = useAppStore((s) => s.setEditingChild);
   const [kind, setKind] = useState("All"),
-    [age, setAge] = useState("child"),
     [saved, setSaved] = useState(false);
-  const months = child.dateOfBirth ? ageMonths(child.dateOfBirth) : null;
+  const today = useTodayDate();
+  const months = ageMonths(child.dateOfBirth ?? null, today);
   const items = PLAY.filter(
     (p) =>
       (kind === "All" || p.kind === kind) &&
-      (age === "all" ||
-        (months !== null && months >= p.min && months <= p.max)) &&
+      (months !== null && months >= p.min && months <= p.max) &&
       (!saved || care.data?.settings.favourites.includes(p.id)),
   );
   return (
@@ -43,17 +44,13 @@ function PlayChild({ child }: { child: import("@/types").Child }) {
             ))}
           </select>
         </label>
-        <label>
-          Age range
-          <select
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            className={fieldClass}
-          >
-            <option value="child">For {child.name}’s age</option>
-            <option value="all">Explore all ages</option>
-          </select>
-        </label>
+        <div>
+          <p className="font-heading text-xl">For {child.name}’s age</p>
+          <p className="text-sm text-slate-600 mt-2">
+            Based on the date of birth in their profile. Activities update
+            automatically as they grow.
+          </p>
+        </div>
       </div>
       <label className="flex gap-3 mt-6">
         <input
@@ -109,11 +106,16 @@ function PlayChild({ child }: { child: import("@/types").Child }) {
         })}
       </div>
       {!items.length && (
-        <p className="py-10">
+        <div className="py-10">
           {months === null
-            ? "Baby play starts after birth. Choose Explore all ages to look ahead."
-            : "Nothing here yet. Try another filter or explore all ages and adapt together."}
-        </p>
+            ? <>
+                <p>Add or check the date of birth in {child.name}’s profile so we can show activities for their age.</p>
+                <button className="text-clay underline mt-3" onClick={() => setEditingChild(child.id)}>Update child profile</button>
+              </>
+            : <p>{saved
+                ? `No saved activities match ${child.name}’s age and this energy filter. Turn off “Only my saved activities” or try another energy level. Your other saved activities are still kept.`
+                : `No activities match ${child.name}’s age and this energy filter yet. Try another energy level.`}</p>}
+        </div>
       )}
       <p className="text-sm text-slate-500 border-t pt-5">
         Kahiye play invitations, informed by{" "}
