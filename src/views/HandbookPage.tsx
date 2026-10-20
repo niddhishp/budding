@@ -9,6 +9,7 @@ import { CareFrame, CareError, fieldClass, buttonClass } from "@/components/care
 import { useHandbook } from "@/components/care/useHandbook";
 import { useTodayDate } from "@/components/care/useTodayDate";
 import type { Child } from "@/types";
+import { GuidanceTrust } from "@/components/GuidanceTrust";
 
 export function HandbookPage() {
   const { children, selectedChildId, handbookCardId } = useAppStore();
@@ -33,6 +34,7 @@ function Handbook({ child }: { child: Child }) {
   }
   return <CareFrame title={`${child.name}’s handbook`} intro="A few words before you need them. Explore what fits your family, try one small thing, and come back when you want.">
     <CareError error={book.error} reload={book.reload} />
+    <GuidanceTrust className="mb-6" />
     {selected ? <article>
       <button className="text-clay underline py-3" onClick={() => openHandbook()}>← All conversations</button>
       <p className="text-sm text-clay mt-5">{TRACKS.find(t => t[0] === selected.track)?.[1]} · {cardAgeLabel(selected)}</p>

@@ -198,11 +198,12 @@ const server = createServer((req, res) => {
                 "kind",
                 "section",
                 "revision",
-                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation", "or",
+                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation", "or", "share_language",
               ].includes(key),
             );
             // Usage excludes later messages in a chat or practice conversation.
             if (key === "or" && value === "(continuation_of.is.null,analysis->conversation.is.null)") { where.push("(continuation_of is null or analysis->'conversation' is null)"); continue; }
+            if (key === "share_language" && value === "not.is.null") { where.push("share_language is not null"); continue; }
             if (key === "kind" && value === "in.(feedback,preferences)") {
               where.push("kind in ('feedback','preferences')");
               continue;
@@ -420,6 +421,18 @@ try {
   await run(outcomes, "POST", { outcome: "worked" }, 422, uid, practiceId);
   const share = await import("../src/app/api/share/route.ts");
   await run(share, "POST", { decodeId: practiceId, language: "English", audience: "partner" }, 422);
+  // Free families get a monthly allowance of messages in other languages; the sixth is refused before any work.
+  const otherChild = crypto.randomUUID();
+  await db.query("insert into public.children(id,user_id,name,dob) values($1,$2,'Synthetic free child','2021-01-01')", [otherChild, other]);
+  for (let i = 0; i < 5; i++) await db.query("insert into public.guidance_requests(id,user_id,child_id,kind,fingerprint,state,share_language) values($1,$2,$3,'share','fixture','complete','Hindi')", [crypto.randomUUID(), other, otherChild]);
+  const beforeShare = aiCalls, sharesBefore = (await db.query("select count(*)::int n from public.guidance_requests where user_id=$1", [other])).rows[0].n;
+  const refused = await run(share, "POST", { decodeId: practiceId, language: "Hindi", audience: "grandparent" }, 402, other);
+  assert.equal((await refused.json()).code, "upgrade_required");
+  assert.equal(aiCalls, beforeShare, "A refused share makes no model call");
+  assert.equal((await db.query("select count(*)::int n from public.guidance_requests where user_id=$1", [other])).rows[0].n, sharesBefore, "A refused share reserves nothing");
+  await db.query("update public.guidance_requests set created_at=now()-interval '31 days' where user_id=$1 and kind='share'", [other]);
+  // Older than 30 days no longer counts; the request proceeds past the allowance check (and fails only on the other family's decode).
+  await run(share, "POST", { decodeId: practiceId, language: "Hindi", audience: "grandparent" }, 404, other);
   const report = await import("../src/app/api/report/route.ts");
   const beforeReport = aiCalls;
   const reportResponse = await run(report, "POST", { childId: child }, 422);

@@ -8,6 +8,8 @@ export const FREE_DECODES_PER_WEEK = 3;
 export const PLUS_DECODES_PER_DAY = 10;
 /** A chat or practice conversation uses one Ask turn and may continue up to this many messages. */
 export const CONVERSATION_MESSAGE_LIMIT = 10;
+/** Free families: caregiver messages per rolling 30 days in a language other than English. */
+export const FREE_TRANSLATED_SHARES_PER_MONTH = 5;
 
 export const PRICES: Record<BillingInterval, { amount: string; per: string; note?: string }> = {
   monthly: { amount: '₹299', per: 'month' },
@@ -16,7 +18,7 @@ export const PRICES: Record<BillingInterval, { amount: string; per: string; note
 
 export const PLUS_FEATURES = [
   `${PLUS_DECODES_PER_DAY} Ask turns per rolling day — guidance, chat or practice (a whole conversation of up to ${CONVERSATION_MESSAGE_LIMIT} messages is one turn)`,
-  'Share scripts with grandparents and caregivers in Hindi, Malayalam, Tamil and 6 more languages',
+  'Scripts for grandparents and caregivers in Hindi, Malayalam, Tamil and 6 more languages, with no monthly limit',
   'Guidance that learns from what worked for your child',
   'A weekly pattern report for each child, ready to show your pediatrician',
   'Profiles for every child in the family',
@@ -25,7 +27,7 @@ export const PLUS_FEATURES = [
 export const FREE_FEATURES = [
   `${FREE_DECODES_PER_WEEK} Ask turns a week — guidance, chat or practice (a whole conversation of up to ${CONVERSATION_MESSAGE_LIMIT} messages is one turn)`,
   'Daily guidance for your child',
-  'Share scripts in English',
+  `Share scripts in English, plus ${FREE_TRANSLATED_SHARES_PER_MONTH} a month in Hindi and 8 more languages`,
 ];
 
 export interface Entitlement {

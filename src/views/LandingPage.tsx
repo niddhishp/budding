@@ -113,15 +113,16 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.2fr_1fr] gap-14 lg:gap-14 items-center">
           <Reveal hero>
             <p className="text-sm font-semibold text-clay tracking-wide mb-5">
-              For parents, from pregnancy to eighteen
+              For parents of children aged 3 to 8
             </p>
             <h1 className="font-heading text-[clamp(2.5rem,5.2vw,4.1rem)] leading-[1.04] text-slate-900">
-              Parenting changes. Find your next small step.
+              The words for the shoe rack, the park and the bedtime fight.
             </h1>
             <p className="mt-7 text-lg md:text-xl leading-relaxed text-slate-600 max-w-[34rem]">
-              A hard moment now, or a conversation you know is coming.
-              Kahiye helps you find words to try, with guidance for your
-              child&rsquo;s age and space to keep family life together.
+              Describe the moment and get words to try, shaped to your
+              child&rsquo;s age. Send the same words to Dadi or the nanny in
+              Hindi, Tamil and seven more languages. Kahiye grows with your
+              child, from pregnancy to eighteen.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
               <Link prefetch={false}

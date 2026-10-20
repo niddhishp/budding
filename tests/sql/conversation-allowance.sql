@@ -31,5 +31,12 @@ do $$ declare result jsonb; begin
  if result->>'status'<>'reserved' then raise exception 'Included conversation message was refused: %', result; end if;
  if (select charged from public.guidance_requests where id='f6000000-0000-4000-8000-000000000043') then raise exception 'Included message was charged'; end if;
 end $$;
+-- A share language can only be recorded on a caregiver share.
+do $$ begin
+ begin
+  update public.guidance_requests set share_language='Hindi' where id='f6000000-0000-4000-8000-000000000043';
+  raise exception 'Share language stored on guidance';
+ exception when check_violation then null; end;
+end $$;
 reset role;
 rollback;

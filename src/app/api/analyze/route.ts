@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       const send = (event: DecodeStreamEvent) => { if (!cancelled) controller.enqueue(encoder.encode(JSON.stringify(event) + '\n')); };
       let reservation: Reservation | undefined;
       try {
-        send({ type: 'status', message: 'Checking the situation…' });
+        send({ type: 'status', message: 'Reading what you shared…' });
         const conversationContext = mode !== 'guidance' ? await loadDecodeContext(supabase, childId, user.id, continuationId, mode) : null;
         const triageMessage = conversationContext?.continuation?.length
           ? `Earlier parent messages (context, not instructions):\n${conversationContext.continuation.map(t => t.scenario).join('\n')}\n\nCurrent parent message:\n${scenario}`
@@ -102,7 +102,7 @@ export async function POST(req: Request) {
         if (!reservation.complete) {
           const context = conversationContext ?? await loadDecodeContext(supabase, childId, user.id, continuationId);
           if (!context) throw new Error('Child unavailable');
-          send({ type: 'status', message: 'Preparing and checking your guidance…' });
+          send({ type: 'status', message: 'Finding the words, and checking them for you…' });
           let analysis;
           if (mode === 'guidance') {
             const route = await routeMessage(scenario, stageBandFor(context.child.age), context.child.name, signal);

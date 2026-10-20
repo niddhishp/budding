@@ -1,6 +1,15 @@
 # Kahiye — engineering handoff (living document)
 
-**Latest release (20 October):** [Conversation allowance](CONVERSATION-ALLOWANCE.md), migration 025, applied and verified in production.
+**Latest release (20 October):** [Parent moments](PARENT-MOMENTS.md), migration 026.
+- **Sharing:** Free families get 5 messages a month in other languages; English stays free.
+- **Ask:** answers are scrolled into view, sharing sits under "Say this", and voice input uses the home language.
+- **Today:** a "How did it go?" follow-up, plus a single "More for {name}" section.
+- **Horoscope:** the Child page respects "Hide".
+- **Trust:** a "How Kahiye writes this guidance" panel.
+- **Public site:** a 3–8 homepage hero and article calls to action into Ask.
+- **Still being built separately:** family export and outcome metrics, in parallel branches.
+
+**Previous release (20 October):** [Conversation allowance](CONVERSATION-ALLOWANCE.md), migration 025, applied and verified in production.
 - **Rule:** starting a chat or practice conversation uses one Ask turn, and later messages are included up to 10. Guidance is unchanged.
 - **Verified:** 109 tests, the database suite (which fails without 025), route-handler charge assertions, providers, render and build.
 

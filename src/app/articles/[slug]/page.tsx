@@ -113,12 +113,16 @@ export default async function ArticlePage({ params }: Props) {
             ))}
           </section>
         )}
-        <Link
-          href="/app"
-          className="inline-block rounded-full bg-clay text-white px-6 py-3 mt-10"
-        >
-          Return to your family space
-        </Link>
+        <section className="mt-12 rounded-2xl bg-paper-deep p-6">
+          <h2 className="font-heading text-2xl">Facing this with your child?</h2>
+          <p className="mt-3 leading-7">
+            Describe what is happening in Kahiye and get words to try, shaped to your child&rsquo;s age.
+            Free to start, no card needed.
+          </p>
+          <Link href="/app" className="inline-block rounded-full bg-clay text-white px-6 py-3 mt-5">
+            Find the words in Kahiye
+          </Link>
+        </section>
       </article>
     </main>
   );

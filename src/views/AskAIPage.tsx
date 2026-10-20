@@ -13,6 +13,7 @@ import { ShareSheet } from '@/components/ShareSheet';
 import { readNdjson } from '@/lib/ndjson';
 import Link from 'next/link';
 import { useRequestScope } from '@/hooks/useRequestScope';
+import { GuidanceTrust } from '@/components/GuidanceTrust';
 import type { Child, Decode, DecodeOutcome, DecodeStreamEvent, SafetyNotice } from '@/types';
 
 const SPRING_TRANSITION = { type: 'spring', stiffness: 100, damping: 20 } as const;
@@ -23,6 +24,18 @@ const EXAMPLES: Record<Child['age']['stage'], string[]> = {
   'early-childhood': ['Refuses to leave the park and screams', 'Says "I hate you" when I say no', 'Hits his little sister when she takes his toys'],
   'middle-childhood': ['Melts down over homework every evening', 'Lies about small things', 'Won\'t stop gaming when time is up'],
   teenage: ['Slammed the door and won\'t talk to me', 'Grades dropping and stays in their room', 'Wants to go to a party I\'m not comfortable with'],
+};
+
+const VOICE_LANGUAGES: Record<string, { code: string; label: string; name: string }> = {
+  English: { code: 'en-IN', label: 'English', name: 'English' },
+  Hindi: { code: 'hi-IN', label: 'हिन्दी', name: 'Hindi' },
+  Marathi: { code: 'mr-IN', label: 'मराठी', name: 'Marathi' },
+  Malayalam: { code: 'ml-IN', label: 'മലയാളം', name: 'Malayalam' },
+  Tamil: { code: 'ta-IN', label: 'தமிழ்', name: 'Tamil' },
+  Bengali: { code: 'bn-IN', label: 'বাংলা', name: 'Bengali' },
+  Telugu: { code: 'te-IN', label: 'తెలుగు', name: 'Telugu' },
+  Kannada: { code: 'kn-IN', label: 'ಕನ್ನಡ', name: 'Kannada' },
+  Gujarati: { code: 'gu-IN', label: 'ગુજરાતી', name: 'Gujarati' },
 };
 
 const OUTCOME_LABELS: Record<DecodeOutcome, string> = {
@@ -59,7 +72,16 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
   const scope = useRequestScope();
   const activeRequest = useRef<ReturnType<typeof scope.start> | null>(null);
   const receipt = useRef<{ key: string; id: string } | null>(null);
-  const [progress, setProgress] = useState('Checking the situation…');
+  const [progress, setProgress] = useState('Reading what you shared…');
+  // Bring the words into view when a new answer arrives, so a parent on a phone does not have to hunt for them.
+  const answerRef = useRef<HTMLDivElement>(null);
+  const revealAnswer = useRef(false);
+  useEffect(() => {
+    if (!current || isAnalyzing || !revealAnswer.current) return;
+    revealAnswer.current = false;
+    const calm = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    answerRef.current?.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+  }, [current, isAnalyzing]);
   const [support, setSupport] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<Record<string, { state: 'saving' | 'saved' | 'failed'; value: DecodeOutcome }>>({});
   const savingOutcomes = useRef(new Set<string>());
@@ -73,6 +95,10 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
   const [voiceSupported, setVoiceSupported] = useState(false);
 
   useEffect(() => setVoiceSupported(!!createRecognition()), []);
+  // Listen in the family's home language by default; one tap switches to English.
+  const homeVoice = selectedChild?.homeLanguages.filter(l => l !== 'English').map(l => VOICE_LANGUAGES[l]).find(Boolean);
+  const [voiceInEnglish, setVoiceInEnglish] = useState(false);
+  const voice = !homeVoice || voiceInEnglish ? VOICE_LANGUAGES.English : homeVoice;
 
   const loadHistory = useCallback(async (offset = 0) => {
     if (!selectedChildId) return;
@@ -119,7 +145,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
     }
     const rec = createRecognition();
     if (!rec) return;
-    rec.lang = navigator.language || 'en-IN';
+    rec.lang = voice.code;
     rec.interimResults = true;
     rec.continuous = true;
     const base = scenario ? `${scenario.trim()} ` : '';
@@ -141,7 +167,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
     if (!text) return;
     recognitionRef.current?.stop();
     setIsAnalyzing(true);
-    setProgress('Checking the situation…');
+    setProgress('Reading what you shared…');
     setCurrent(null);
     setSafety(null);
     setError(null);
@@ -180,6 +206,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
           case 'done':
             if (event.decode.childId !== selectedChild.id) throw new Error('Response child mismatch');
             terminal = true;
+            revealAnswer.current = true;
             setCurrent(event.decode);
             setContinuation(null);
             setScenario('');
@@ -225,6 +252,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
     recognitionRef.current?.stop();
     setCurrent(continueIt ? null : decode); setContinuation(continueIt ? decode : null);
     setScenario(''); setError(null); setSafety(null); setSupport(null);
+    if (!continueIt) { revealAnswer.current = true; return; }
     scenarioInput.current?.focus();
     scenarioInput.current?.scrollIntoView({ behavior: 'auto', block: 'center' });
   };
@@ -264,10 +292,10 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
               }}
               maxLength={2000}
               placeholder={continuation ? 'What happened next? What helped, or what has changed?' : `e.g., ${examples[0] ?? 'What happened, and what did you try?'}`}
-              className="w-full min-h-[140px] px-5 pt-4 pb-16 rounded-[2rem] border-slate-200 bg-white/70 backdrop-blur-md text-slate-800 text-lg placeholder:text-slate-400 focus:border-clay focus:ring-clay/20 resize-none shadow-sm"
+              className="w-full min-h-[140px] px-5 pt-4 pb-16 rounded-[2rem] border-slate-200 bg-white text-slate-800 text-lg placeholder:text-slate-500 focus:border-clay focus:ring-clay/20 resize-none shadow-sm"
             />
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-              {voiceSupported ? (
+              {voiceSupported ? (<span className="flex items-center">
                 <button
                   type="button"
                   onClick={toggleVoice}
@@ -279,7 +307,8 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
                   {listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                   {listening ? 'Listening…' : 'Speak'}
                 </button>
-              ) : <span />}
+                {homeVoice && !listening && <button type="button" onClick={() => setVoiceInEnglish(v => !v)} aria-label={`Speak in ${voiceInEnglish ? homeVoice.name : 'English'} instead`} className="ml-1 h-10 px-3 rounded-full text-sm text-slate-600 hover:bg-slate-100">{voice.label}</button>}
+              </span>) : <span />}
               <Button
                 onClick={() => handleAnalyze()}
                 disabled={!scenario.trim() || isAnalyzing}
@@ -294,16 +323,10 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
             </div>
           </div>
 
-          {entitlement && (
-            <p className="mt-3 text-xs text-slate-400">
-              {entitlement.plan === 'free' ? (
-                <>
-                  {Math.max(0, entitlement.limit - entitlement.used)} of {entitlement.limit} free Ask turns left this week ·{' '}
-                  <button onClick={() => openPaywall()} className="text-leaf font-medium hover:underline">See Plus</button>
-                </>
-              ) : (
-                <>Kahiye Plus · {entitlement.limit} Ask turns per rolling day</>
-              )}
+          {entitlement?.plan === 'free' && entitlement.limit - entitlement.used <= 1 && (
+            <p className="mt-3 text-sm text-slate-600">
+              {entitlement.limit - entitlement.used <= 0 ? 'No free Ask turns left this week. Saved guidance and immediate support stay open.' : 'This is your last free Ask turn this week.'}{' '}
+              <button onClick={() => openPaywall()} className="text-clay underline py-2">See Plus</button>
             </p>
           )}
 
@@ -335,8 +358,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
           {safety && <SafetyBanner notice={safety} onExpert={() => openExpert('safety', scenario.trim())} />}
 
           {analysis && current && !isAnalyzing && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-8">
-              <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600"><p className="font-medium text-slate-800">{current.continuationOf ? 'A continued situation' : 'Saved guidance'} · {new Date(current.createdAt).toLocaleDateString()}</p><p className="mt-2 whitespace-pre-wrap break-words">{current.scenario}</p></div>
+            <motion.div ref={answerRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-8 scroll-mt-6">
               {analysis.rightNow && <RightNow text={analysis.rightNow} />}
 
               {/* Say this — first, biggest */}
@@ -345,8 +367,14 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
                   <MessageSquare className="w-4 h-4 text-leaf" /> Say this
                 </h3>
                 <p className="text-2xl md:text-3xl font-heading text-slate-850 leading-snug">"{analysis.sayThis}"</p>
-                <p className="mt-3 text-xs text-slate-400">An example, not magic words. Say it your way.</p>
+                <p className="mt-3 text-xs text-slate-500">An example, not magic words. Say it your way.</p>
               </div>
+              {current.safetyCategory === 'none' && <button
+                onClick={() => setSharing(current)}
+                className="w-full flex items-center justify-center gap-2 h-12 rounded-full bg-[#25D366]/10 text-[#128C4B] font-medium hover:bg-[#25D366]/15 transition-colors"
+              >
+                <Share2 className="w-4 h-4" /> Send the same words to grandparents or caregivers
+              </button>}
 
               {analysis.clarify && !current.refines && Date.now() - new Date(current.createdAt).getTime() < 30 * 60 * 1000 && (
                 <div className="p-5 rounded-[1.5rem] bg-paper-deep">
@@ -378,9 +406,8 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
                 </ol>
               </div>
 
-              <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-50 text-red-800">
-                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm leading-relaxed"><span className="font-semibold block mb-1">Avoid</span>{analysis.avoid}</p>
+              <div className="p-4 rounded-2xl bg-paper-deep text-slate-800">
+                <p className="text-sm leading-relaxed"><span className="font-semibold block mb-1">Leave out</span>{analysis.avoid}</p>
               </div>
 
               <div>
@@ -463,17 +490,29 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
               {current.safetyCategory === 'none' && <button className="w-full rounded-full border border-clay text-clay py-3 font-medium" onClick={() => openSaved(current, true)}>Continue this situation</button>}
               {outcomes[current.id] && <p role="status" className="text-sm">{outcomes[current.id].state === 'saving' ? 'Saving feedback…' : outcomes[current.id].state === 'saved' ? 'Feedback saved.' : 'Feedback was not saved. Tap your choice to retry.'}</p>}
 
-              <button
-                onClick={() => setSharing(current)}
-                className="w-full flex items-center justify-center gap-2 h-12 rounded-full bg-[#25D366]/10 text-[#128C4B] font-medium hover:bg-[#25D366]/15 transition-colors"
-              >
-                <Share2 className="w-4 h-4" /> Send to grandparents or caregivers
-              </button>
+              <details className="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600">
+                <summary className="cursor-pointer py-1">Your moment · {current.continuationOf ? 'continued' : 'saved'} {new Date(current.createdAt).toLocaleDateString()}</summary>
+                <p className="mt-2 whitespace-pre-wrap break-words">{current.scenario}</p>
+              </details>
 
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-500 leading-relaxed">
                 General guidance, not a diagnosis. If you're worried about your child's health or safety, talk to your pediatrician.
               </p>
+              <GuidanceTrust />
             </motion.div>
+          )}
+
+          {entitlement && (
+            <p className="mt-8 text-xs text-slate-500">
+              {entitlement.plan === 'free' ? (
+                <>
+                  {Math.max(0, entitlement.limit - entitlement.used)} of {entitlement.limit} free Ask turns left this week ·{' '}
+                  <button onClick={() => openPaywall()} className="text-clay underline py-2">See Plus</button>
+                </>
+              ) : (
+                <>Kahiye Plus · {entitlement.limit} Ask turns per rolling day</>
+              )}
+            </p>
           )}
         </div>
 

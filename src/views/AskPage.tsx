@@ -58,7 +58,7 @@ function Conversation({ child, mode, initial, cardId }: { child: Child; mode: "t
   async function send() {
     const scenario = text.trim();
     if (scenario.length < 3 || active.current) return;
-    setBusy(true); setError(""); setSafety(null); setSupport(""); setStatus("Checking your message…");
+    setBusy(true); setError(""); setSafety(null); setSupport(""); setStatus("Reading what you shared…");
     const task = scope.start();
     active.current = task;
     const previous = turns.at(-1);

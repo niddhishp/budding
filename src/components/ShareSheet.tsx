@@ -1,10 +1,11 @@
 import { useRequestScope } from '@/hooks/useRequestScope';
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Check, Loader2, Lock, X, Send } from 'lucide-react';
+import { Copy, Check, Loader2, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/stores/appStore';
 import type { Decode } from '@/types';
+import { FREE_TRANSLATED_SHARES_PER_MONTH } from '@/lib/plans';
 
 const LANGUAGES = [
   { value: 'English', label: 'English' },
@@ -32,9 +33,12 @@ type Audience = (typeof AUDIENCES)[number]['value'];
 export function ShareSheet({ decode, childName, onClose }: { decode: Decode; childName: string; onClose: () => void }) {
   const scope = useRequestScope();
   const active = useRef<AbortSignal | null>(null);
-  const { entitlement, openPaywall } = useAppStore();
+  const { entitlement, openPaywall, children } = useAppStore();
   const isPlus = entitlement?.plan === 'plus';
-  const [language, setLanguage] = useState<Language>('English');
+  // Start in the family's home language when it is one we can write.
+  const homeLanguage = children.find(c => c.id === decode.childId)?.homeLanguages.find(h => LANGUAGES.some(l => l.value === h)) as Language | undefined;
+  const [language, setLanguage] = useState<Language>(homeLanguage ?? 'English');
+  const [translatedLeft, setTranslatedLeft] = useState<number | null>(null);
   const [audience, setAudience] = useState<Audience>('grandparent');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -42,10 +46,6 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
   const [copied, setCopied] = useState(false);
 
   const pickLanguage = (value: Language) => {
-    if (value !== 'English' && !isPlus) {
-      openPaywall('Share scripts with family in their own language.');
-      return;
-    }
     active.current = null; scope.cancel(); setBusy(false);
     setLanguage(value);
     setMessage('');
@@ -70,6 +70,7 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
       }
       if (!res.ok) throw new Error(body.error);
       setMessage(body.message);
+      if (typeof body.translatedLeft === 'number') setTranslatedLeft(body.translatedLeft);
     } catch (err) {
       if (active.current !== task.signal) return;
       setError(err instanceof Error && err.message ? err.message : 'Could not write the message. Please try again.');
@@ -120,7 +121,6 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Language</p>
         <div className="flex flex-wrap gap-2 mb-6">
           {LANGUAGES.map((l) => {
-            const locked = l.value !== 'English' && !isPlus;
             return (
               <button
                 key={l.value}
@@ -129,11 +129,19 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
                   language === l.value ? 'border-clay bg-clay/10 text-slate-850 font-medium' : 'border-slate-200 text-slate-600'
                 }`}
               >
-                {locked && <Lock className="w-3 h-3 text-slate-400" />} {l.label}
+                {l.label}
               </button>
             );
           })}
         </div>
+
+        {!isPlus && (
+          <p className="text-xs text-slate-600 -mt-3 mb-6">
+            {translatedLeft !== null
+              ? `${Math.max(0, translatedLeft)} of ${FREE_TRANSLATED_SHARES_PER_MONTH} messages in other languages left this month. English is always free.`
+              : `Free plan: ${FREE_TRANSLATED_SHARES_PER_MONTH} messages a month in other languages. English is always free.`}
+          </p>
+        )}
 
         {message ? (
           <>

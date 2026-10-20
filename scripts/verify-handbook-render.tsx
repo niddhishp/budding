@@ -38,6 +38,9 @@ try {
     Object.assign(initial, { currentPage: "dashboard" });
     const dashboard = renderToStaticMarkup(<DashboardPage />);
     assert(dashboard.includes("Need to find the words?"));
+    assert(dashboard.includes("The words to say, when it matters."));
+    assert(dashboard.includes(`More for ${child.name}`), "Secondary destinations are grouped in one quiet section");
+    assert.equal((dashboard.match(/text-clay underline/g) ?? []).length <= 4, true, "Today keeps only a few emphasised links");
     assert(!dashboard.includes("takes in more than most children"));
     assert(!dashboard.includes("A deep feeler"));
     if (years >= 3) {

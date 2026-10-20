@@ -9,6 +9,7 @@ import { HealthUpcoming } from "@/components/care/HealthUpcoming";
 import { GrowthSnapshot } from "@/components/care/GrowthSnapshot";
 import { WeekGuideCard } from "@/components/WeekGuideCard";
 import { observedPatterns } from "@/lib/moments";
+import { OutcomeFollowUp } from "@/components/OutcomeFollowUp";
 import type { Child } from "@/types";
 
 export function DashboardPage() {
@@ -31,7 +32,7 @@ function Today({ child }: { child: Child }) {
     <header className="mb-8">
       <p className="text-sm text-clay mb-3">{new Date(`${today}T12:00:00Z`).toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric", timeZone: "Asia/Kolkata" })}</p>
       <h1 className="font-heading text-4xl sm:text-5xl leading-tight">Today with {child.name}</h1>
-      <p className="text-slate-600 text-lg mt-4">A little preparation. A little connection. Help when you need it.</p>
+      <p className="text-slate-600 text-lg mt-4">The words to say, when it matters.</p>
     </header>
     <section className="bg-slate-850 text-white rounded-2xl p-6 sm:p-8 mb-9">
       <h2 className="font-heading text-2xl">Need to find the words?</h2>
@@ -41,6 +42,7 @@ function Today({ child }: { child: Child }) {
         <button onClick={() => openAsk("talk")} className="underline py-3">Just talk it through</button>
       </div>
     </section>
+    {relevance.born && <OutcomeFollowUp childId={child.id} />}
     {conversation && <section className="border-y py-7 mb-8">
       <p className="text-sm text-clay">{entry?.followUp && entry.followUp <= today ? "You wanted to come back to this" : "One conversation to make room for"}</p>
       <h2 className="font-heading text-3xl mt-3">{conversation.title}</h2>
@@ -56,25 +58,26 @@ function Today({ child }: { child: Child }) {
       <button className="text-clay underline py-3" onClick={() => openAsk("guidance", `Help me prepare ${child.name} for this event I saved: ${nextEvent.value.title}. It is on ${nextEvent.value.date}. What is a short, age-appropriate way to start the conversation?`)}>Help us prepare →</button>
     </section>}
     {family.error && <p className="text-sm mb-5">Family dates could not be loaded. <button className="underline" onClick={family.reload}>Retry</button></p>}
-    {relevance.born && <div className="flex flex-wrap gap-x-6 gap-y-1 mb-7">
-      <button className="text-clay underline py-2" onClick={() => setPage("safety")}>Safety & boundaries</button>
-      {relevance.puberty && <button className="text-clay underline py-2" onClick={() => setPage("puberty")}>{child.name}’s puberty guide</button>}
-      <button className="text-clay underline py-2" onClick={() => setPage("play")}>Make time for play</button>
-    </div>}
     {expecting && <>
       <button className="w-full text-left border-y py-5 text-clay mb-6" onClick={() => setPage("pregnancy")}>Your pregnancy space: preparations, questions & support →</button>
       {child.age.pregnancyWeek && <WeekGuideCard key={child.age.pregnancyWeek} week={child.age.pregnancyWeek} />}
     </>}
     {relevance.born && <>
       <HealthUpcoming key={child.id} child={child} />
-      <details className="mb-8 border-b pb-5"><summary className="font-heading text-2xl cursor-pointer">Growth at a glance</summary><div className="pt-5"><GrowthSnapshot child={child} /></div></details>
     </>}
-    {pattern && <details className="border-b pb-5 mb-7"><summary className="cursor-pointer text-sm">Something you shared about {child.name}</summary><p className="mt-3">{pattern.situation}</p><p className="text-slate-600 mt-2">{pattern.answer}</p><p className="text-sm mt-3">An observation you shared, not a fixed description. If it has changed, you can update it.</p><button className="text-clay underline py-3" onClick={() => setEditingChild(child.id)}>Update profile</button></details>}
     {birthday && <section className="border-b pb-6 mb-7"><p className="text-sm text-clay">A birthday coming up · {birthday}</p><h2 className="font-heading text-2xl mt-2">What would make it special?</h2><p className="text-slate-600 mt-3">A shared experience, something they need, or a thoughtful gift. It need not be a big spend.</p><div className="flex flex-wrap gap-5"><button className="text-clay underline py-3" onClick={() => setPage("gifts")}>Gifts & rewards →</button><button className="text-clay underline py-3" onClick={() => setPage("shop")}>Browse useful finds →</button></div><p className="text-xs text-slate-600">Some retailer links may earn Kahiye a referral fee. Buying is always optional.</p></section>}
-    <div className="flex flex-wrap gap-x-6 mb-6">
-      <button className="text-clay underline py-3" onClick={() => setPage("family-plan")}>Family dates & savings goals →</button>
-      <button className="text-clay underline py-3" onClick={() => setPage("parent-space")}>A little room for you →</button>
-    </div>
+    <section className="border-t pt-6 mb-6" aria-label={`More for ${child.name}`}>
+      <h2 className="font-heading text-xl">More for {child.name}</h2>
+      <ul className="mt-3 divide-y divide-slate-200">
+        {relevance.born && <li><button className="w-full text-left py-3" onClick={() => setPage("safety")}>Safety & boundaries</button></li>}
+        {relevance.puberty && <li><button className="w-full text-left py-3" onClick={() => setPage("puberty")}>{child.name}’s puberty guide</button></li>}
+        {relevance.born && <li><button className="w-full text-left py-3" onClick={() => setPage("play")}>Ideas for play</button></li>}
+        <li><button className="w-full text-left py-3" onClick={() => setPage("family-plan")}>Family dates & savings goals</button></li>
+        <li><button className="w-full text-left py-3" onClick={() => setPage("parent-space")}>Room for you</button></li>
+      </ul>
+      {relevance.born && <details className="border-t py-3"><summary className="cursor-pointer py-1">Growth at a glance</summary><div className="pt-4"><GrowthSnapshot child={child} /></div></details>}
+      {pattern && <details className="border-t py-3"><summary className="cursor-pointer py-1">Something you shared about {child.name}</summary><p className="mt-3">{pattern.situation}</p><p className="text-slate-600 mt-2">{pattern.answer}</p><p className="text-sm mt-3">An observation you shared, not a fixed description. If it has changed, you can update it.</p><button className="text-clay underline py-3" onClick={() => setEditingChild(child.id)}>Update profile</button></details>}
+    </section>
     {relevance.born && <HoroscopeCard child={child} />}
     <p className="text-sm text-center text-slate-600 mt-8">Take what helps. There is no perfect-parent checklist here.</p>
   </div>;

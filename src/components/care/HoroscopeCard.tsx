@@ -21,12 +21,17 @@ export function HoroscopeCard({ child, profile = false }: { child: Child; profil
     try { localStorage.setItem(key, next ? 'yes' : 'no'); setFallback(null); window.dispatchEvent(new Event('kahiye-horoscope-change')); } catch { setFallback(next); }
   }
   if (!sign || (!profile && !enabled)) return null;
+  // Once hidden, the profile keeps only a quiet way back, not the card itself.
+  if (!enabled) return <p className="my-5">
+    <button className="text-sm text-clay underline py-3" onClick={() => toggle(true)}>Show the just-for-fun horoscope</button>
+    {fallback !== null && <span className="block text-xs">This choice could not be saved in your browser.</span>}
+  </p>;
   return <section className="rounded-2xl bg-paper-deep p-6 my-7" aria-label="A little starlight">
     <p className="text-xs text-clay">✧ A little starlight · Just for fun</p>
     <h2 className="font-heading text-xl mt-2">{sign} · {child.name}’s little spark</h2>
-    {enabled && <p className="mt-3 text-slate-700" aria-live="polite">{horoscopeLine(sign, date)}</p>}
+    <p className="mt-3 text-slate-700" aria-live="polite">{horoscopeLine(sign, date)}</p>
     <p className="text-xs text-slate-500 mt-3">A playful sun-sign reflection, not a prediction.</p>
-    <button className="text-xs text-clay underline py-3" onClick={() => toggle(!enabled)}>{enabled ? 'Hide horoscope' : 'Bring back a little starlight'}</button>
+    <button className="text-sm text-clay underline py-3" onClick={() => toggle(false)}>Hide horoscope</button>
     {fallback !== null && <p className="text-xs">This choice could not be saved in your browser.</p>}
   </section>;
 }
