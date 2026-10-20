@@ -50,3 +50,19 @@ The broader quality-review admin inbox, fully reviewed multilingual curriculum, 
 - Supplied Parenting Research documents stay local and untracked. No production family test records or external messages were created.
 
 Release commit, CI and live-browser results are recorded after deployment below.
+
+## Live release checks
+
+- Initial application revision `e74a159df868fcf7db277d272eae8c725818628d` passed branch CI `39426477899` and main CI `39426742779`; production `dpl_HzKAFSg4xvFEHSuu86hURZXFy2KT` reached Ready on both Kahiye domains.
+- Live testing found that opening a card near the bottom of the Handbook retained its previous scroll position. Follow-up `7c44d15` resets the reading position when the selected conversation changes.
+- Follow-up `58702abd426d85f18fdce0e51018897bd5816bf1` also replaces technical developmental-stage descriptions with everyday parent-facing language. Final branch CI [39427274599](https://github.com/niddhishp/budding/actions/runs/39427274599) passed all tests, fresh SQL bootstrap, actual route checks, component rendering and build.
+- Signed-in verification: selected 11-year-old profile receives the matching Handbook layer, girls' puberty guide and 11–13 Safety guide. No repeated age/gender question. Handbook topic filtering works. Practice opens a clearly fictional, editable prompt without sending it; direct Ask navigation clears that prompt. Chat is explicitly AI, with real-professional access separate.
+- Child retains photo timeline, family plan/savings, gifts, shop, growth, health and interests. Today retains saved interest invitations, health reminders and the fun-only horoscope. No family records were edited during browser testing.
+- Responsive verification observed actual 390×844, 754×900 and desktop layouts. The narrow phone has all five navigation buttons, no horizontal overflow and no observed console errors. Temporary viewport override is restored after verification.
+- Public homepage, articles and privacy return 200. Anonymous Handbook, care, analyze and report calls return 401; a cross-origin Handbook write returns 403.
+- The disposable local PostgreSQL container was stopped after tests. Production model generation and clinical efficacy remain unverified; no claim is made that mocked provider transport proves either.
+- Final application `58702abd426d85f18fdce0e51018897bd5816bf1` is deployed as `dpl_DCJKCCjkTweJjxkBzZvPPDkoGMzD`, Ready on `www.kahiye.app` and `kahiye.app`. Exact main CI [39427730976](https://github.com/niddhishp/budding/actions/runs/39427730976) passed.
+- Final live navigation check: opening the last Handbook card returns the main scroll position to 0 and places its heading on screen. Saved-progress controls successfully load. Final Child view shows the revised everyday wording. No console errors observed.
+- Private screenshot evidence (not marketing assets): `C:/Users/Admin/.codex/visualizations/2026/10/17/01a14a81-9a08-7f22-ab03-d2a79055ac2f/kahiye-handbook-live.jpg` and `kahiye-handbook-today-phone.jpg` in the same directory. The phone screenshot shows the initial release; the final follow-up changes only Handbook scroll reset and stage-description text.
+
+Rollback: revert the application commits or promote the preceding production deployment. Migration 024 may remain installed with the previous application because ordinary guidance has no conversation mode. Do not delete conversation records, care values or parent data as a rollback technique.
