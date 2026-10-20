@@ -2,6 +2,15 @@
 
 Clinical status: **unreviewed**. The owner requested placeholder reviewer assignments for now; see [CLINICAL-REVIEW.md](CLINICAL-REVIEW.md).
 
+## Release verification
+
+- Application commit: `41b81ecac72beaa5a4029c7e398cd2047a383e69`.
+- Exact branch CI [39432730782](https://github.com/niddhishp/budding/actions/runs/39432730782) and main CI [39433153015](https://github.com/niddhishp/budding/actions/runs/39433153015) both passed.
+- Lint, TypeScript and all 100 unit/server tests passed. CI also passed fresh database security/bootstrap, provider/concurrency tests, actual route-handler tests, real component rendering and production build.
+- Production deployment `dpl_AoLaM8XSrMAvtATy1D6gbstNddE4` is Ready, with the exact application SHA and aliases `www.kahiye.app` and `kahiye.app`.
+- Post-deploy checks: homepage, articles and help-now return 200; anonymous analyze and Handbook requests return 401. No real-parent chat submission or family write was used as a deployment test.
+- Rollback: revert the application changes or promote the preceding deployment. No migration or data rollback is required. Keep raw evaluation evidence local and preserve the owner's untracked research.
+
 ## Scope and data protection
 
 Live requests ran through OpenRouter using fictional families only. The evaluated model IDs correspond to the application's main and fast models: `anthropic/claude-opus-5.5` and `anthropic/claude-haiku-4.5`. Production continues to use its existing direct provider; this release does not migrate customer processing to OpenRouter.
