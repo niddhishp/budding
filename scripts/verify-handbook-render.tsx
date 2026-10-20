@@ -14,6 +14,7 @@ import { SafetyBanner } from "../src/views/AskAIPage";
 import { MemoryStrip } from "../src/components/child/MemoryStrip";
 import { BottomNav } from "../src/components/BottomNav";
 import { ChildProfilePage } from "../src/views/ChildProfilePage";
+import { ProgrammePage } from "../src/views/ProgrammePage";
 Object.assign(globalThis, { React });
 const initial = useAppStore.getInitialState(), original = { ...initial }, today = todayDate();
 const profile = (years: number) => childFromRow({
@@ -75,4 +76,27 @@ try {
     assert(!emptyStrip.includes("/api/family-photos/"), "Examples never request a real photo");
   }
   console.log("PASS: real Handbook/Today/Ask/Child components for ages 1, 4, 11 and 16; exactly five mobile destinations, age relevance, fiction/AI labels, preserved family tools and no fixed temperament claims.");
+
+  // Guided programmes: age-matched in the Handbook, with a readable detail page and no paywall.
+  const show = (child: ReturnType<typeof profile>, page: "handbook" | "programme", programmeId: string | null = null) => {
+    Object.assign(initial, { children: [child], selectedChildId: child.id, handbookCardId: null, currentPage: page, programmeId, askIntent: null });
+    return renderToStaticMarkup(page === "handbook" ? <HandbookPage /> : <ProgrammePage />);
+  };
+  const toddler = profile(2), shelf = show(toddler, "handbook");
+  assert(shelf.includes("Guided programmes") && shelf.includes("Potty training, together"), "A 2-year-old's Handbook offers potty training");
+  assert(shelf.includes("Screen-off without tears") && shelf.includes("Coming up in the next year"), "Programmes starting within a year are previewed");
+  assert(!shelf.includes("Getting ready for the first period"));
+  const potty = show(toddler, "programme", "potty-training");
+  for (const text of ["Potty training, together", "Why this matters", "Before you start", "What you’ll do", "Day 1", "Meet the potty or toilet", "Talk to a doctor or professional if", "Clinical review pending", "Free during early access", "Immediate support"])
+    assert(potty.includes(text), `Potty programme shows ${text}`);
+  assert(!/Upgrade|Kahiye Plus|₹/.test(potty), "Programmes show no paywall during early access");
+  const girl = profile(11), preteen = show(girl, "handbook");
+  assert(preteen.includes("Getting ready for the first period") && preteen.includes("The body talk: growing up"), "An 11-year-old girl's Handbook offers the first-period and body-talk programmes");
+  assert(!preteen.includes("Potty training, together"));
+  const period = show(girl, "programme", "first-period");
+  for (const text of ["Getting ready for the first period", "Session 1", "A school plan", "fathers can help", "soaking a pad", "Clinical review pending"]) assert(period.includes(text), `First-period programme shows ${text}`);
+  const boy = childFromRow({ id: "synthetic-boy", name: "Sample boy", dob: `${Number(today.slice(0, 4)) - 11}${today.slice(4)}`, due_date: null, curiosity: 50, persistence: 50, sensitivity: 50, sociability: 50, emotional_intensity: 50, flexibility: 50, gender: "boy" });
+  const boyShelf = show(boy, "handbook");
+  assert(!boyShelf.includes("Getting ready for the first period") && boyShelf.includes("The body talk: growing up"), "A Boy profile is not offered the first-period programme");
+  console.log("PASS: guided programmes render for a 2-year-old (potty training) and an 11-year-old girl (first period), with age-matched lists, coming-up previews, doctor lines, review labels and no paywall.");
 } finally { Object.assign(initial, original); }

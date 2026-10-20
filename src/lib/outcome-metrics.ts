@@ -26,8 +26,21 @@ export const CHECKIN_METRICS = [
   ['more_confident_rate', 'Parent more confident', 'Share where the parent rated their confidence higher than at the first check-in.', 'percent'],
 ] as const;
 export type CheckinMetric = typeof CHECKIN_METRICS[number][0];
+/** Guided programmes (supabase/031), one row per programme, aggregate and suppressed below five families. */
+export const PROGRAMME_METRICS = [
+  ['families', 'Families', 'Families who started this programme at least once.', 'count'],
+  ['enrolments', 'Started', 'Times it was started, including restarts.', 'count'],
+  ['active', 'Running now', 'Enrolments still in progress.', 'count'],
+  ['completed', 'Finished', 'Enrolments finished with a closing rating.', 'count'],
+  ['stopped', 'Stopped', 'Enrolments the parent stopped early.', 'count'],
+  ['completion_rate', 'Finished (14+ days)', 'Of enrolments started at least 14 days ago, the share finished.', 'percent'],
+  ['improved_rate', 'Easier at the finish', 'Of finished enrolments, the share whose closing 1–5 "how hard" rating was lower than the opening one.', 'percent'],
+] as const;
+export type ProgrammeMetric = typeof PROGRAMME_METRICS[number][0];
+export type ProgrammeMetricsRow = { programme_id: string } & Partial<Record<ProgrammeMetric, MetricCell>>;
 export interface OutcomeMetrics {
   checkins?: Partial<Record<CheckinMetric, MetricCell>>;
+  programmes?: ProgrammeMetricsRow[];
   generated_at: string;
   minimum_families: number;
   current: { registered_families: MetricCell; plus_subscribers: MetricCell };

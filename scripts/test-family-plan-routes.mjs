@@ -197,7 +197,7 @@ const server = createServer((req, res) => {
               "shop_catalog",
               "shop_discovery_runs",
               // Family export reads, each filtered by user_id under RLS.
-              "consent_events", "whatsapp_links", "memories", "stories", "expert_requests", "family_checkins",
+              "consent_events", "whatsapp_links", "memories", "stories", "expert_requests", "family_checkins", "programme_enrolments",
             ].includes(table),
           );
           const values = [],
@@ -867,6 +867,8 @@ try {
   await db.query("insert into public.memories(child_id,user_id,kind,content,source,confidence,archived) values($1,$2,'fact','Archived synthetic memory','parent_said',1,true)", [child, uid]);
   await db.query("insert into public.expert_requests(user_id,child_id,concern,phone) values($1,$2,'Synthetic sleep concern','+910000000001')", [uid, child]);
   await db.query("insert into public.whatsapp_links(user_id,phone) values($1,'+910000000002')", [uid]);
+  await db.query(`insert into public.programme_enrolments(id,user_id,child_id,programme_id,started_on,baseline,progress) values(gen_random_uuid(),$1,$2,'potty-training',current_date,4,'{"1":"2026-10-21"}')`, [uid, child]);
+  await db.query("insert into public.programme_enrolments(id,user_id,child_id,programme_id,started_on,baseline) values(gen_random_uuid(),$1,$2,'screen-off',current_date,3)", [other, otherChild]);
   await run(exporter, "GET", null, 401, null);
   signRequests.length = 0;
   const download = await run(exporter, "GET", null);
@@ -881,6 +883,7 @@ try {
   assert.equal(exported.photo_timeline.find(p => p.id === memory.id).photo.url.includes(`/family-photos/${uid}/${memory.id}-`), true);
   assert.match(exported.stories[0].narration.url, /story-audio/);
   assert.equal(exported.expert_requests[0].concern, "Synthetic sleep concern");
+  assert.deepEqual(exported.programmes.map(p => [p.programme_id, p.baseline, p.progress]), [["potty-training", 4, { 1: "2026-10-21" }]], "Programme progress is exported per child, and only the parent's own");
   assert.equal(records.account.whatsapp.linked, true);
   assert.equal(records.account.subscription.status, "active");
   assert(exported.gifts_and_shop.length > 0 && exported.notes !== undefined);

@@ -11,6 +11,7 @@ import { useTodayDate } from "@/components/care/useTodayDate";
 import type { Child } from "@/types";
 import { GuidanceTrust } from "@/components/GuidanceTrust";
 import { ShareSheet } from "@/components/ShareSheet";
+import { ProgrammeShelf } from "@/components/ProgrammeShelf";
 
 export function HandbookPage() {
   const { children, selectedChildId, handbookCardId } = useAppStore();
@@ -85,6 +86,7 @@ function Handbook({ child }: { child: Child }) {
         <p className="text-sm text-clay mb-3">{progress[suggestion.id]?.followUp && progress[suggestion.id].followUp! <= date ? "You wanted to return to this" : "A conversation to make room for"}</p>
         <h2 className="font-heading text-3xl">{suggestion.title} →</h2><p className="mt-3 text-slate-600 leading-7">{suggestion.why}</p>
       </button>}
+      {!search && track === "all" && !savedOnly && <ProgrammeShelf child={child} today={date} />}
       <div className="grid sm:grid-cols-2 gap-4">
         <label className="text-sm">Find a conversation<input type="search" className={fieldClass} placeholder="Try friends, money, school…" value={search} onChange={e => setSearch(e.target.value)} /></label>
         <label className="text-sm">Explore a topic<select className={fieldClass} value={track} onChange={e => setTrack(e.target.value as Track | "all")}><option value="all">All topics</option>{TRACKS.map(t => <option key={t[0]} value={t[0]}>{t[1]}</option>)}</select></label>

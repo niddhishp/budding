@@ -19,6 +19,7 @@ import type {
 
 export type Page =
   | "handbook"
+  | "programme"
   | "puberty"
   | "safety"
   | "shop"
@@ -113,6 +114,9 @@ interface AppState {
   currentPage: Page;
   handbookCardId: string | null;
   openHandbook: (id?: string) => void;
+  /** Guided programme shown on the "programme" page (src/data/programmes.ts). */
+  programmeId: string | null;
+  openProgramme: (id: string) => void;
   askIntent: { mode: "guidance" | "talk" | "rehearse"; prompt: string; cardId?: string } | null;
   /** Open the photo editor with a new memory form, optionally with a suggested title. */
   photoIntent: { title: string } | null;
@@ -315,6 +319,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentPage: "dashboard",
   handbookCardId: null,
   openHandbook: (id) => set({ currentPage: "handbook", handbookCardId: id ?? null }),
+  programmeId: null,
+  openProgramme: (id) => set({ currentPage: "programme", programmeId: id }),
   askIntent: null,
   photoIntent: null,
   openPhotos: (add) => set({ currentPage: "photo-timeline", photoIntent: add ?? null }),
