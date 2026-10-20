@@ -53,9 +53,9 @@ ${MODULE_MENU}
 
 Pick 1-3 modules, most important first. Ask a clarifying question only when its answer would change the advice substantially; most messages need none.`;
 
-export async function routeMessage(message: string, stage: StageBand, childName: string, signal?: AbortSignal): Promise<Route> {
+export async function routeMessage(message: string, stage: StageBand, childName: string, signal?: AbortSignal, call = structuredCall): Promise<Route> {
   try {
-    const r = await withTimeout(structuredCall({
+    const r = await withTimeout(call({
       model: FAST_MODEL,
       system: ROUTER_SYSTEM,
       user: `<child stage="${stage}" name="${childName}" />\n<message>\n${message}\n</message>`,

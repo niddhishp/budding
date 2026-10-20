@@ -78,7 +78,9 @@ export const MODULES: DomainModule[] = [
     keywords: /sleep|bedtime|night|wak(e|ing)|nap|won'?t go to bed|so nahi/i,
     principles: [
       'A short, predictable, calm bedtime routine at a consistent time.',
-      'Present options across the comfort spectrum (from gradual to more direct) without shaming any family\'s choice, including co-sleeping.',
+      'Be non-judgemental about family sleep arrangements, while clearly distinguishing room-sharing from bed-sharing and explaining infant safety.',
+      'For babies under one year, sleep advice must briefly include: place on the back for every sleep, on a firm flat separate infant sleep surface with no loose bedding or pillows; room-share, not bed-share. An exhausted adult should not fall asleep holding a baby on a sofa or chair. Do not recommend withholding needed feeds.',
+      'Do not generalise sleep-training studies to younger babies or promise no harm. For an infant, focus on responsive settling and a sustainable routine; discuss individual feeding or sleep-training plans with their paediatrician.',
       'Screens off about an hour before sleep.',
     ],
     avoid: ['Shaming co-sleeping or sleep training', 'Changing approach every night'],

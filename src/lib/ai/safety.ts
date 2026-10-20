@@ -82,7 +82,7 @@ export async function classifySafety(message: string, signal?: AbortSignal, call
 
 /** Crisis-adjacent turns bypass quotas and paywalls. */
 export function bypassesPaywall(s: SafetyResult): boolean {
-  return s.status === 'unavailable' || s.level === 'urgent' || s.level === 'elevated' || s.category === 'parent_distress' || s.category === 'parent_harm_risk';
+  return guidancePath(s) !== 'ordinary' || s.category === 'parent_distress';
 }
 
 /** Whether this turn should be queued for human review. */
@@ -131,6 +131,16 @@ export function safetyNotice(s: SafetyResult): SafetyNotice | null {
         helplines: [H.childline, H.emergency, H.teleManas],
       };
     case 'medical':
+      if (s.level !== 'urgent') return {
+        ...base, tier: 2,
+        message: 'A clinician or pharmacist can help with this medical question. Kahiye cannot assess symptoms or change treatment.',
+        steps: [
+          'Contact your child’s clinician or pharmacist promptly for advice specific to them.',
+          'Do not start, stop or change a prescribed dose based on chat advice.',
+          'If an overdose may already have happened, or your child has trouble breathing or is unusually hard to wake, seek emergency help now.',
+        ],
+        helplines: [],
+      };
       return {
         ...base, tier: 3,
         message: 'This may be a medical emergency. Get help now.',

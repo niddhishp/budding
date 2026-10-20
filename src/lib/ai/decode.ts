@@ -1,7 +1,7 @@
 import { describePatterns } from '@/lib/moments';
 import 'server-only';
 import { z } from 'zod';
-import { FAST_MODEL, MODEL } from '@/lib/ai/llm';
+import { FAST_MODEL, MODEL, structuredCall } from '@/lib/ai/llm';
 import { CONSTITUTION } from '@/lib/ai/doctrine/constitution';
 import { STAGES, stageBandFor } from '@/lib/ai/doctrine/stages';
 import { getModule } from '@/lib/ai/doctrine/modules';
@@ -201,13 +201,14 @@ export async function decodeBehavior(
   route: Route,
   _onText: (delta: string) => void = () => {},
   signal?: AbortSignal,
+  call = structuredCall,
 ): Promise<{ analysis: AgentAnalysis; violations: string[]; repaired: boolean }> {
   void _onText; // Legacy callback retained for callers; unchecked text is never emitted.
   const generated = await checkedCall({
     system: CONSTITUTION, user: composeUserTurn(scenario, ctx, route),
     schema: GENERATED_JSON_SCHEMA, validator: generatedSchema,
     maxTokens: 6000, signal, additionalContent: route.clarify,
-  });
+  }, call);
   // No raw token callback: only complete, checked content may leave this module.
   return { analysis: toAnalysis(generated, route), violations: [], repaired: false };
 }
