@@ -569,12 +569,12 @@ export function SafetyBanner({ notice, onExpert }: { notice: SafetyNotice; onExp
           </a>
         ))}
       </div>
-      <button
+      {notice.category !== 'medical' && <button
         onClick={onExpert}
         className={`mt-3 w-full h-11 rounded-xl text-sm font-medium ${urgent ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-amber-600 text-white hover:bg-amber-700'}`}
       >
         Request a call from a child psychologist
-      </button>
+      </button>}
     </div>
   );
 }

@@ -71,7 +71,11 @@ export async function POST(req: Request) {
         const notice = safetyNotice(safety);
         send({ type: 'safety', safety: notice });
         if (path !== 'ordinary') {
-          send({ type: 'support', message: path === 'unavailable' ? 'We could not complete the safety check, so we have not generated advice or used your allowance. Try again shortly. If help cannot wait, open Immediate support.' : 'Use the immediate support information. No ordinary advice was generated and your allowance was not used. Consultation callbacks are not emergency support.' });
+          send({ type: 'support', message: path === 'unavailable'
+            ? 'We could not complete the safety check, so we have not generated advice or used your allowance. Try again shortly. If help cannot wait, open Immediate support.'
+            : safety.level === 'urgent'
+              ? 'Use the immediate support information. No ordinary advice was generated and your allowance was not used. Consultation callbacks are not emergency support.'
+              : 'Follow the support steps above and contact the appropriate professional. No ordinary advice was generated and your allowance was not used.' });
           if (needsReview(safety)) {
             const { data: child } = await supabase.from('children').select('id').eq('id', childId).maybeSingle();
             if (child) {

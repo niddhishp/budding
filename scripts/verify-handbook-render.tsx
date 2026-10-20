@@ -8,6 +8,7 @@ import { todayDate } from "../src/lib/family-care";
 import { HandbookPage } from "../src/views/HandbookPage";
 import { DashboardPage } from "../src/views/DashboardPage";
 import { AskPage } from "../src/views/AskPage";
+import { SafetyBanner } from "../src/views/AskAIPage";
 import { BottomNav } from "../src/components/BottomNav";
 import { ChildProfilePage } from "../src/views/ChildProfilePage";
 Object.assign(globalThis, { React });
@@ -17,6 +18,11 @@ const profile = (years: number) => childFromRow({
   curiosity: 50, persistence: 50, sensitivity: 80, sociability: 50, emotional_intensity: 50, flexibility: 50, gender: "girl",
 });
 try {
+  const medical = renderToStaticMarkup(<SafetyBanner notice={{ level: "low", category: "medical", tier: 2, message: "Contact your clinician or pharmacist.", steps: [], helplines: [] }} onExpert={() => {}} />);
+  assert(medical.includes("Contact your clinician or pharmacist."));
+  assert(!medical.includes("Request a call from a child psychologist"), "Medical questions must not be redirected to a psychology callback.");
+  const wellbeing = renderToStaticMarkup(<SafetyBanner notice={{ level: "elevated", category: "wellbeing_concern", tier: 2, message: "Get individual support.", steps: [], helplines: [] }} onExpert={() => {}} />);
+  assert(wellbeing.includes("Request a call from a child psychologist"));
   for (const years of [1, 4, 11, 16]) {
     const child = profile(years);
     Object.assign(initial, { children: [child], selectedChildId: child.id, handbookCardId: null, currentPage: "handbook", askIntent: null });
