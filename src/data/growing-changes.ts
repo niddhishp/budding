@@ -2,6 +2,12 @@ import { ageMonths } from '@/lib/family-care';
 
 // Conversation invitations, not age deadlines or a clinical checklist.
 export const growingBands = [
+  { id: '3-5', min: 36, max: 60, label: 'Big feelings, big imagination · 3–5 years', prompts: [
+    ['potty', 'Learning to use the toilet', 'How do they let you know their body needs the toilet?', 'Keep it calm and unhurried. Notice a small step, like telling you in time, and leave accidents without comment.'],
+    ['preschool', 'Nursery and new places', 'What helps them settle when you say goodbye?', 'Use the same short goodbye each time and tell them truthfully when you will be back.'],
+    ['no', 'Saying "no!"', 'When do they push back most, and what is underneath it?', 'Offer two choices you are happy with. A "no" is often practice at having a say, not a challenge to you.'],
+    ['pretend', 'Pretend play', 'What do they love to pretend to be?', 'Join in for a few minutes and let them lead the story. Follow their rules, even the silly ones.'],
+  ] },
   { id: '5-8', min: 61, max: 107, label: 'Growing independence · 5–8 years', prompts: [
     ['choices', 'Making small choices', 'What do they enjoy choosing for themselves?', 'Offer two workable choices and let them explain their preference.'],
     ['friendship', 'Learning to be a friend', 'What makes a good day with a friend?', 'Talk through taking turns or repairing a disagreement using a real, small example.'],

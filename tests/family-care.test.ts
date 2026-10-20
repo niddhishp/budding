@@ -41,9 +41,9 @@ test('care validation bounds private notes and rejects empty or invalid growth',
  assert.equal(growthSchema.safeParse({...record,weight_kg:-1}).success,false);
  assert.equal(DEFAULT_CARE.reminders,false);
 });
-test('all twenty authored guides have distinct routes, substantive copy and sources; play has safety cues',()=>{
+test('all twenty-six authored guides have distinct routes, substantive copy and sources; play has safety cues',()=>{
  const originalGuides=ARTICLES.filter(a=>!PARENT_GUIDES.some(g=>g.slug===a.slug));
- assert.equal(originalGuides.length,20);assert.equal(new Set(originalGuides.map(a=>a.slug)).size,20);
+ assert.equal(originalGuides.length,26);assert.equal(new Set(originalGuides.map(a=>a.slug)).size,26);
  for(const a of originalGuides){assert.ok(a.sections.length>=3);assert.ok(a.sections.map(s=>s.body).join(' ').split(/\s+/).length>=170,a.slug);assert.ok(a.sources.every(s=>s.url.startsWith('https://')));assert.ok(readingMinutes(a)>=1);}
  assert.equal(new Set(PLAY.map(p=>p.id)).size,PLAY.length);assert.ok(PLAY.every(p=>p.steps.length>=3&&p.safety.length>50));
 });

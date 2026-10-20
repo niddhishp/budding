@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ARTICLES, ARTICLE_UPDATED, readingMinutes } from "@/data/articles";
+import { HANDBOOK } from "@/data/handbook";
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { EditorialByline } from '@/components/seo/EditorialByline';
 import { SITE_URL, EDITORIAL_URL, EDITORIAL_NAME, publicMetadata, jsonLd } from '@/lib/seo';
@@ -34,6 +35,7 @@ export default async function ArticlePage({ params }: Props) {
   const sameTopic = ARTICLES.filter(
     (b) => b.slug !== slug && b.category === a.category,
   );
+  const handbookCards = (a.handbook ?? []).map((id) => HANDBOOK.find((c) => c.id === id)).filter((c) => !!c);
   const related = [...sameTopic, ...ARTICLES.filter(b => b.slug !== slug && b.category !== a.category)].slice(0, 3);
   return (
     <main className="min-h-screen bg-canvas px-5 py-10 text-slate-850">
@@ -73,6 +75,20 @@ export default async function ArticlePage({ params }: Props) {
             <p className="text-lg leading-8 text-slate-700">{s.body}</p>
           </section>
         ))}
+        {handbookCards.length > 0 && (
+          <section className="mt-10">
+            <h2 className="font-heading text-2xl mb-4">In the Kahiye Handbook</h2>
+            <p className="text-lg leading-8 text-slate-700">
+              Short words to say and one small thing to try, matched to your child&rsquo;s age:
+            </p>
+            <ul className="mt-3 list-disc pl-6 text-lg leading-8 text-slate-700">
+              {handbookCards.map((card) => <li key={card.id}>{card.title}</li>)}
+            </ul>
+            <Link href="/app" className="inline-block text-clay underline py-3">
+              Open these in your Handbook
+            </Link>
+          </section>
+        )}
         <aside className="border-t border-slate-300 mt-12 pt-6 text-sm">
           <h2 className="font-heading text-xl mb-3">Sources & care</h2>
           <ul className="space-y-3">

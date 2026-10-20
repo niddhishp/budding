@@ -246,7 +246,9 @@ const server = createServer((req, res) => {
           } else if (req.method === "PATCH" && table === "guidance_requests") {
             assert.equal(token, "synthetic-service-only");
             const p = JSON.parse(bytes);
-            result = (await db.query(`update public.guidance_requests set state=$${values.length + 1},updated_at=$${values.length + 2}${condition} returning *`, [...values,p.state,p.updated_at])).rows;
+            // Share language is recorded on the leased reservation; nothing else may be patched this way.
+            if (Object.keys(p).join() === "share_language") result = (await db.query(`update public.guidance_requests set share_language=$${values.length + 1}${condition} returning *`, [...values, p.share_language])).rows;
+            else result = (await db.query(`update public.guidance_requests set state=$${values.length + 1},updated_at=$${values.length + 2}${condition} returning *`, [...values,p.state,p.updated_at])).rows;
           } else if (req.method === "PATCH") {
             assert.equal(table, "family_entries");
             assert.equal(token, "synthetic-service-only");
@@ -296,7 +298,7 @@ process.env.ANTHROPIC_API_KEY = "synthetic-provider-only";
 process.env.ANTHROPIC_BASE_URL = base;
 const originalFetch = globalThis.fetch;
 let amazonFixture = false, amazonCalls = 0;
-let aiCalls = 0, rejectAiReview = false;
+let aiCalls = 0, rejectAiReview = false, lastShareInput = "";
 globalThis.fetch = (input, init) => {
   const target = String(input);
   if (target.startsWith(base + "/v1/messages")) {
@@ -304,6 +306,8 @@ globalThis.fetch = (input, init) => {
     const payload = JSON.parse(String(init.body)), props = payload.output_config.format.schema.properties;
     const text = props.level ? { level: "none", category: "none", reason: "Synthetic routine question" }
       : props.approved ? { approved: !rejectAiReview }
+      // Caregiver share messages: record what the model was given so the card source can be checked.
+      : props.message ? (lastShareInput = payload.messages[0].content, { message: "Synthetic caregiver message." })
       : { reply: "We can take this one step at a time. What would help today?", practiceReply: JSON.parse(payload.messages[0].content).mode === "rehearse" ? "But my friends can do it." : "", feedback: [] };
     assert(payload.system[0].cache_control);
     return Promise.resolve(Response.json({ id: "msg_fixture", type: "message", role: "assistant", model: "fixture", content: [{ type: "text", text: JSON.stringify(text) }], stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 20, output_tokens: 30 } }));
@@ -445,6 +449,29 @@ try {
   await db.query("update public.guidance_requests set created_at=now()-interval '31 days' where user_id=$1 and kind='share'", [other]);
   // Older than 30 days no longer counts; the request proceeds past the allowance check (and fails only on the other family's decode).
   await run(share, "POST", { decodeId: practiceId, language: "Hindi", audience: "grandparent" }, 404, other);
+  // Handbook cards share through the same route, checks and allowance, for the parent's own selected child.
+  const { HANDBOOK } = await import("../src/data/handbook.ts");
+  const shopCard = HANDBOOK.find(c => c.id === "tantrum-shop");
+  const beforeCard = aiCalls;
+  const cardShare = await run(share, "POST", { cardId: "tantrum-shop", childId: child, language: "English", audience: "grandparent" });
+  const cardBody = await cardShare.json();
+  assert.equal(cardBody.message, "Synthetic caregiver message.");
+  assert.equal(cardBody.translatedLeft, undefined, "English is not counted");
+  assert(aiCalls > beforeCard);
+  for (const part of [shopCard.title, shopCard.words, shopCard.avoid, shopCard.response]) assert(lastShareInput.includes(part), `card share input includes: ${part}`);
+  assert.deepEqual((await db.query("select state, share_language from public.guidance_requests where user_id=$1 and child_id=$2 and kind='share'", [uid, child])).rows, [{ state: "complete", share_language: null }]);
+  const callsBeforeRejected = aiCalls, rowsBeforeRejected = (await db.query("select count(*)::int n from public.guidance_requests where kind='share'")).rows[0].n;
+  await run(share, "POST", { cardId: "tantrum-shop", childId: freeChild, language: "English", audience: "grandparent" }, 404);
+  await run(share, "POST", { cardId: "not-a-real-card", childId: child, language: "English", audience: "grandparent" }, 400);
+  await run(share, "POST", { cardId: "tantrum-shop", language: "English", audience: "grandparent" }, 400);
+  await run(share, "POST", { decodeId: practiceId, cardId: "tantrum-shop", childId: child, language: "English", audience: "grandparent" }, 400);
+  assert.equal(aiCalls, callsBeforeRejected, "Rejected card shares make no model call");
+  assert.equal((await db.query("select count(*)::int n from public.guidance_requests where kind='share'")).rows[0].n, rowsBeforeRejected, "Rejected card shares reserve nothing");
+  // A Free family's card share in Hindi uses the same 30-day allowance and records its language.
+  const hindiCard = await run(share, "POST", { cardId: "bedtime-stalling", childId: freeChild, language: "Hindi", audience: "grandparent" }, 200, other);
+  assert.equal((await hindiCard.json()).translatedLeft, 4);
+  assert.equal((await db.query("select count(*)::int n from public.guidance_requests where user_id=$1 and child_id=$2 and kind='share' and state='complete' and share_language='Hindi' and created_at>now()-interval '1 day'", [other, freeChild])).rows[0].n, 1);
+  console.log("PASS: Handbook card sharing in English and Hindi, cross-family child rejection, unknown card and ambiguous bodies refused before any model call or reservation. AI transport simulated.");
   const report = await import("../src/app/api/report/route.ts");
   const beforeReport = aiCalls;
   const reportResponse = await run(report, "POST", { childId: child }, 422);

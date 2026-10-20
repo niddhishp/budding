@@ -5,6 +5,7 @@ import { Copy, Check, Loader2, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/stores/appStore';
 import type { Decode } from '@/types';
+import type { HandbookCard } from '@/data/handbook';
 import { FREE_TRANSLATED_SHARES_PER_MONTH } from '@/lib/plans';
 
 const LANGUAGES = [
@@ -29,14 +30,19 @@ const AUDIENCES = [
 type Language = (typeof LANGUAGES)[number]['value'];
 type Audience = (typeof AUDIENCES)[number]['value'];
 
-// One script, every caregiver: turns a decode into a WhatsApp-ready message in their language.
-export function ShareSheet({ decode, childName, onClose }: { decode: Decode; childName: string; onClose: () => void }) {
+type ShareSource =
+  | { decode: Decode; card?: never; childId?: never }
+  | { card: HandbookCard; childId: string; decode?: never };
+
+// One script, every caregiver: turns a decode or a Handbook card into a WhatsApp-ready message in their language.
+export function ShareSheet({ childName, onClose, ...source }: ShareSource & { childName: string; onClose: () => void }) {
+  const childId = source.decode ? source.decode.childId : source.childId;
   const scope = useRequestScope();
   const active = useRef<AbortSignal | null>(null);
   const { entitlement, openPaywall, children } = useAppStore();
   const isPlus = entitlement?.plan === 'plus';
   // Start in the family's home language when it is one we can write.
-  const homeLanguage = children.find(c => c.id === decode.childId)?.homeLanguages.find(h => LANGUAGES.some(l => l.value === h)) as Language | undefined;
+  const homeLanguage = children.find(c => c.id === childId)?.homeLanguages.find(h => LANGUAGES.some(l => l.value === h)) as Language | undefined;
   const [language, setLanguage] = useState<Language>(homeLanguage ?? 'English');
   const [translatedLeft, setTranslatedLeft] = useState<number | null>(null);
   const [audience, setAudience] = useState<Audience>('grandparent');
@@ -60,7 +66,7 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
       const res = await fetch('/api/share', {
         method: 'POST', signal: task.signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decodeId: decode.id, language, audience }),
+        body: JSON.stringify(source.decode ? { decodeId: source.decode.id, language, audience } : { cardId: source.card.id, childId, language, audience }),
       });
       const body = await res.json();
       if (!task.active()) return;
@@ -103,7 +109,7 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
           <X className="w-4 h-4" />
         </button>
         <h2 id="share-title" className="font-heading text-2xl text-slate-850 mb-1 pr-8">Everyone, same words.</h2>
-        <p className="text-slate-500 text-sm mb-6">Send this plan for {childName} so every caregiver responds the same way.</p>
+        <p className="text-slate-500 text-sm mb-6">{source.card ? <>Send the words from “{source.card.title}” for {childName}, so every caregiver can use them.</> : <>Send this plan for {childName} so every caregiver responds the same way.</>}</p>
 
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">For</p>
         <div className="flex flex-wrap gap-2 mb-5">
@@ -138,8 +144,8 @@ export function ShareSheet({ decode, childName, onClose }: { decode: Decode; chi
         {!isPlus && (
           <p className="text-xs text-slate-600 -mt-3 mb-6">
             {translatedLeft !== null
-              ? `${Math.max(0, translatedLeft)} of ${FREE_TRANSLATED_SHARES_PER_MONTH} messages in other languages left this month. English is always free.`
-              : `Free plan: ${FREE_TRANSLATED_SHARES_PER_MONTH} messages a month in other languages. English is always free.`}
+              ? `${Math.max(0, translatedLeft)} of ${FREE_TRANSLATED_SHARES_PER_MONTH} messages in other languages left, counted over the last 30 days. English is always free.`
+              : `Free plan: ${FREE_TRANSLATED_SHARES_PER_MONTH} messages every 30 days in other languages. English is always free.`}
           </p>
         )}
 
