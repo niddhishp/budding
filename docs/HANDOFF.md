@@ -1,6 +1,15 @@
 # Kahiye — engineering handoff (living document)
 
-**Latest release (20 October), engineering hygiene.** No schema or behaviour change for parents.
+**Latest release (21 October): [programmes, partners, sponsors, playbook](LAUNCH-AND-PLAYBOOK.md)**, migrations 031–033.
+- **Five free guided programmes:** potty training, screen-off, first period, and two body-talk programmes.
+- **"What works for {child}":** a playbook on the Child page.
+- **Film slots:** on Handbook cards and programme days, using a Vimeo/YouTube embed.
+- **Partner services:** gated by the database; none seeded.
+- **Sponsor codes:** for schools, employers and clinics.
+- **Legal operator details:** come from environment variables, and two new launch checks flag what is missing.
+- **Owner inputs:** everything the owner must provide is in [OWNER-INPUTS.md](OWNER-INPUTS.md). This replaces §5 below.
+
+**Previous release (20 October), engineering hygiene.** No schema or behaviour change for parents.
 - **Hindi and Hinglish safety lint:** diagnosis, physical punishment and shaming are now caught per clause, with negation and softener handling.
 - **Unused code removed:** 7 unreachable views, 49 unused UI-kit files and helpers; 6,883 lines, about 22% of `src`.
 - **New docs:** [docs/ARCHITECTURE.md](ARCHITECTURE.md), the map and invariants, and a pull-request checklist in `.github/`.
