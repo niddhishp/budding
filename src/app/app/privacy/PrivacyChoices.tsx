@@ -28,7 +28,7 @@ export function PrivacyChoices({ accepted }: { accepted: boolean }) {
       const link = Object.assign(document.createElement('a'), { href: url, download: name });
       document.body.append(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setMessage('Your family records are downloading. Photo links in the file work for one hour.');
+      setMessage('Your family records are downloading. Photo links in the file work for one hour for anyone who has it, so keep it private.');
     } catch { setMessage('We could not reach Kahiye. Please try again.'); }
     finally { setBusy(false); setExporting(false); }
   }
@@ -48,7 +48,7 @@ export function PrivacyChoices({ accepted }: { accepted: boolean }) {
     {active && <Button disabled={busy} variant="outline" onClick={withdraw}>{busy ? 'Saving…' : 'Withdraw consent'}</Button>}
     <p role="status">{message}</p>
     <Button disabled={busy} variant="outline" onClick={cancelRenewal}>Cancel paid renewal</Button>
-    <p className="text-slate-600">The download is one file with your account, child profiles, notes, guidance, memories, stories, reports, plans and photo details, and its photo links expire after one hour.</p>
+    <p className="text-slate-600">The download is one file with your account, child profiles, notes, guidance, memories, stories, reports, plans and photo details, and its photo links expire after one hour. Until then anyone with the file can open them, so keep it private.</p>
     <Button disabled={busy} variant="outline" onClick={downloadRecords}>{exporting ? 'Preparing your download…' : "Download my family's records"}</Button>
     <Button disabled={busy} variant="outline" onClick={deleteAccount}>Delete account and data</Button>
     <Button variant="outline" onClick={async () => { await getSupabase().auth.signOut(); window.location.assign('/'); }}>Sign out</Button>

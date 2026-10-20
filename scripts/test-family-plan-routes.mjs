@@ -434,9 +434,9 @@ try {
   const share = await import("../src/app/api/share/route.ts");
   await run(share, "POST", { decodeId: practiceId, language: "English", audience: "partner" }, 422);
   // Free families get a monthly allowance of messages in other languages; the sixth is refused before any work.
-  const otherChild = crypto.randomUUID();
-  await db.query("insert into public.children(id,user_id,name,dob) values($1,$2,'Synthetic free child','2021-01-01')", [otherChild, other]);
-  for (let i = 0; i < 5; i++) await db.query("insert into public.guidance_requests(id,user_id,child_id,kind,fingerprint,state,share_language) values($1,$2,$3,'share','fixture','complete','Hindi')", [crypto.randomUUID(), other, otherChild]);
+  const freeChild = crypto.randomUUID();
+  await db.query("insert into public.children(id,user_id,name,dob) values($1,$2,'Synthetic free child','2021-01-01')", [freeChild, other]);
+  for (let i = 0; i < 5; i++) await db.query("insert into public.guidance_requests(id,user_id,child_id,kind,fingerprint,state,share_language) values($1,$2,$3,'share','fixture','complete','Hindi')", [crypto.randomUUID(), other, freeChild]);
   const beforeShare = aiCalls, sharesBefore = (await db.query("select count(*)::int n from public.guidance_requests where user_id=$1", [other])).rows[0].n;
   const refused = await run(share, "POST", { decodeId: practiceId, language: "Hindi", audience: "grandparent" }, 402, other);
   assert.equal((await refused.json()).code, "upgrade_required");

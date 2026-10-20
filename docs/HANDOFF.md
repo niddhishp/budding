@@ -7,7 +7,8 @@
 - **Horoscope:** the Child page respects "Hide".
 - **Trust:** a "How Kahiye writes this guidance" panel.
 - **Public site:** a 3–8 homepage hero and article calls to action into Ask.
-- **Still being built separately:** family export and outcome metrics, in parallel branches.
+- **Family export:** see [Family export](FAMILY-EXPORT.md). `GET /api/account/export` gives the parent a JSON download of all their records, read under RLS. A guard test fails if any erased table is neither exported nor excluded with a reason.
+- **Outcome metrics:** see [Parent outcome metrics](PARENT-OUTCOME-METRICS.md), migration 027. `/admin/outcomes` is for owner and operations only, behind MFA, and shows aggregate figures only; any cell with fewer than 5 families shows as "<5". Staff and test accounts with consent are currently counted as families.
 
 **Previous release (20 October):** [Conversation allowance](CONVERSATION-ALLOWANCE.md), migration 025, applied and verified in production.
 - **Rule:** starting a chat or practice conversation uses one Ask turn, and later messages are included up to 10. Guidance is unchanged.
