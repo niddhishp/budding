@@ -1,5 +1,5 @@
 import { POLICY_VERSION } from '@/lib/consent';
-import { FREE_DECODES_PER_WEEK, PLUS_DECODES_PER_DAY, PRICES } from '@/lib/plans';
+import { CONVERSATION_MESSAGE_LIMIT, FREE_DECODES_PER_WEEK, PLUS_DECODES_PER_DAY, PRICES } from '@/lib/plans';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { publicMetadata } from '@/lib/seo';
 
@@ -28,10 +28,10 @@ export default function TermsPage() {
 
       <h2>Plans and billing</h2>
       <ul>
-        <li>Free: {FREE_DECODES_PER_WEEK} Ask turns per rolling 7 days, shared across practical guidance, chat and practice.</li>
+        <li>Free: {FREE_DECODES_PER_WEEK} Ask turns per rolling 7 days, shared across practical guidance, chat and practice. A chat or practice conversation uses one Ask turn when it starts and includes up to {CONVERSATION_MESSAGE_LIMIT} messages.</li>
         <li>
           Plus: {PRICES.monthly.amount}/{PRICES.monthly.per} or {PRICES.yearly.amount}/{PRICES.yearly.per}, billed in advance
-          through Razorpay and renewing automatically until cancelled. Fair use is {PLUS_DECODES_PER_DAY} Ask turns per rolling day, shared across practical guidance, chat and practice.
+          through Razorpay and renewing automatically until cancelled. Fair use is {PLUS_DECODES_PER_DAY} Ask turns per rolling day, shared across practical guidance, chat and practice, with the same conversation rule.
         </li>
         <li>Cancel anytime from the account menu. You keep Plus until the end of the period you paid for; we do not refund partial periods except where the law requires.</li>
         <li>We will give you at least 30 days&apos; notice of any price change.</li>

@@ -56,6 +56,8 @@ export async function getEntitlement(supabase: SupabaseClient, userId: string): 
     // Safety never consumes quota: turns with any safety signal, and refinements, are free.
     .eq('safety_category', 'none')
     .is('refines', null)
+    // Later messages in a chat or practice conversation are included in its starting turn.
+    .or('continuation_of.is.null,analysis->conversation.is.null')
     .gte('created_at', new Date(Date.now() - windowMs).toISOString());
 
   if (usageError || count === null) throw new Error('Usage lookup unavailable');

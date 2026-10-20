@@ -10,6 +10,7 @@ import { DECODE_COLUMNS, decodeFromRow, type DecodeRow } from "@/lib/mappers";
 import { HANDBOOK } from "@/data/handbook";
 import { fieldClass, buttonClass } from "@/components/care/CareFrame";
 import type { Child, Decode, DecodeStreamEvent, SafetyNotice } from "@/types";
+import { CONVERSATION_MESSAGE_LIMIT } from "@/lib/plans";
 
 type Mode = "guidance" | "talk" | "rehearse";
 export function AskPage() {
@@ -114,7 +115,7 @@ function Conversation({ child, mode, initial, cardId }: { child: Child; mode: "t
       {busy && <p role="status" className="text-sm text-slate-600 mt-3">{status}</p>}
       {error && <p role="alert" className="text-sm text-red-800 mt-4">{error}</p>}
     </form>
-    <p className="text-xs text-slate-600 mt-5 leading-6">Each AI reply uses one Ask turn from your plan; safety support does not use your allowance. {entitlement && `${Math.max(0, entitlement.limit - entitlement.used)} of ${entitlement.limit} left in this ${entitlement.window}.`} Replies are saved to this child’s account history. Only when you continue a conversation are up to four earlier turns included. Chat and fictional practice do not create child memories automatically.</p>
+    <p className="text-xs text-slate-600 mt-5 leading-6">Starting a conversation uses one Ask turn; your next replies in it are included, up to {CONVERSATION_MESSAGE_LIMIT} messages. Safety support never uses your allowance. {entitlement && `${Math.max(0, entitlement.limit - entitlement.used)} of ${entitlement.limit} left in this ${entitlement.window}.`} Replies are saved to this child’s account history. Only when you continue a conversation are up to four earlier turns included. Chat and fictional practice do not create child memories automatically.</p>
     <details className="mt-8 border-t pt-5"><summary className="cursor-pointer">Saved {mode === "talk" ? "chats" : "practice"} for {child.name}</summary>
       {loading ? <p role="status" className="mt-4">Loading…</p> : history.length ? <div className="divide-y mt-3">{history.map(turn => <button disabled={busy} key={turn.id} className="block w-full text-left py-4" onClick={() => { setTurns([turn]); setText(""); setError(""); setSafety(null); setSupport(""); input.current?.focus(); }}><span className="text-xs text-slate-600">{new Date(turn.createdAt).toLocaleDateString()} · Open & continue</span><span className="block line-clamp-2 mt-1">{turn.scenario}</span></button>)}</div> : <p className="mt-4">Your first conversation can start with a single sentence.</p>}
       {hasMore && <button disabled={loading} className="underline py-3 text-sm mr-5" onClick={() => setOffset(n => n + 20)}>Load older conversations</button>}

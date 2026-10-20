@@ -1,11 +1,21 @@
 # Kahiye — engineering handoff (living document)
 
-**In progress (20 October, branch `claude/handbook-depth`, not yet on main):** [Handbook depth](HANDBOOK-DEPTH.md).
-- **What changed:** the Handbook moves from three wide age bands to seven layers (under 1, 1–2, 3–5, 6–8, 9–12, 13–15, 16–17). It has 67 cards, 33 of them new. These cover bullying, image threats, online exposure, relationships, low mood and the handover at 18. From age 1, every track is present at every layer.
+**Latest release (20 October):** [Conversation allowance](CONVERSATION-ALLOWANCE.md), migration 025, applied and verified in production.
+- **Rule:** starting a chat or practice conversation uses one Ask turn, and later messages are included up to 10. Guidance is unchanged.
+- **Verified:** 109 tests, the database suite (which fails without 025), route-handler charge assertions, providers, render and build.
+
+**Deployed release (20 October):** [Handbook depth](HANDBOOK-DEPTH.md), application `74492ec`, production `dpl_Ee9MCuLfE87d8uh3YvE8Zf6XyvrP` READY. Main CI `39452031036` passed.
+- **What changed:** seven age layers and 67 cards, 33 of them new. From age 1, every track is present at every layer.
 - **What did not change:** existing card IDs and saved progress. No schema or data changes.
-- **Verified:** lint, typecheck, 107 tests, the render check and the build.
-- **Still unreviewed:** the safeguarding cards should go first in the clinical-review queue.
-- **Open owner decision:** Free allows 3 Ask turns a week, shared across guidance, chat and practice. That makes a multi-turn chat impossible on Free.
+- **Still unreviewed:** the safeguarding cards go first in the clinical-review queue.
+- **Rollback point:** `dpl_7FL9chbSRQghy4c83xGCFXYGukY2`.
+
+**Owner materials (20 October):** `docs/Market Research/` and `docs/Kahiye — Investor Pitch Deck.pptx` are untracked; preserve them. The deck claims several things the product doesn't yet back:
+- portable family records (there is no export)
+- measured loops: activation, 14-day repeat use, feedback rate, share rate (no metrics exist)
+- a recommended entry cohort of 7–12, which conflicts with the research's 3–8
+
+See the session summary for the gap list.
 
 **Latest deployed follow-up (20 October):** [Launch operations readiness](LAUNCH-READINESS.md), application `718814ba45ba8e9fb4df5748efdf82a3270b1e08`, production `dpl_DXZoKyVsyQsdmRUJmhhLVD7DGKhq` READY on both domains. Admin diagnostics now distinguish configuration from provider acceptance across payments, email, WhatsApp and referrals, with explicit missing requirements and recovery-worker freshness. All 106 tests, exact branch/main CI (`39435264256`, `39435715495`), security/provider/route/SSR/build checks pass; production dependency audit reports zero known findings. Live public/access checks and the signed-in parent dashboard passed with no browser errors. Admin visual inspection remains behind MFA; no bypass was used. No schema/data writes, provider activation, messages or payments occurred. Clinical review remains pending by owner instruction. The updated root `LAUNCH.md` is the current commercial-launch runbook; real provider acceptance, isolated test-checkout harness/setup, sender/partner configuration, legal details and operational verification remain unfinished.
 

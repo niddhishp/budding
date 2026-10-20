@@ -198,9 +198,11 @@ const server = createServer((req, res) => {
                 "kind",
                 "section",
                 "revision",
-                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation",
+                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation", "or",
               ].includes(key),
             );
+            // Usage excludes later messages in a chat or practice conversation.
+            if (key === "or" && value === "(continuation_of.is.null,analysis->conversation.is.null)") { where.push("(continuation_of is null or analysis->'conversation' is null)"); continue; }
             if (key === "kind" && value === "in.(feedback,preferences)") {
               where.push("kind in ('feedback','preferences')");
               continue;
@@ -404,6 +406,12 @@ try {
   assert.equal(aiCalls, 4, "Retry only rechecks safety, not generation");
   const continued = await events({ ...message, scenario: "Starting homework has been hard.", requestId: crypto.randomUUID(), continues: done.decode.id });
   assert(continued.some(e => e.type === "done"), JSON.stringify(continued));
+  // The conversation used one Ask turn when it started; the continued message is included.
+  const opening = (await db.query("select charged from public.guidance_requests where id=$1", [message.requestId])).rows[0];
+  assert.equal(opening?.charged, true, "Starting a conversation uses one Ask turn");
+  const continuedCharge = (await db.query("select g.charged from public.guidance_requests g join public.decodes d on d.id=g.result_id where d.id=$1", [continued.find(e => e.type === "done").decode.id])).rows[0];
+  assert.equal(continuedCharge?.charged, false, "A continued conversation message is included in its starting turn");
+  assert.equal(continued.find(e => e.type === "done").entitlement.used, done.entitlement.used, "Included messages do not change the parent's visible usage");
   await run(analyze, "POST", { ...message, requestId: crypto.randomUUID(), mode: "rehearse", continues: done.decode.id }, 422);
   const practice = await events({ ...message, scenario: "Help me practise a phone conversation.", requestId: crypto.randomUUID(), mode: "rehearse", cardId: "digital-phone" });
   assert(practice.some(e => e.type === "done" && e.decode.analysis.conversation.practiceReply));

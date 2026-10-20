@@ -14,6 +14,8 @@ import { processGuidanceJob } from '@/lib/guidance-jobs';
 import type { DecodeStreamEvent } from '@/types';
 import { converse } from '@/lib/ai/conversation';
 import { HANDBOOK } from '@/data/handbook';
+import { conversationLength, nextMessageIncluded, type ConversationLink } from '@/lib/conversation-allowance';
+import { CONVERSATION_MESSAGE_LIMIT } from '@/lib/plans';
 
 export const maxDuration = 60;
 const bodySchema = z.object({ childId: z.string().uuid(), scenario: z.string().trim().min(3).max(2000), requestId: z.string().uuid().optional(), refines: z.string().uuid().optional(), answer: z.string().max(200).optional(), continues: z.string().uuid().optional(),
@@ -52,6 +54,16 @@ export async function POST(req: Request) {
     const previousMode = previous.data.analysis?.conversation?.mode ?? 'guidance';
     if (previousMode !== mode) return NextResponse.json({ error: 'Start fresh when changing between guidance, chat and fictional practice.' }, { status: 422 });
   }
+  // A chat or practice conversation uses one Ask turn when it starts; later messages are included up to a limit.
+  let includedInConversation = false;
+  if (continuationId && mode !== 'guidance') {
+    const thread = await supabase.from('decodes').select('id,continuation_of').eq('child_id', childId).eq('user_id', user.id)
+      .eq('analysis->conversation->>mode', mode).order('created_at', { ascending: false }).limit(100).returns<ConversationLink[]>();
+    if (thread.error) return NextResponse.json({ error: 'Could not check this conversation. Nothing has been charged; please try again.' }, { status: 503 });
+    if (!nextMessageIncluded(conversationLength(thread.data ?? [], continuationId)))
+      return NextResponse.json({ error: `This conversation has reached ${CONVERSATION_MESSAGE_LIMIT} messages. Start a fresh conversation to keep going.`, code: 'conversation_full' }, { status: 422 });
+    includedInConversation = true;
+  }
   const abort = new AbortController();
   const signal = AbortSignal.any([req.signal, abort.signal, AbortSignal.timeout(54_000)]);
   const encoder = new TextEncoder();
@@ -85,7 +97,7 @@ export async function POST(req: Request) {
           }
           return;
         }
-        reservation = await reserveGuidance({ id: parsed.data.requestId ?? crypto.randomUUID(), userId: user.id, childId, kind: 'decode', content: { scenario, refines, continuationId, ...(mode !== 'guidance' ? { mode, cardId } : {}) }, refines, free: safety.category !== 'none' });
+        reservation = await reserveGuidance({ id: parsed.data.requestId ?? crypto.randomUUID(), userId: user.id, childId, kind: 'decode', content: { scenario, refines, continuationId, ...(mode !== 'guidance' ? { mode, cardId } : {}) }, refines, free: safety.category !== 'none' || includedInConversation });
         let resultId = reservation.resultId;
         if (!reservation.complete) {
           const context = conversationContext ?? await loadDecodeContext(supabase, childId, user.id, continuationId);
