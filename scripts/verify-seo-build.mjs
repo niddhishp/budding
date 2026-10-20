@@ -47,6 +47,7 @@ for (const url of urls) {
     assert(html.includes('independent clinical review'), `${path}: review status`);
   }
   if (path === '/') {
+    assert(attr(html, 'link', 'rel', 'stylesheet', 'href').length <= 2, 'Homepage blocking CSS request budget');
     assert(schemas.some(s => s['@type'] === 'Organization'));
     assert(schemas.some(s => s['@type'] === 'WebSite'));
     const faq = schemas.find(s => s['@type'] === 'FAQPage');

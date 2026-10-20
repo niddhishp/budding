@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared module surfaces live in this bundle to avoid a separate blocking App.css request. */
+.glass-card {
+  background: oklch(var(--surface));
+  border: 1px solid oklch(var(--border));
+  border-radius: 1.5rem;
+}
+[data-slot="progress-indicator"] {
+  background: oklch(var(--clay)) !important;
+}
+
 /*
  * Budding design tokens — warm paper, deep ink, one clay accent.
  * Colours are OKLCH triples ("L C H") so Tailwind can apply alpha: oklch(var(--x) / <alpha>).

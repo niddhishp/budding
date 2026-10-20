@@ -16,7 +16,7 @@ Release validation and deployment results are recorded below as they complete. D
 | Trust/identity | Collective byline without a dedicated identity/policy page. | New About and Editorial pages; linked Kahiye Editorial byline, source and AI-use disclosure, pending review status. No invented credentials. |
 | Site hierarchy | Immediate support not in sitemap or homepage links. | Homepage/footer links, breadcrumbs, related reading and a sitemap entry for support. |
 | Article catalogue | Client JavaScript imported all 32 full article bodies. | Server passes only title, summary, age, topic, slug and reading time. Background prefetch of every article disabled. |
-| Rendering | Homepage lacked a main landmark; hero started with an opacity animation. | Main landmark, skip link, immediate hero visibility, optional font rendering, no unnecessary Hindi font preload. |
+| Rendering | Homepage lacked a main landmark; hero started with an opacity animation. | Main landmark, skip link, immediate hero visibility, optional font rendering, no unnecessary Hindi font preload. Shared CSS consolidated from three requests to two; homepage background route prefetch disabled. |
 | Readability/mobile | Pale small text and a footer row prone to overflow. | Stronger secondary text contrast and wrapping footer links. |
 | Copy | Unsupported competitor/completeness claims; temperament labels and misleading funding/pricing language. | Practical, warmer wording with no labels, no clinical promises, referral transparency and clear planned subscription status. |
 | Structured data | Article markup only. | Organization, WebSite, visible FAQ, BreadcrumbList and an editorial AboutPage. Article author links to its real publishing byline. |
@@ -178,6 +178,8 @@ Baseline mobile [PageSpeed report](https://pagespeed.web.dev/analysis/https-www-
 | Speed index | 4.5 s | Pending release measurement |
 
 The baseline LCP element was the header wordmark, with a large rendering delay. Changes target font rendering and hero visibility, rather than hiding content. Article catalogue payload is reduced by excluding full bodies from the client bundle. All public content remains rendered in the initial HTML.
+
+The first hosted retest on `ce86fbf` scored 91 performance and 100 accessibility, best practices and SEO, with LCP 3.038 s, FCP 1.698 s, CLS 0, TBT 0 ms and speed index 4.399 s. [Initial release measurement](https://pagespeed.web.dev/analysis/https-www-kahiye-app/ndw7uz5j70?form_factor=mobile). Its remaining blocking CSS requests justified one further pass: merge the tiny shared App.css rules into the existing stylesheet and stop background prefetch from homepage links. No experimental CSS inlining was enabled; Next's documentation still labels it unsuitable for production.
 
 There is no CrUX field data available for this origin in the baseline report. A lab test does not establish real-user INP, universal two-second loading or a field CWV pass. Google's good thresholds are assessed at the 75th percentile: LCP ≤2.5 s, INP ≤200 ms and CLS ≤0.1. The requested <2 s target is stricter; report observed results rather than promise it for every connection. [CWV thresholds](https://web.dev/articles/defining-core-web-vitals-thresholds).
 

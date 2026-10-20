@@ -124,13 +124,13 @@ export default function LandingPage() {
               child&rsquo;s age and space to keep family life together.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
-              <Link
+              <Link prefetch={false}
                 href="/app"
                 className="inline-flex items-center gap-2 h-14 px-8 rounded-full bg-clay text-white text-lg font-semibold shadow-paper transition-colors duration-200 hover:bg-clay-deep"
               >
                 Start free <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/quiz"
                 className="text-lg font-semibold text-slate-800 underline decoration-clay/40 decoration-2 underline-offset-[6px] hover:decoration-clay"
               >
@@ -166,7 +166,7 @@ export default function LandingPage() {
             >
               For the questions that grow with them.
             </h2>
-            <Link href="/articles" className="text-clay underline py-2">
+            <Link prefetch={false} href="/articles" className="text-clay underline py-2">
               Explore all parenting articles →
             </Link>
           </div>
@@ -184,7 +184,7 @@ export default function LandingPage() {
                     {a.category} · {readingMinutes(a)} min read
                   </p>
                   <h3 className="font-heading text-2xl mt-4">
-                    <Link
+                    <Link prefetch={false}
                       href={`/articles/${a.slug}`}
                       className="hover:text-clay underline decoration-clay/30 underline-offset-4"
                     >
@@ -409,7 +409,7 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
-            <Link
+            <Link prefetch={false}
               href="/quiz"
               className="mt-10 inline-flex items-center gap-2 h-12 px-7 rounded-full bg-slate-850 text-white font-semibold transition-colors hover:bg-slate-700"
             >
@@ -417,7 +417,7 @@ export default function LandingPage() {
             </Link>
           </Reveal>
           <Reveal className="mt-16">
-            <Link
+            <Link prefetch={false}
               href="/tools/due-date"
               className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[2rem] bg-paper-deep px-7 py-7 sm:px-10 transition-colors hover:bg-[oklch(91%_0.025_78)]"
             >
@@ -469,7 +469,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
+                <Link prefetch={false}
                   href="/app"
                   className="mt-auto pt-0 flex items-center justify-center h-12 rounded-full border border-slate-300 font-semibold text-slate-800 transition-colors hover:bg-slate-100"
                 >
@@ -496,7 +496,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
+                <Link prefetch={false}
                   href="/app"
                   className="mt-auto flex items-center justify-center h-12 rounded-full bg-clay text-white font-semibold transition-colors hover:bg-clay-deep"
                 >
@@ -542,7 +542,7 @@ export default function LandingPage() {
             <summary className="cursor-pointer text-lg font-semibold text-slate-900">{question}</summary>
             <p className="mt-4 leading-relaxed text-slate-700">{answer}</p>
           </details>)}
-          <p className="mt-6 text-slate-700">Read our <Link href="/editorial" className="underline">editorial approach</Link> or find <Link href="/help-now" className="underline">immediate support</Link>.</p>
+          <p className="mt-6 text-slate-700">Read our <Link prefetch={false} href="/editorial" className="underline">editorial approach</Link> or find <Link prefetch={false} href="/help-now" className="underline">immediate support</Link>.</p>
         </div>
       </section>
       {/* ── Close ───────────────────────────────────────────────────────── */}
@@ -572,7 +572,7 @@ export default function LandingPage() {
           <h2 className="font-heading text-[clamp(2rem,4.5vw,3.6rem)] leading-[1.06] max-w-3xl">
             You don&rsquo;t need all the answers today.
           </h2>
-          <Link
+          <Link prefetch={false}
             href="/app"
             className="mt-10 inline-flex items-center gap-2 h-14 px-8 rounded-full bg-[oklch(97%_0.012_82)] text-clay-deep text-lg font-semibold transition-transform duration-200 hover:-translate-y-0.5"
           >
@@ -589,22 +589,22 @@ export default function LandingPage() {
             medical advice.
           </span>
           <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-4">
-            <Link href="/about" className="hover:text-slate-900">About</Link>
-            <Link href="/editorial" className="hover:text-slate-900">Editorial approach</Link>
-            <Link href="/help-now" className="hover:text-slate-900">Immediate support</Link>
-            <Link href="/quiz" className="hover:text-slate-900">
+            <Link prefetch={false} href="/about" className="hover:text-slate-900">About</Link>
+            <Link prefetch={false} href="/editorial" className="hover:text-slate-900">Editorial approach</Link>
+            <Link prefetch={false} href="/help-now" className="hover:text-slate-900">Immediate support</Link>
+            <Link prefetch={false} href="/quiz" className="hover:text-slate-900">
               Everyday moments quiz
             </Link>
-            <Link href="/tools/due-date" className="hover:text-slate-900">
+            <Link prefetch={false} href="/tools/due-date" className="hover:text-slate-900">
               Due date calculator
             </Link>
-            <Link href="/articles" className="hover:text-slate-900">
+            <Link prefetch={false} href="/articles" className="hover:text-slate-900">
               Parenting guides
             </Link>
-            <Link href="/privacy" className="hover:text-slate-900">
+            <Link prefetch={false} href="/privacy" className="hover:text-slate-900">
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-slate-900">
+            <Link prefetch={false} href="/terms" className="hover:text-slate-900">
               Terms
             </Link>
           </nav>
@@ -618,7 +618,7 @@ export function SiteHeader() {
   return (
     <header className="px-5 sm:px-8 py-5">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-6">
-        <Link
+        <Link prefetch={false}
           href="/"
           className="flex items-center gap-2.5"
           aria-label="Kahiye home"
@@ -627,28 +627,28 @@ export function SiteHeader() {
           <span className="font-heading text-2xl text-slate-900">kahiye</span>
         </Link>
         <nav className="flex items-center gap-6 text-[15px]">
-          <Link href="/articles" className="text-slate-600 hover:text-clay">
+          <Link prefetch={false} href="/articles" className="text-slate-600 hover:text-clay">
             Articles
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/quiz"
             className="hidden md:inline text-slate-600 hover:text-slate-900"
           >
             Free quiz
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/#how"
             className="hidden md:inline text-slate-600 hover:text-slate-900"
           >
             How it works
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/#pricing"
             className="hidden md:inline text-slate-600 hover:text-slate-900"
           >
             Pricing
           </Link>
-          <Link
+          <Link prefetch={false}
             href="/login?next=/app"
             className="font-semibold text-slate-800 hover:text-clay"
           >

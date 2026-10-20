@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Young_Serif, Atkinson_Hyperlegible_Next, Mukta } from 'next/font/google';
 import '../index.css';
-import '../App.css';
 import { publicMetadata, SITE_DESCRIPTION, SITE_URL } from '@/lib/seo';
 
 // Display: a soft, bookish serif — the voice of a calm elder. One weight; never faux-bolded.
