@@ -11,6 +11,7 @@ import { WeekGuideCard } from "@/components/WeekGuideCard";
 import { observedPatterns } from "@/lib/moments";
 import { OutcomeFollowUp } from "@/components/OutcomeFollowUp";
 import { FamilyCheckin } from "@/components/FamilyCheckin";
+import { PartnerOffers } from "@/components/partners/PartnerOffers";
 import type { Child } from "@/types";
 
 export function DashboardPage() {
@@ -66,6 +67,8 @@ function Today({ child }: { child: Child }) {
     </>}
     {relevance.born && <>
       <HealthUpcoming key={child.id} child={child} />
+      {/* At most one, and only when a recorded vaccination or check-up is due. */}
+      <PartnerOffers child={child} placement="today" heading="If it helps with what is due" className="mb-8" />
     </>}
     {birthday && <section className="border-b pb-6 mb-7"><p className="text-sm text-clay">A birthday coming up · {birthday}</p><h2 className="font-heading text-2xl mt-2">What would make it special?</h2><p className="text-slate-600 mt-3">A shared experience, something they need, or a thoughtful gift. It need not be a big spend.</p><div className="flex flex-wrap gap-5"><button className="text-clay underline py-3" onClick={() => setPage("gifts")}>Gifts & rewards →</button><button className="text-clay underline py-3" onClick={() => setPage("shop")}>Browse useful finds →</button></div><p className="text-xs text-slate-600">Some retailer links may earn Kahiye a referral fee. Buying is always optional.</p></section>}
     <section className="border-t pt-6 mb-6" aria-label={`More for ${child.name}`}>

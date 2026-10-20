@@ -12,6 +12,7 @@ import { MemoryStrip } from "@/components/child/MemoryStrip";
 import { useFamilyPlan } from "@/components/care/useFamilyPlan";
 import { useTodayDate } from "@/components/care/useTodayDate";
 import { familyNavigation } from "@/lib/family-navigation";
+import { PartnerOffers } from "@/components/partners/PartnerOffers";
 import type { Child } from "@/types";
 
 export function ChildProfilePage() {
@@ -111,6 +112,7 @@ function ChildProfile({ child }: { child: Child }) {
             <ProfileList label="Languages" items={child.homeLanguages} />
             {child.profileNotes && <div className="mt-4"><p className="text-xs font-medium text-slate-500 mb-1">Notes</p><p className="text-sm text-slate-700 leading-relaxed">{child.profileNotes}</p></div>}
           </section>
+          {born && <PartnerOffers child={child} placement="child" heading={`For ${child.name} now`} />}
           {born && <section className="rounded-2xl bg-paper-deep p-6" aria-labelledby="gifts-title">
             <h2 id="gifts-title" className="font-heading text-xl text-slate-850">Gifts & finds</h2>
             <p className="text-sm text-slate-600 mt-2">Ideas for birthdays and rewards, chosen for their age and what you prefer.</p>

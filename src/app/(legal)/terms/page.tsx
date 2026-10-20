@@ -37,6 +37,15 @@ export default function TermsPage() {
         <li>We will give you at least 30 days&apos; notice of any price change.</li>
       </ul>
 
+      <h2>Partner services</h2>
+      <p>
+        Kahiye may show services from independent partners, such as home health checks, tuition, classes or days out,
+        each labelled as a partner offer with the provider&apos;s name and terms. Kahiye introduces you; the partner
+        provides the service under its own terms and is responsible for it. You pay the partner directly. Kahiye may
+        earn a fee from the partner, which never changes what is shown. Raise a concern with the partner first, then
+        with Kahiye&apos;s grievance officer.
+      </p>
+
       <h2>Acceptable use</h2>
       <p>Don&apos;t misuse the service, attempt to access other people&apos;s data, or use it to harm a child or anyone else.</p>
 

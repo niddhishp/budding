@@ -11,6 +11,7 @@ import { useTodayDate } from "@/components/care/useTodayDate";
 import type { Child } from "@/types";
 import { GuidanceTrust } from "@/components/GuidanceTrust";
 import { ShareSheet } from "@/components/ShareSheet";
+import { PartnerOffers } from "@/components/partners/PartnerOffers";
 
 export function HandbookPage() {
   const { children, selectedChildId, handbookCardId } = useAppStore();
@@ -71,6 +72,7 @@ function Handbook({ child }: { child: Child }) {
         {!book.data && !book.error && <p role="status" className="text-sm">Loading your saved conversations…</p>}
         <p className="text-xs text-slate-600 mt-3">Follow-ups appear in Today. Email and WhatsApp are not activated. These records do not become AI memory.</p>
       </section>
+      {selected.track === "school" && <LearningSupport child={child} />}
       <SourceNote card={selected} />
     </article> : <>
       <div className="flex flex-wrap gap-x-6 gap-y-2 border-y py-4 mb-8">
@@ -94,11 +96,20 @@ function Handbook({ child }: { child: Child }) {
       <div className="divide-y">{matching.map(card => <button key={card.id} className="w-full text-left py-6 grid grid-cols-[1fr_auto] gap-3 group" onClick={() => openHandbook(card.id)}>
         <span><span className="text-xs text-clay">{TRACKS.find(t => t[0] === card.track)?.[1]} · {cardAgeLabel(card)}</span><span className="block font-heading text-2xl mt-2 group-hover:text-clay">{card.title}</span><span className="block text-slate-600 mt-2">{card.why}</span>{progress[card.id] && <span className="block text-sm text-leaf mt-2">{{ saved: "Kept for later", tried: "You tried this", revisit: "To revisit" }[progress[card.id].status]}{progress[card.id].followUp ? ` · Come back ${progress[card.id].followUp}` : ""}</span>}</span><span aria-hidden="true">→</span>
       </button>)}</div>
+      {track === "school" && !savedOnly && <LearningSupport child={child} />}
       {!matching.length && <p className="py-6">No matching conversations here yet. Try another topic, or <button className="underline text-clay" onClick={() => openAsk("talk")}>talk it through in Ask</button>. Saved records are kept.</p>}
       {!!next.length && !savedOnly && <details className="border-y py-5 mt-8"><summary className="cursor-pointer font-heading text-xl">Coming into the next age range</summary><p className="text-sm text-slate-600 mt-3">A preview, not a timetable your child has to follow.</p>{next.map(card => <p key={card.id} className="mt-3">{card.title} <span className="text-sm text-slate-600">· {cardAgeLabel(card)}</span></p>)}</details>}
       <p className="text-xs text-slate-600 leading-6 mt-8">Kahiye editorial conversation starters, informed by linked guidance. They are not individual assessments or therapy. Clinical and safeguarding review is pending; sensitive concerns belong with a qualified professional. <Link className="underline" href="/help-now">Immediate support</Link> remains available.</p>
     </>}
   </CareFrame>;
+}
+/** Tuition offers sit beside Kahiye's own guidance on pressure, so a class is never the first answer to marks. */
+function LearningSupport({ child }: { child: Child }) {
+  const openHandbook = useAppStore(s => s.openHandbook);
+  const guide = HANDBOOK.find(c => c.id === (child.age.years >= 13 ? "school-pressure" : "school-homework"));
+  return <PartnerOffers child={child} placement="learning" track="school" heading="Extra learning support" className="my-8"
+    intro="Some families want a tutor or a structured class. Start with what makes learning hard; more hours are not always the answer."
+    footer={guide && <p className="text-sm mt-4">Before adding classes: <button className="text-clay underline py-2 text-left" onClick={() => openHandbook(guide.id)}>{guide.title} →</button></p>} />;
 }
 function SourceNote({ card }: { card: HandbookCard }) {
   const source = HANDBOOK_SOURCES[card.source];

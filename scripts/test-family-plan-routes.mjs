@@ -41,6 +41,15 @@ await db.query(
   "insert into public.admin_memberships(user_id,role) values($1,'operations')",
   [other],
 );
+const PARTNER_RPC = {
+  partner_offers_for_child: ["target"],
+  create_partner_lead: ["receipt", "offer", "target", "parent_name", "contact_method", "contact", "note", "agreed", "agreed_version"],
+  record_partner_events: ["offers", "event_kind"],
+  save_partner: ["target", "actor", "actor_session", "expected", "content"],
+  save_partner_offer: ["target", "actor", "actor_session", "expected", "content"],
+  set_partner_lead_status: ["lead", "actor", "actor_session", "next_status"],
+  partner_admin_overview: ["actor", "actor_session"],
+};
 const objects = new Map(), signRequests = [];
 let failUpload = false,
   queue = Promise.resolve();
@@ -169,6 +178,10 @@ const server = createServer((req, res) => {
               ],
             )
           ).rows[0].value;
+        } else if (path.startsWith("/rest/v1/rpc/") && PARTNER_RPC[path.slice(13)]) {
+          // Partner services: named arguments in their SQL order; the role set above decides access.
+          const name = path.slice(13), p = JSON.parse(bytes), args = PARTNER_RPC[name];
+          result = (await db.query(`select public.${name}(${args.map((_, i) => `$${i + 1}`).join(",")}) value`, args.map(a => p[a]))).rows[0].value;
         } else if (path === "/rest/v1/rpc/save_family_entry") {
           const p = JSON.parse(bytes);
           result = (
@@ -197,7 +210,7 @@ const server = createServer((req, res) => {
               "shop_catalog",
               "shop_discovery_runs",
               // Family export reads, each filtered by user_id under RLS.
-              "consent_events", "whatsapp_links", "memories", "stories", "expert_requests", "family_checkins",
+              "consent_events", "whatsapp_links", "memories", "stories", "expert_requests", "family_checkins", "partner_leads",
             ].includes(table),
           );
           const values = [],
@@ -739,6 +752,70 @@ try {
   console.log(
     "PASS: actual shop routes preserve revisions, validate choices, isolate families, redact evidence, pause products and undo feedback.",
   );
+  // ── Partner services: empty state, admin gates, matching, consent-checked enquiries, counts ──
+  const partnerOffers = await import("../src/app/api/partner-offers/route.ts");
+  const enquiryRoute = await import("../src/app/api/partner-offers/enquiry/route.ts");
+  const partnerAdmin = await import("../src/app/api/admin/partners/route.ts");
+  const { PARTNER_CONSENT_VERSION } = await import("../src/lib/partner-services.ts");
+  const pq = `?childId=${child}`;
+  const offersFor = async (owner = uid) => (await (await run(partnerOffers, "GET", null, 200, owner, "unused", pq)).json());
+  await run(partnerOffers, "GET", null, 401, null, "unused", pq);
+  assert.deepEqual((await offersFor()).offers, [], "No partners means nothing is shown");
+  await run(partnerOffers, "GET", null, 404, other, "unused", pq);
+  await run(partnerAdmin, "GET", null, 403);
+  await run(partnerAdmin, "PUT", { kind: "partner", id: crypto.randomUUID(), revision: 0, value: {} }, 403);
+  const signed = new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10);
+  const tutorId = crypto.randomUUID();
+  const tutor = { name: "Synthetic Tutors", legal_name: "Synthetic Tutors Pvt Ltd", category: "tuition", website: "", terms_url: "https://tutors.example.invalid/terms", contact_email: "partners@tutors.example.invalid", grievance_contact: "care@tutors.example.invalid", contract_signed_on: signed, contract_expires_on: "", fee_model: "commission", fee_note: "Synthetic fee note", police_verification_confirmed: false, insurance_confirmed: true, status: "active" };
+  const blocked = await run(partnerAdmin, "PUT", { kind: "partner", id: tutorId, revision: 0, value: tutor }, 409, other);
+  assert.match((await blocked.json()).error, /police verification/);
+  await run(partnerAdmin, "PUT", { kind: "partner", id: crypto.randomUUID(), revision: 0, value: { ...tutor, category: "health_lab", police_verification_confirmed: true, status: "draft" } }, 409, other);
+  await run(partnerAdmin, "PUT", { kind: "partner", id: tutorId, revision: 0, value: { ...tutor, police_verification_confirmed: true } }, 200, other);
+  const offerBase = { partner_id: tutorId, title: "Maths circle", summary: "Small-group problem solving with a qualified tutor.", category: "tuition", min_months: 120, max_months: 156, cities: ["Pune"], moment: "always", trigger_value: null, price_label: "From Rs 1,200 a month", cta: "enquiry", url: "", status: "active" };
+  const enquiryOffer = crypto.randomUUID(), linkOffer = crypto.randomUUID();
+  await run(partnerAdmin, "PUT", { kind: "offer", id: enquiryOffer, revision: 0, value: offerBase }, 200, other);
+  await run(partnerAdmin, "PUT", { kind: "offer", id: linkOffer, revision: 0, value: { ...offerBase, title: "Online reading club", cities: ["online"], cta: "link", url: "https://tutors.example.invalid/reading?level=2" } }, 200, other);
+  await run(partnerAdmin, "PUT", { kind: "offer", id: crypto.randomUUID(), revision: 0, value: { ...offerBase, title: "Toddler rhymes", min_months: 12, max_months: 36 } }, 200, other);
+  await run(partnerAdmin, "PUT", { kind: "offer", id: crypto.randomUUID(), revision: 0, value: { ...offerBase, title: "Vaccination drive", category: "health_lab" } }, 409, other);
+  let found = await offersFor();
+  assert.deepEqual(found.offers.map(o => o.title), ["Online reading club"], "Without a saved city only online offers match");
+  const link = new URL(found.offers[0].url);
+  assert.equal(link.searchParams.get("ref"), "kahiye");
+  assert.equal(link.searchParams.get("level"), "2");
+  for (const hidden of ["Synthetic fee note", "partners@tutors", "Synthetic Tutors Pvt Ltd", "reviewed_by"]) assert(!JSON.stringify(found).includes(hidden), `Parent offers exposed ${hidden}`);
+  await db.query("update public.children set city='Pune' where id=$1", [child]);
+  found = await offersFor();
+  assert.deepEqual(found.offers.map(o => o.title).sort(), ["Maths circle", "Online reading club"]);
+  assert.equal(found.ageBand, "9–12 years");
+  const maths = found.offers.find(o => o.title === "Maths circle");
+  assert.equal(maths.provider, "Synthetic Tutors");
+  assert.equal(maths.url, null);
+  const lead = { receipt: crypto.randomUUID(), offerId: enquiryOffer, childId: child, parentName: "Asha Rao", contactMethod: "phone", contact: "+91 98765 43210", message: "Weekday evenings suit us.", consent: true, consentVersion: PARTNER_CONSENT_VERSION };
+  await run(enquiryRoute, "POST", { ...lead, consent: false }, 400);
+  await run(enquiryRoute, "POST", { ...lead, childName: "Synthetic child" }, 400);
+  await run(enquiryRoute, "POST", lead, 404, other);
+  const named = await run(enquiryRoute, "POST", { ...lead, receipt: crypto.randomUUID(), message: "Synthetic child loves puzzles." }, 400);
+  assert.match((await named.json()).error, /name out/);
+  await run(enquiryRoute, "POST", { ...lead, receipt: crypto.randomUUID(), offerId: linkOffer }, 410);
+  const sent = (await (await run(enquiryRoute, "POST", lead)).json()).lead;
+  assert.deepEqual(Object.keys(sent.shared).sort(), ["child_age_band", "city", "contact_method", "message", "parent_name", "phone"]);
+  assert(!JSON.stringify(sent).includes("Synthetic child") && sent.user_id === undefined, "No child name or account id in the shared record");
+  assert.equal((await (await run(enquiryRoute, "POST", lead)).json()).lead.id, sent.id, "A retried enquiry returns the same record");
+  await run(enquiryRoute, "POST", { ...lead, receipt: crypto.randomUUID() }, 409);
+  await run(partnerOffers, "POST", { kind: "click", offerIds: [linkOffer] });
+  await run(partnerOffers, "POST", { kind: "lead", offerIds: [linkOffer] }, 400);
+  const overview = await (await run(partnerAdmin, "GET", null, 200, other)).json();
+  assert.equal(overview.leads.length, 1);
+  assert.equal(overview.leads[0].user_id, undefined);
+  const counts = overview.monthly.find(m => m.partner === "Synthetic Tutors");
+  assert.equal(counts.leads, 1);
+  assert.equal(counts.clicks, 1);
+  assert.equal((await (await run(partnerAdmin, "PATCH", { leadId: sent.id, status: "sent" }, 200, other)).json()).lead.status, "sent");
+  await run(partnerAdmin, "PATCH", { leadId: sent.id, status: "sent" }, 403);
+  await run(partnerAdmin, "PUT", { kind: "partner", id: tutorId, revision: 0, value: { ...tutor, police_verification_confirmed: true, status: "paused" } }, 409, other);
+  await run(partnerAdmin, "PUT", { kind: "partner", id: tutorId, revision: 1, value: { ...tutor, police_verification_confirmed: true, status: "paused" } }, 200, other);
+  assert.deepEqual((await offersFor()).offers, [], "Pausing a partner hides its offers");
+  console.log("PASS: actual partner routes: empty state, admin-only gated writes with MFA session, stale revisions, age/city matching, ref-only link-outs, consent-checked enquiries without the child’s name, retries, duplicates, anonymous counts, lead status and pausing.");
   const { blankValue } = await import("../src/lib/family-planner.ts");
   let e = {
     id: crypto.randomUUID(),
@@ -884,6 +961,11 @@ try {
   assert.equal(records.account.whatsapp.linked, true);
   assert.equal(records.account.subscription.status, "active");
   assert(exported.gifts_and_shop.length > 0 && exported.notes !== undefined);
+  assert.equal(exported.profile.city, "Pune");
+  assert.equal(exported.partner_enquiries.length, 1, "Every enquiry the parent sent is exported");
+  assert.equal(exported.partner_enquiries[0].provider_name, "Synthetic Tutors");
+  assert.equal(exported.partner_enquiries[0].consent_version, "partner-enquiry-2026-10-21");
+  assert.equal(exported.partner_enquiries[0].shared.parent_name, "Asha Rao");
   for (const leak of ["Other family", "sub_handbook_fixture", "photoHash", '"lease"', '"fingerprint"', '"attempts"', '"embedding"', '"model"', '"reviewer_note"'])
     assert(!exportText.includes(leak), `Export leaked ${leak}`);
   assert.deepEqual(signRequests.map(r => r.bucket).sort(), ["family-photos", "story-audio"]);

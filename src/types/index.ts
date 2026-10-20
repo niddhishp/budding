@@ -26,6 +26,8 @@ export interface Child {
   /** Null means legacy intake; [] means no observations supplied. */
   intakeAnswered?: (keyof TemperamentProfile)[] | null;
   memoryEnabled?: boolean;
+  /** Optional parent-chosen city, only for matching local partner services. Never sent to AI. */
+  city?: string | null;
 }
 
 export type MemoryKind = 'fact' | 'observation' | 'pattern' | 'what_worked' | 'what_didnt' | 'preference' | 'milestone' | 'joy';

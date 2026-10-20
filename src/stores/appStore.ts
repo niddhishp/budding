@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { getSupabase } from "@/lib/supabase";
 import {
-  CHILD_COLUMNS,
+  PARENT_CHILD_COLUMNS,
   childFromRow,
   temperamentToRow,
   type ChildRow,
@@ -59,6 +59,8 @@ export interface NewChildInput {
   /** Age band the temperament answers were given for (null for pregnancy). */
   intakeBand?: string | null;
   intakeAnswered?: (keyof TemperamentProfile)[] | null;
+  /** Omitted means unchanged; null clears it. */
+  city?: string | null;
 }
 
 function profileToRow(input: NewChildInput) {
@@ -72,6 +74,7 @@ function profileToRow(input: NewChildInput) {
     household: input.household ?? [],
     home_languages: input.homeLanguages ?? [],
     profile_notes: input.profileNotes?.trim() || null,
+    ...(input.city !== undefined ? { city: input.city?.trim() || null } : {}),
     intake_band: input.intakeBand ?? null,
     ...(input.intakeAnswered !== undefined
       ? { intake_answered: input.intakeAnswered }
@@ -237,7 +240,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const [{ data, error }, consentRes] = await Promise.all([
         supabase
           .from("children")
-          .select(CHILD_COLUMNS)
+          .select(PARENT_CHILD_COLUMNS)
           .order("created_at", { ascending: true })
           .returns<ChildRow[]>(),
         supabase
@@ -335,7 +338,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { data, error } = await getSupabase()
       .from("children")
       .insert(profileToRow(input))
-      .select(CHILD_COLUMNS)
+      .select(PARENT_CHILD_COLUMNS)
       .single<ChildRow>();
     if (error) throw error;
 
@@ -354,7 +357,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       .from("children")
       .update(profileToRow(input))
       .eq("id", id)
-      .select(CHILD_COLUMNS)
+      .select(PARENT_CHILD_COLUMNS)
       .single<ChildRow>();
     if (error) throw error;
 

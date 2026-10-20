@@ -149,6 +149,15 @@ export default function PrivacyPage() {
           reference and protected workspace link, not your concern or child
           details.
         </li>
+        <li>
+          <strong>Partner services you contact</strong>: only when you send an
+          enquiry and confirm the details on that screen. The partner receives
+          your name, the phone number or email you choose, your child&apos;s age
+          band, your city if you saved one, and any message you write. Never
+          your child&apos;s name, health diary, notes or conversations. Each
+          partner provides its service under its own terms; you can see every
+          enquiry you sent in your family export.
+        </li>
       </ul>
       <p>
         Some of these providers may process data outside India, under contracts
@@ -197,7 +206,7 @@ export default function PrivacyPage() {
         <li>Nominate someone to exercise these rights on your behalf.</li>
       </ul>
 
-      <h2>Grievance Officer</h2>
+      <h2 id="grievance">Grievance Officer</h2>
       <p>
         [Name], [email], [phone]. We respond within 30 days. If you are not
         satisfied, you may approach the Data Protection Board of India.

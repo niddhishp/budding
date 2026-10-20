@@ -18,6 +18,7 @@ import { todayDate } from "@/lib/family-care";
 import { interestAreas, scenes } from "@/data/interest-exploration";
 import { DailyInterestActivity } from '@/components/care/DailyInterestActivity';
 import { useTodayDate } from '@/components/care/useTodayDate';
+import { PartnerOffers } from '@/components/partners/PartnerOffers';
 export function InterestsPage() {
   const child = useAppStore((s) =>
     s.children.find((c) => c.id === s.selectedChildId),
@@ -48,6 +49,14 @@ function InterestChild({ child }: { child: Child }) {
           saved={book.data.interests.value}
           busy={book.busy}
           save={(value) => book.save("interests", value)}
+        />
+        <PartnerOffers
+          key={`partners-${book.data.interests.revision}`}
+          child={child}
+          placement="interests"
+          heading={`Classes for what ${child.name} enjoys`}
+          intro="Matched to the interests you saved and their age. Exploring is the point; a class is one option, never a requirement."
+          className="mt-8"
         />
         </>
       ) : !book.error ? (

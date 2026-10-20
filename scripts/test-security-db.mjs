@@ -59,6 +59,8 @@ try {
   await client.query(readFileSync('tests/sql/family-planner.sql','utf8'));
   await client.query(readFileSync('tests/sql/shop.sql','utf8'));
   console.log('PASS: shop isolation, service-only writes, MFA, revisions, audit, discovery limits and erasure.');
+  await client.query(readFileSync('tests/sql/partner-services.sql','utf8'));
+  console.log('PASS: partner services: activation gates (contract, terms, grievance, police verification, insurance, health fee model) hold for every writer; parents see only active, gated, age- and city-matched offers; enquiries need consent, ownership and a visible offer, share a fixed field list without the child’s name, stay private per family and are erased with the account; events carry no identifiers; team writes need MFA and are audited. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/parent-outcome-metrics.sql','utf8'));
   console.log('PASS: parent outcome metrics: consent scope, activation and second-moment 14-day windows, 30-day return, chat/practice excluded from activation, shares, feedback, Plus, small-cell suppression and service-only access. Fixtures rolled back.');
   console.log('PASS: family planning ownership, revisions/retries, archive/restore, validation, private photos and erasure recovery.');
