@@ -9,7 +9,7 @@ export const FAMILY_EXPORT_TABLES = [
   'children', 'consents', 'consent_events', 'subscriptions', 'whatsapp_links',
   'context_logs', 'decodes', 'memories', 'stories', 'reports', 'growth_entries',
   'child_care_state', 'child_profile_notebooks', 'family_entries', 'shop_records', 'expert_requests',
-  'family_checkins',
+  'family_checkins', 'sponsored_access',
 ] as const;
 
 export const FAMILY_EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
@@ -23,6 +23,7 @@ export const FAMILY_EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
   consultation_events: 'Team-only consultation notes and actions. Your own request and its status are exported.',
   consultation_alerts: 'Team notification queue: provider IDs and attempt counters.',
   admin_memberships: 'Kahiye team access, not a family record.',
+  sponsor_code_attempts: 'Security counter of refused sponsor-code attempts, used only to slow down guessing. Sponsorships you redeemed are exported.',
 };
 
 /** Private storage objects removed by erasure. Bytes are never inlined; each gets a short-lived link. */
@@ -56,6 +57,7 @@ const CHECKIN = ['id', 'hard_evenings', 'confidence', 'created_at'];
 const GROWTH = ['id', 'measured_on', 'weight_kg', 'length_cm', 'head_cm', 'method', 'note', 'archived', 'created_at', 'updated_at'];
 const REQUEST = ['id', 'concern', 'phone', 'preferred_language', 'preferred_time', 'status', 'source', 'scheduled_at', 'duration_minutes', 'created_at', 'updated_at'];
 const SUBSCRIPTION = ['plan', 'interval', 'status', 'current_period_end', 'paid_through', 'cancel_at_period_end', 'updated_at'];
+const SPONSORSHIP = ['organisation_name', 'code', 'redeemed_at', 'access_until'];
 
 /** Reads every page as the signed-in parent. RLS limits rows to their own; the user_id filter is belt and braces. */
 async function owned(supabase: SupabaseClient, table: (typeof FAMILY_EXPORT_TABLES)[number], userId: string): Promise<Row[]> {
@@ -72,7 +74,7 @@ async function owned(supabase: SupabaseClient, table: (typeof FAMILY_EXPORT_TABL
 }
 
 export async function collectFamilyExport(supabase: SupabaseClient, sign: LinkSigner, user: ExportUser, now = new Date()) {
-  const [children, consents, consentEvents, subscriptions, whatsapp, notes, decodes, memories, stories, reports, growth, care, notebooks, entries, shop, requests, checkins] =
+  const [children, consents, consentEvents, subscriptions, whatsapp, notes, decodes, memories, stories, reports, growth, care, notebooks, entries, shop, requests, checkins, sponsorships] =
     await Promise.all(FAMILY_EXPORT_TABLES.map(table => owned(supabase, table, user.id)));
   // Storage keys are always rebuilt or checked against the parent's own prefix before signing.
   const mine = (path: string | null) => (path && path.startsWith(`${user.id}/`) && !path.includes('..') ? path : null);
@@ -125,6 +127,8 @@ export async function collectFamilyExport(supabase: SupabaseClient, sign: LinkSi
       email: user.email ?? null,
       consent: { current: consents[0] ? pick(consents[0], ['policy_version', 'agreed_at']) : null, history: sorted(consentEvents, 'occurred_at').map(c => pick(c, ['policy_version', 'action', 'occurred_at'])) },
       subscription: sub ? pick(sub, SUBSCRIPTION) : null,
+      // Kahiye Plus paid for by a school, employer, clinic or community partner.
+      sponsorships: sorted(sponsorships, 'redeemed_at').map(s => pick(s, SPONSORSHIP)),
       whatsapp: link ? { linked: true, phone: link.phone ?? null, linked_at: link.linked_at ?? null } : { linked: false },
     },
     children: sorted(children, 'created_at').map(c => {

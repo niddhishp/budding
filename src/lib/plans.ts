@@ -45,6 +45,8 @@ export interface Entitlement {
   window: 'week' | 'day';
   renewsAt: string | null;
   cancelAtPeriodEnd: boolean;
+  /** Plus paid for by a school, employer, clinic or community partner, until `until` (supabase/033). */
+  sponsor?: { name: string; until: string } | null;
 }
 
 export const FREE_STORIES_LIFETIME = 1;

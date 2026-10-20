@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const { interval } = parsed.data;
 
   const entitlement = await getEntitlement(supabase, user.id);
-  if (entitlement.plan === 'plus') return NextResponse.json({ error: 'You already have Kahiye Plus.' }, { status: 409 });
+  if (entitlement.plan === 'plus') return NextResponse.json({ error: entitlement.sponsor ? `Your Kahiye Plus is sponsored by ${entitlement.sponsor.name}, so there is nothing to pay.` : 'You already have Kahiye Plus.' }, { status: 409 });
 
   try {
     await checkPaymentPlan(interval);

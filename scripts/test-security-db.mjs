@@ -46,6 +46,9 @@ try {
   console.log('PASS: a chat or practice conversation uses one Ask turn; included messages are reserved uncharged. Free allowance is 10 and Kahiye’s own failures are not counted. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/family-checkins.sql','utf8'));
   console.log('PASS: check-ins need consent and ownership, are spaced and idempotent, stay private, and aggregate only with five or more families. Fixtures rolled back.');
+  await client.query(readFileSync('tests/sql/sponsored-access.sql','utf8'));
+  console.log('PASS: sponsored access: team-only audited setup, consent, code validity, expiry, seat and code limits, idempotent re-redeem, one running sponsorship, attempt limit, Plus limits in reserve_guidance that end with the contract, sponsor reports suppressed below five families, no family visibility for sponsors, erasure. Fixtures rolled back.');
+  await import('./test-sponsor-db.mjs');
   console.log('PASS: chat/practice cannot create outcome memories, worker memories, or cross-mode continuations. Fixtures rolled back.');
   console.log('PASS: memory revisions, ownership, corrections, stop/rerate, pause, pending extraction and continuity boundaries. Fixtures rolled back.');
   await import('./test-guidance-db.mjs');

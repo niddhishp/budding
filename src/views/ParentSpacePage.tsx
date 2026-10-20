@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { CareFrame, buttonClass, fieldClass } from '@/components/care/CareFrame';
 import { useAppStore } from '@/stores/appStore';
+import { SponsorCode } from '@/components/SponsorCode';
 
 const resets = [
   ['pause', 'A quiet minute', 'If your child is safely supervised, sit or stand somewhere comfortable. Notice your feet and a few things around you. Breathe at your usual pace. You don’t have to fix the whole day right now.'],
@@ -31,6 +32,7 @@ export function ParentSpacePage() {
       <button className="text-clay underline py-3 mt-2" onClick={() => openAsk('talk', `Help me draft a simple family agreement about ${task}. ${solo ? 'I am managing without another adult at home, so keep it realistic.' : 'Ask who is available, then help us agree an owner, a backup and a check-in day.'}`)}>Help me put an agreement into words →</button>
     </section>
     <section className="py-8 border-b"><h2 className="font-heading text-2xl">If you need more than a small reset</h2><p className="mt-3 text-slate-600">If things keep feeling difficult, you can ask for a conversation with a qualified professional. You do not need to wait until everything feels unmanageable.</p><button className="text-clay underline py-3" onClick={() => useAppStore.getState().openExpert('menu')}>Request a conversation →</button><p><a className="text-clay underline text-sm" href="https://www.unicef.org/parenting/mental-health/parent-self-care-tips" target="_blank" rel="noreferrer">More ideas for parent self-care from UNICEF ↗</a></p></section>
+    <section className="py-8 border-b" aria-labelledby="sponsor-heading"><h2 id="sponsor-heading" className="font-heading text-2xl">Kahiye Plus through your school, employer or clinic</h2><p className="mt-3 text-slate-600">Some organisations pay for Kahiye Plus for their families. If yours has given you a code, use it here.</p><SponsorCode className="mt-4 block" /></section>
     <section className="pt-8"><h2 className="font-heading text-2xl">A new chapter for your family?</h2>
       {expecting.length ? <><p className="text-slate-600 mt-3">Your expecting profiles have their own pregnancy preparations and notes.</p>{expecting.map(c => <button key={c.id} className="block text-clay underline py-3" onClick={() => { selectChild(c.id); setPage('pregnancy'); }}>Open {c.name}’s pregnancy space →</button>)}</> : <p className="text-slate-600 mt-3">Pregnancy guidance appears when you add an expecting profile. Your existing children’s profiles stay as they are.</p>}
       <button className={`${buttonClass} mt-4`} onClick={() => setAddingChild(true, true)}>We’re expecting {children.length ? 'another child' : 'a child'}</button>

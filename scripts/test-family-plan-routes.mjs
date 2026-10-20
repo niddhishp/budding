@@ -169,6 +169,19 @@ const server = createServer((req, res) => {
               ],
             )
           ).rows[0].value;
+        } else if (path === "/rest/v1/rpc/redeem_sponsor_code") {
+          // Runs as the signed-in parent: the function reads auth.uid() from these claims.
+          result = (await db.query("select public.redeem_sponsor_code($1) value", [JSON.parse(bytes).input])).rows[0].value;
+        } else if (path === "/rest/v1/rpc/save_organisation") {
+          const p = JSON.parse(bytes);
+          result = (await db.query("select public.save_organisation($1,$2,$3,$4,$5) value", [p.target, p.actor, p.actor_session, p.expected, p.content])).rows[0].value;
+        } else if (path === "/rest/v1/rpc/create_sponsor_code") {
+          const p = JSON.parse(bytes);
+          result = (await db.query("select public.create_sponsor_code($1,$2,$3,$4,$5,$6) value", [p.actor, p.actor_session, p.organisation, p.new_code, p.maximum, p.expires])).rows[0].value;
+        } else if (path === "/rest/v1/rpc/sponsor_admin_overview") {
+          result = (await db.query("select public.sponsor_admin_overview() value")).rows[0].value;
+        } else if (path === "/rest/v1/rpc/sponsor_report") {
+          result = (await db.query("select public.sponsor_report($1) value", [JSON.parse(bytes).organisation])).rows[0].value;
         } else if (path === "/rest/v1/rpc/save_family_entry") {
           const p = JSON.parse(bytes);
           result = (
@@ -198,6 +211,8 @@ const server = createServer((req, res) => {
               "shop_discovery_runs",
               // Family export reads, each filtered by user_id under RLS.
               "consent_events", "whatsapp_links", "memories", "stories", "expert_requests", "family_checkins",
+              // Entitlement and export: the parent's own sponsorship, under RLS.
+              "sponsored_access",
             ].includes(table),
           );
           const values = [],
@@ -212,9 +227,11 @@ const server = createServer((req, res) => {
                 "kind",
                 "section",
                 "revision",
-                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation", "or", "share_language", "analysis->>detailUnavailable",
+                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation", "or", "share_language", "analysis->>detailUnavailable", "access_until",
               ].includes(key),
             );
+            // A sponsorship counts only while it runs.
+            if (key === "access_until" && value.startsWith("gt.")) { values.push(value.slice(3)); where.push(`access_until > $${values.length}`); continue; }
             // Usage excludes later messages in a chat or practice conversation.
             if (key === "or" && value === "(continuation_of.is.null,analysis->conversation.is.null)") { where.push("(continuation_of is null or analysis->'conversation' is null)"); continue; }
             if (key === "share_language" && value === "not.is.null") { where.push("share_language is not null"); continue; }
@@ -894,6 +911,59 @@ try {
   const uncovered = erased.filter(t => !FAMILY_EXPORT_TABLES.includes(t) && !(t in FAMILY_EXPORT_EXCLUSIONS));
   assert.deepEqual(uncovered, [], `Erased tables missing from the export inventory: ${uncovered.join(", ")}`);
   console.log(`PASS: family export handler, parent-only reads, chat/practice history, archived memories, one-hour photo and narration links, family isolation and erasure inventory (${erased.length} erased tables covered).`);
+  // ── Sponsored access: team issues codes, a Free parent redeems one, Plus follows the sponsorship ──
+  const sponsorAdmin = await import("../src/app/api/admin/sponsors/route.ts");
+  const sponsorRoute = await import("../src/app/api/sponsor/route.ts");
+  const me = await import("../src/app/api/me/route.ts");
+  const family = "f4000000-0000-4000-8000-000000000003", familyChild = "f4000000-0000-4000-8000-000000000013";
+  await db.query("insert into auth.users(id,email) values($1,'sponsored-route@example.invalid')", [family]);
+  await db.query("insert into public.consents(user_id,policy_version) values($1,'2026-10-05')", [family]);
+  await db.query("insert into public.children(id,user_id,name,dob) values($1,$2,'Synthetic sponsored child','2019-01-01')", [familyChild, family]);
+  await run(sponsorAdmin, "GET", null, 403); // a parent is not team
+  const orgId = crypto.randomUUID(), istToday = new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10);
+  const endsOn = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
+  const orgValue = { name: "Synthetic Route School", kind: "school", contact_name: "", contact_email: "head@example.invalid", contract_signed_on: istToday, seats: 40, starts_on: istToday, ends_on: endsOn, status: "active", notes: "" };
+  await run(sponsorAdmin, "POST", { action: "organisation", id: orgId, revision: 0, value: { ...orgValue, ends_on: "2020-01-01" } }, 400, other);
+  await run(sponsorAdmin, "POST", { action: "organisation", id: orgId, revision: 0, value: orgValue }, 200, other);
+  await run(sponsorAdmin, "POST", { action: "organisation", id: orgId, revision: 0, value: orgValue }, 409, other); // stale revision
+  const issued = (await (await run(sponsorAdmin, "POST", { action: "codes", organisationId: orgId, count: 2, maxRedemptions: 40, expiresOn: null }, 200, other)).json()).codes;
+  assert.equal(issued.length, 2);
+  assert(issued.every(c => /^[2-9ABCDEFGHJKMNPQRSTUVWXYZ]{10}$/.test(c.code)) && issued[0].code !== issued[1].code);
+  await run(sponsorAdmin, "POST", { action: "codes", organisationId: orgId, count: 1, maxRedemptions: 40, expiresOn: null }, 403, uid);
+  const freeMe = (await (await run(me, "GET", null, 200, family)).json()).entitlement;
+  assert.deepEqual([freeMe.plan, freeMe.window, freeMe.sponsor], ["free", "week", null]);
+  const sponsorCalls = aiCalls;
+  assert.equal((await (await run(sponsorRoute, "POST", { code: "ZZZZZ-ZZZZZ" }, 422, family)).json()).code, "invalid");
+  await run(sponsorRoute, "POST", { code: issued[0].code }, 401, null);
+  await run(sponsorRoute, "POST", { code: "" }, 400, family);
+  const typed = issued[0].code.toLowerCase().replace(/^(.{5})/, "$1-");
+  const redeemed = await (await run(sponsorRoute, "POST", { code: typed }, 200, family)).json();
+  assert.equal(redeemed.sponsor.name, "Synthetic Route School");
+  assert.equal(redeemed.already, false);
+  assert.deepEqual([redeemed.entitlement.plan, redeemed.entitlement.window, redeemed.entitlement.limit, redeemed.entitlement.renewsAt], ["plus", "day", 10, null]);
+  assert.equal(redeemed.entitlement.sponsor.name, "Synthetic Route School");
+  assert.equal(new Date(redeemed.entitlement.sponsor.until).getTime(), new Date(`${endsOn}T00:00:00+05:30`).getTime() + 86_400_000, "Access runs to the end of the last day, India time");
+  assert.equal((await (await run(sponsorRoute, "POST", { code: issued[1].code }, 200, family)).json()).already, true, "Re-redeeming the same sponsor is idempotent");
+  assert.equal(aiCalls, sponsorCalls, "Redeeming makes no model call");
+  // Plus is unlimited for caregiver messages in other languages, and SQL grants the Plus share limit too.
+  for (let i = 0; i < 5; i++) await db.query("insert into public.guidance_requests(id,user_id,child_id,kind,fingerprint,state,share_language) values($1,$2,$3,'share','fixture','complete','Hindi')", [crypto.randomUUID(), family, familyChild]);
+  const sponsoredShare = await (await run(share, "POST", { cardId: "bedtime-stalling", childId: familyChild, language: "Hindi", audience: "grandparent" }, 200, family)).json();
+  assert.equal(sponsoredShare.translatedLeft, undefined, "No 30-day limit while sponsored");
+  // The team sees seats and the suppressed sponsor summary; never a family.
+  const overview = await (await run(sponsorAdmin, "GET", null, 200, other)).json();
+  const mine = overview.organisations.find(o => o.organisation.id === orgId);
+  assert.equal(mine.seats_used, 1);
+  assert.equal(mine.report.families_joined, "<5");
+  assert(!JSON.stringify(overview).includes(family) && !JSON.stringify(overview).includes("Synthetic sponsored child"), "No family identifiers reach the team view");
+  // The parent's export carries the sponsorship.
+  const sponsoredExport = await (await run(exporter, "GET", null, 200, family)).json();
+  assert.equal(sponsoredExport.account.sponsorships[0].organisation_name, "Synthetic Route School");
+  // When the sponsorship ends, the family is back on Free limits.
+  await db.query("update public.sponsored_access set access_until=now()-interval '1 second' where user_id=$1", [family]);
+  const after = (await (await run(me, "GET", null, 200, family)).json()).entitlement;
+  assert.deepEqual([after.plan, after.window, after.sponsor], ["free", "week", null]);
+  assert.equal((await (await run(share, "POST", { cardId: "bedtime-stalling", childId: familyChild, language: "Hindi", audience: "grandparent" }, 402, family)).json()).code, "upgrade_required");
+  console.log("PASS: sponsored access routes: team-only organisation and code issuing (validation, stale revision), parent redemption with typed formatting, idempotent re-redeem, Plus entitlement with sponsor name and end date, unlimited translated shares while sponsored, suppressed team summary without family identifiers, export, and Free limits after the sponsorship ends.");
   console.log(
     "PASS: actual family plan/photo handlers, SQL persistence, tenant isolation, stale revisions, upload outage/retry, immutable photos, private image delivery and archive/restore. Storage transport simulated; no production records.",
   );
