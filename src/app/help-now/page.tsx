@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { publicMetadata } from '@/lib/seo';
 
-export const metadata = { title: 'Immediate support · Kahiye' };
+export const metadata = publicMetadata('Immediate support in India | Kahiye', 'Find direct emergency, mental health and child protection contacts in India. Available without signing in. Do not wait for an app response in an emergency.', '/help-now');
 export default function ImmediateSupport() {
   return <main className="max-w-2xl mx-auto px-6 py-12 text-foreground">
-    <Link href="/" className="text-clay underline">Kahiye</Link>
+    <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Immediate support', path: '/help-now' }]} />
     <h1 className="font-heading text-4xl mt-10 mb-5">Support when it cannot wait.</h1>
     <p className="text-lg mb-8">If anyone is in immediate danger, contact emergency services now. Do not wait for an app response or a consultation callback.</p>
     <div className="space-y-6">

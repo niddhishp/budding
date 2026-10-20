@@ -78,7 +78,7 @@ export const ARTICLES: Article[] = [
     sources: [
       source(
         "AAP: choosing and using car seats",
-        "https://healthychildren.org/English/safety-prevention/on-the-go/Pages/Car-Safety-Seats-Information-for-Families.aspx",
+        "https://www.healthychildren.org/English/safety-prevention/on-the-go/Pages/Car-Safety-Seats-Information-for-Families.aspx",
       ),
     ],
   },
@@ -589,7 +589,8 @@ export const ARTICLES: Article[] = [
     ],
   },
 ];
-export const ARTICLE_UPDATED = GUIDE_UPDATED;
+// Editorial byline, related reading and source-link update; not a clinical review date.
+export const ARTICLE_UPDATED = GUIDE_UPDATED > '2026-10-20' ? GUIDE_UPDATED : '2026-10-20';
 export function readingMinutes(article: Article) {
   return Math.max(
     1,

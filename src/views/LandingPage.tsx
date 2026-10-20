@@ -16,6 +16,7 @@ import {
   SproutMark,
 } from "@/components/illustrations";
 import { FREE_FEATURES, PLUS_FEATURES, PRICES } from "@/lib/plans";
+import { HOME_FAQS, faqSchema, jsonLd, organizationSchema, websiteSchema } from "@/lib/seo";
 
 /**
  * Scroll reveal in pure CSS (scroll-driven animation). Browsers without support, crawlers and
@@ -32,7 +33,7 @@ function Reveal({
   hero?: boolean;
 }) {
   return (
-    <div className={`${hero ? "page-enter" : "reveal"} ${className ?? ""}`}>
+    <div className={`${hero ? "" : "reveal"} ${className ?? ""}`}>
       {children}
     </div>
   );
@@ -50,14 +51,14 @@ const LANGUAGES = [
   "ગુજરાતી",
 ];
 const TYPES = [
-  "The Big-Hearted Storm",
-  "The Quiet Noticer",
-  "The Bold Firecracker",
-  "The Steady Planner",
-  "The Determined Explorer",
-  "The Social Spark",
-  "The Easy Breeze",
-  "The Balanced Builder",
+  "A change of plan",
+  "Meeting someone new",
+  "One more try",
+  "Time to leave",
+  "A busy room",
+  "Playing together",
+  "A new place",
+  "A quiet moment",
 ];
 const STAGES = [
   {
@@ -103,8 +104,10 @@ const TAG_TINTS = [
 export default function LandingPage() {
   return (
     <div className="bg-canvas text-slate-850 overflow-x-clip">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:block focus:p-4">Skip to content</a>
       <SiteHeader />
-
+      <main id="main-content">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd([organizationSchema, websiteSchema, faqSchema]) }} />
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="px-5 sm:px-8 pt-6 pb-24 md:pt-10 md:pb-32">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.2fr_1fr] gap-14 lg:gap-14 items-center">
@@ -113,13 +116,12 @@ export default function LandingPage() {
               For parents, from pregnancy to eighteen
             </p>
             <h1 className="font-heading text-[clamp(2.5rem,5.2vw,4.1rem)] leading-[1.04] text-slate-900">
-              Your child isn&rsquo;t being difficult. They&rsquo;re telling you
-              something.
+              Parenting changes. Find your next small step.
             </h1>
             <p className="mt-7 text-lg md:text-xl leading-relaxed text-slate-600 max-w-[34rem]">
-              Describe the moment, in English, Hindi or Hinglish. Kahiye gives
-              you the exact words to say, tuned to your child&rsquo;s age,
-              temperament and what has worked before.
+              A hard moment now, or a conversation you know is coming.
+              Kahiye helps you find words to try, with guidance for your
+              child&rsquo;s age and space to keep family life together.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
               <Link
@@ -135,8 +137,8 @@ export default function LandingPage() {
                 Try four little moments
               </Link>
             </div>
-            <p className="mt-6 text-sm text-slate-500">
-              Free to start. No card needed. Private by design.
+            <p className="mt-6 text-sm text-slate-600">
+              Start free. No card needed. You choose what to share.
             </p>
           </Reveal>
 
@@ -190,7 +192,7 @@ export default function LandingPage() {
                     </Link>
                   </h3>
                   <p className="text-slate-600 leading-7 mt-4">{a.summary}</p>
-                  <p className="text-xs text-slate-500 mt-4">{a.age}</p>
+                  <p className="text-xs text-slate-600 mt-4">{a.age}</p>
                 </article>
               ))}
           </div>
@@ -201,8 +203,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <Reveal>
             <h2 className="font-heading text-[clamp(1.8rem,3.4vw,2.6rem)] leading-[1.1] text-slate-900 max-w-3xl">
-              Most parenting apps go quiet after the first birthday. Kahiye
-              stays for all eighteen years.
+              From the first days to the teenage years, the questions keep changing.
             </h2>
           </Reveal>
           <ol className="mt-12 grid grid-cols-2 md:grid-cols-5 gap-x-6 gap-y-10">
@@ -220,7 +221,7 @@ export default function LandingPage() {
                   />
                 )}
                 <p className="font-heading text-xl text-slate-900">{st.name}</p>
-                <p className="mt-1 text-sm text-slate-500">{st.age}</p>
+                <p className="mt-1 text-sm text-slate-600">{st.age}</p>
                 <p className="mt-3 text-[15px] leading-relaxed text-slate-600">
                   &ldquo;{st.moment}&rdquo;
                 </p>
@@ -235,7 +236,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <Reveal>
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.08] text-slate-900 max-w-2xl">
-              Three steps, right in the middle of the moment.
+              Start with what happened.
             </h2>
           </Reveal>
 
@@ -243,7 +244,7 @@ export default function LandingPage() {
             <Step
               n="1"
               title="Tell Kahiye what’s happening"
-              body="Type it or say it, the way you’d tell a friend. Kahiye uses their age and the details you choose to share."
+              body="A few sentences are enough. Choose your child’s profile and describe what happened. Add the details you think matter."
             >
               <div className="flex md:justify-end">
                 <div className="max-w-sm rounded-[1.5rem] rounded-br-md bg-surface shadow-paper px-5 py-4">
@@ -251,7 +252,7 @@ export default function LandingPage() {
                     Aarav hit his little sister when she took his blocks.
                     He&rsquo;s still screaming.
                   </p>
-                  <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+                  <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-600">
                     <Mic className="w-3.5 h-3.5" /> or just speak
                   </p>
                 </div>
@@ -259,8 +260,8 @@ export default function LandingPage() {
             </Step>
             <Step
               n="2"
-              title="Get the words to say"
-              body="Not an article. The sentence to say right now, two or three things to do, and the one thing to avoid with this particular child."
+              title="Find words you can try"
+              body="Get a possible way to begin, a few practical steps and something to watch out for. Read it, adjust it and use your own judgment."
             >
               <div className="rounded-[1.75rem] bg-surface shadow-paper p-6 md:p-7 max-w-md">
                 <p className="text-xs font-semibold tracking-wide text-clay mb-2">
@@ -293,7 +294,7 @@ export default function LandingPage() {
             <Step
               n="3"
               title="Tell it what worked"
-              body="One tap afterwards. Next time, Kahiye starts from what actually works for your child, not for children in general."
+              body="Leave a little feedback. With memory enabled, it can help shape future suggestions. You can review, change or pause what Kahiye remembers."
             >
               <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-2 rounded-full bg-leaf text-white px-5 py-2.5 font-semibold">
@@ -324,19 +325,19 @@ export default function LandingPage() {
                 अम्मा, आरव गुस्से में हो तो पहले उसके पास बैठिए और कहिए:
                 &ldquo;तुम्हें बहुत गुस्सा आ रहा है। मैं यहीं हूँ।&rdquo;
               </p>
-              <p className="mt-1 text-right text-[11px] text-slate-500">
+              <p className="mt-1 text-right text-[11px] text-slate-600">
                 9:12 pm ✓✓
               </p>
             </div>
           </Reveal>
           <Reveal delay={0.1} className="order-1 md:order-2">
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.08] text-slate-900">
-              Same words, every caregiver.
+              Help the adults around your child work together.
             </h2>
             <p className="mt-6 text-lg leading-relaxed text-slate-600 max-w-lg">
-              Children settle when every adult responds the same way. Send the
-              plan to Dadi, Nani, your partner or your nanny on WhatsApp,
-              written warmly for them, in their language.
+              Agree on a small plan with your partner, Dadi, Nani or another
+              caregiver. Read the suggested message, adjust it and share it
+              yourself on WhatsApp. You choose the words and who receives them.
             </p>
             <ul className="mt-8 flex flex-wrap gap-2" aria-label="Languages">
               {LANGUAGES.map((l) => (
@@ -360,13 +361,12 @@ export default function LandingPage() {
               Bedtime stories
             </p>
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.1]">
-              Tonight, Aarav is the hero.
+              Make room for a story together.
             </h2>
             <p className="mt-6 text-lg leading-[1.75] text-[oklch(82%_0.03_82)] max-w-lg">
-              A story written for what&rsquo;s on his mind: a new school, a new
-              sibling, the dark. The hero feels the same worry and finds a
-              small, brave way through. Read it yourself, or let Kahiye read it
-              aloud.
+              For younger children, a made-up adventure can be a lovely way to
+              spend a few minutes together. Choose a familiar theme, read the
+              story first, then settle in and see where their questions take you.
             </p>
             <blockquote className="mt-8 font-heading text-xl leading-relaxed text-[oklch(90%_0.03_82)] max-w-md">
               &ldquo;Aarav put his bravest thing in his pocket, a small red
@@ -447,10 +447,11 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto">
           <Reveal>
             <h2 className="font-heading text-[clamp(2rem,4vw,3.2rem)] leading-[1.08] text-slate-900">
-              Less than a cup of chai a week.
+              Try Kahiye at your own pace.
             </h2>
             <p className="mt-4 text-lg text-slate-600">
-              Start free. Upgrade when Kahiye has earned it.
+              Start with the free plan. Plus is planned; paid checkout is not
+              open yet. The prices below show the intended subscription options.
             </p>
           </Reveal>
           <Reveal delay={0.1}>
@@ -479,12 +480,12 @@ export default function LandingPage() {
                 <p className="font-semibold text-clay">Plus</p>
                 <p className="mt-2 font-heading text-5xl text-slate-900 [font-variant-numeric:lining-nums]">
                   {PRICES.yearly.amount}
-                  <span className="font-sans text-lg text-slate-500">
+                  <span className="font-sans text-lg text-slate-600">
                     {" "}
                     / year
                   </span>
                 </p>
-                <p className="mt-1 text-slate-500">
+                <p className="mt-1 text-slate-600">
                   or {PRICES.monthly.amount} a month
                 </p>
                 <ul className="mt-8 mb-10 space-y-3">
@@ -499,7 +500,7 @@ export default function LandingPage() {
                   href="/app"
                   className="mt-auto flex items-center justify-center h-12 rounded-full bg-clay text-white font-semibold transition-colors hover:bg-clay-deep"
                 >
-                  Try free, then upgrade
+                  Start with the free plan
                 </Link>
               </div>
             </div>
@@ -512,16 +513,16 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10">
           {[
             [
-              "Grounded, not guessed",
-              "Every answer draws on developmental psychology and attachment research, then on what has worked for your child.",
+              "Useful, with clear limits",
+              "Research informs the guidance, but AI can make mistakes. Independent clinical review is pending. Bring health concerns to a clinician who knows your child.",
             ],
             [
               "Safety comes first",
-              "If something sounds serious, Kahiye says so plainly and puts Childline 1098, Tele-MANAS 14416 and 112 one tap away.",
+              "Urgent concerns need human help. Immediate support contacts are available without signing in. Kahiye is not an emergency service.",
             ],
             [
-              "No ads. Ever.",
-              "Kahiye is paid for by parents, not advertisers. Your family's details are never sold, and you can delete everything in one step.",
+              "Clear about referrals",
+              "No display ads. The business model includes subscriptions, labelled referrals and partnerships. Referral commissions are not used to rank products.",
             ],
           ].map(([title, body], i) => (
             <Reveal key={title} delay={i * 0.08}>
@@ -534,6 +535,16 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="px-5 sm:px-8 pb-20" aria-labelledby="faq-title">
+        <div className="max-w-3xl mx-auto">
+          <h2 id="faq-title" className="font-heading text-3xl sm:text-4xl mb-8">A few things you might be wondering.</h2>
+          {HOME_FAQS.map(({ question, answer }) => <details key={question} className="border-t border-slate-300 py-5">
+            <summary className="cursor-pointer text-lg font-semibold text-slate-900">{question}</summary>
+            <p className="mt-4 leading-relaxed text-slate-700">{answer}</p>
+          </details>)}
+          <p className="mt-6 text-slate-700">Read our <Link href="/editorial" className="underline">editorial approach</Link> or find <Link href="/help-now" className="underline">immediate support</Link>.</p>
+        </div>
+      </section>
       {/* ── Close ───────────────────────────────────────────────────────── */}
       <section className="px-5 sm:px-8 pb-24 md:pb-32">
         <Reveal className="relative overflow-hidden max-w-6xl mx-auto rounded-[2.5rem] bg-clay text-white px-8 py-14 md:px-16 md:py-20 paper-grain">
@@ -559,7 +570,7 @@ export default function LandingPage() {
             />
           </svg>
           <h2 className="font-heading text-[clamp(2rem,4.5vw,3.6rem)] leading-[1.06] max-w-3xl">
-            The next hard moment is coming. Have the words ready.
+            You don&rsquo;t need all the answers today.
           </h2>
           <Link
             href="/app"
@@ -569,17 +580,20 @@ export default function LandingPage() {
           </Link>
         </Reveal>
       </section>
-
-      <footer className="px-5 sm:px-8 py-10 border-t border-slate-200 text-sm text-slate-500">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row gap-4 justify-between">
+      </main>
+      <footer className="px-5 sm:px-8 py-10 border-t border-slate-200 text-sm text-slate-600">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 justify-between">
           <span>
             © {new Date().getFullYear()} Kahiye · <span lang="hi">कहिए</span>,
             Hindi for &ldquo;please, say it&rdquo; · General guidance, not
             medical advice.
           </span>
-          <nav className="flex gap-6">
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-4">
+            <Link href="/about" className="hover:text-slate-900">About</Link>
+            <Link href="/editorial" className="hover:text-slate-900">Editorial approach</Link>
+            <Link href="/help-now" className="hover:text-slate-900">Immediate support</Link>
             <Link href="/quiz" className="hover:text-slate-900">
-              Temperament quiz
+              Everyday moments quiz
             </Link>
             <Link href="/tools/due-date" className="hover:text-slate-900">
               Due date calculator

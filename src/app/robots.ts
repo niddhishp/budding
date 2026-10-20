@@ -1,10 +1,10 @@
 import type { MetadataRoute } from 'next';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.kahiye.app';
+import { SITE_URL } from '@/lib/seo';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: '*', allow: ['/', '/quiz', '/tools/', '/privacy', '/terms'], disallow: ['/app', '/admin', '/api/', '/auth/', '/login'] }],
-    sitemap: `${SITE}/sitemap.xml`,
+    rules: [{ userAgent: '*', allow: '/', disallow: ['/app', '/admin', '/api/', '/auth/'] }],
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }

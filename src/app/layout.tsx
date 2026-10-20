@@ -2,23 +2,25 @@ import type { Metadata, Viewport } from 'next';
 import { Young_Serif, Atkinson_Hyperlegible_Next, Mukta } from 'next/font/google';
 import '../index.css';
 import '../App.css';
+import { publicMetadata, SITE_DESCRIPTION, SITE_URL } from '@/lib/seo';
 
 // Display: a soft, bookish serif — the voice of a calm elder. One weight; never faux-bolded.
-const display = Young_Serif({ weight: '400', subsets: ['latin'], variable: '--font-display', display: 'swap' });
+const display = Young_Serif({ weight: '400', subsets: ['latin'], variable: '--font-display', display: 'optional' });
 // Body: designed for legibility at low vision — kind to tired eyes at 9pm.
-const body = Atkinson_Hyperlegible_Next({ subsets: ['latin'], variable: '--font-body', display: 'swap', adjustFontFallback: false });
+const body = Atkinson_Hyperlegible_Next({ subsets: ['latin'], variable: '--font-body', display: 'optional', adjustFontFallback: false });
 // Devanagari (Hindi, Marathi) so Indic scripts look as considered as English.
-const deva = Mukta({ weight: ['400', '600'], subsets: ['devanagari'], variable: '--font-deva', display: 'swap' });
+const deva = Mukta({ weight: ['400', '600'], subsets: ['devanagari'], variable: '--font-deva', display: 'optional', preload: false });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.kahiye.app'),
+  metadataBase: new URL(SITE_URL),
   title: 'Kahiye — The words to say, when it matters',
-  description: 'Describe a hard moment with your child and get the exact words to say, tuned to their age, temperament and history. From pregnancy to 18.',
+  description: SITE_DESCRIPTION,
   openGraph: {
     title: 'Kahiye — The words to say, when it matters',
     description: 'Parenting guidance tuned to your child, not the average child.',
     siteName: 'Kahiye',
     type: 'website',
+    images: publicMetadata('', '', '/').openGraph?.images,
   },
 };
 

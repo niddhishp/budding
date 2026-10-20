@@ -1,13 +1,15 @@
-import type { Metadata } from 'next';
 import { POLICY_VERSION } from '@/lib/consent';
 import { FREE_DECODES_PER_WEEK, PLUS_DECODES_PER_DAY, PRICES } from '@/lib/plans';
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { publicMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = { title: 'Terms — Kahiye' };
+export const metadata = publicMetadata('Terms of use | Kahiye', 'Read the terms for using Kahiye, including account responsibilities, guidance limits, subscription terms and how the service handles parenting information.', '/terms');
 
 // DRAFT — have counsel review before launch. Replace every [bracketed] placeholder.
 export default function TermsPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Terms of use', path: '/terms' }]} />
       <h1>Terms of Use</h1>
       <p className="text-sm text-slate-500">Version {POLICY_VERSION}</p>
 

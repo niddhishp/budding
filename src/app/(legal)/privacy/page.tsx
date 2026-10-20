@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
 import { POLICY_VERSION } from "@/lib/consent";
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { publicMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = { title: "Privacy Policy — Kahiye" };
+export const metadata = publicMetadata('Privacy policy | Kahiye', 'Understand what Kahiye collects, how family information is used and the choices available for consent, saved memories, account access and deletion.', '/privacy');
 
 // DRAFT — have counsel review before launch. Replace every [bracketed] placeholder.
 export default function PrivacyPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Privacy policy', path: '/privacy' }]} />
       <h1>Privacy Policy</h1>
       <p className="text-sm text-slate-500">Version {POLICY_VERSION}</p>
 

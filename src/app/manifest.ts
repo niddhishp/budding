@@ -1,11 +1,12 @@
 import type { MetadataRoute } from 'next';
+import { SITE_DESCRIPTION } from '@/lib/seo';
 
 // Installable on Android/iOS home screens: parents reach for Kahiye mid-meltdown, one tap away.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Kahiye — the words to say',
     short_name: 'Kahiye',
-    description: 'The exact words to say in hard moments with your child, tuned to their temperament.',
+    description: SITE_DESCRIPTION,
     start_url: '/app',
     scope: '/',
     display: 'standalone',

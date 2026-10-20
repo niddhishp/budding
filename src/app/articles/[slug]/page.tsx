@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ARTICLES, ARTICLE_UPDATED, readingMinutes } from "@/data/articles";
+import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
+import { EditorialByline } from '@/components/seo/EditorialByline';
+import { SITE_URL, EDITORIAL_URL, EDITORIAL_NAME, publicMetadata, jsonLd } from '@/lib/seo';
 export function generateStaticParams() {
   return ARTICLES.map((a) => ({ slug: a.slug }));
 }
@@ -11,16 +14,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const a = ARTICLES.find((a) => a.slug === slug);
   return a
     ? {
-        title: `${a.title} | Kahiye`,
-        description: a.summary,
+        ...publicMetadata(`${a.title} | Kahiye`, a.summary, `/articles/${a.slug}`),
         openGraph: {
           type: "article",
           title: a.title,
           description: a.summary,
           url: `https://www.kahiye.app/articles/${a.slug}`,
           modifiedTime: ARTICLE_UPDATED,
+          images: [{ url: `${SITE_URL}/kahiye-social.webp`, width: 1200, height: 630, alt: 'Kahiye parenting guides' }],
         },
-        twitter: { card: "summary", title: a.title, description: a.summary },
         alternates: { canonical: `https://www.kahiye.app/articles/${a.slug}` },
       }
     : {};
@@ -29,30 +31,30 @@ export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
   const a = ARTICLES.find((a) => a.slug === slug);
   if (!a) notFound();
-  const related = ARTICLES.filter(
+  const sameTopic = ARTICLES.filter(
     (b) => b.slug !== slug && b.category === a.category,
-  ).slice(0, 3);
+  );
+  const related = [...sameTopic, ...ARTICLES.filter(b => b.slug !== slug && b.category !== a.category)].slice(0, 3);
   return (
     <main className="min-h-screen bg-canvas px-5 py-10 text-slate-850">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: jsonLd({
             "@context": "https://schema.org",
             "@type": "Article",
             headline: a.title,
             description: a.summary,
             dateModified: ARTICLE_UPDATED,
-            author: { "@type": "Organization", name: "Kahiye editorial" },
-            publisher: { "@type": "Organization", name: "Kahiye" },
+            author: { "@type": "Organization", name: EDITORIAL_NAME, url: EDITORIAL_URL },
+            publisher: { "@type": "Organization", name: "Kahiye", url: SITE_URL },
+            image: `${SITE_URL}/kahiye-social.webp`,
             mainEntityOfPage: `https://www.kahiye.app/articles/${a.slug}`,
-          }).replace(/</g, "\\u003c"),
+          }),
         }}
       />
       <article className="max-w-2xl mx-auto">
-        <Link href="/articles" className="text-clay underline">
-          ← All guides
-        </Link>
+        <Breadcrumbs items={[{ name: 'Home', path: '/' }, { name: 'Parenting guides', path: '/articles' }, { name: a.title, path: `/articles/${a.slug}` }]} />
         <p className="text-clay mt-12 mb-4">
           {a.category} · {readingMinutes(a)} min read
         </p>
@@ -60,8 +62,8 @@ export default async function ArticlePage({ params }: Props) {
           {a.title}
         </h1>
         <p className="text-xl text-slate-600 mt-6">{a.summary}</p>
-        <p className="text-sm text-slate-500 my-7">
-          Kahiye editorial · Updated {ARTICLE_UPDATED}
+        <p className="text-sm text-slate-600 my-7">
+          <Link href="/editorial" rel="author" className="underline">Kahiye Editorial</Link> · Updated <time dateTime={ARTICLE_UPDATED}>{ARTICLE_UPDATED}</time>
           <br />
           {a.age}
         </p>
@@ -94,6 +96,7 @@ export default async function ArticlePage({ params }: Props) {
             someone is seriously unwell, seek urgent local medical care.
           </p>
         </aside>
+        <EditorialByline />
         {related.length > 0 && (
           <section className="mt-10">
             <h2 className="font-heading text-2xl mb-4">

@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { ARTICLES, readingMinutes } from "@/data/articles";
-export function ArticleLibrary() {
+import type { Article } from "@/data/articles";
+export type ArticlePreview = Pick<Article, 'slug' | 'category' | 'title' | 'summary' | 'age'> & { minutes: number };
+export function ArticleLibrary({ articles }: { articles: ArticlePreview[] }) {
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("All");
-  const matches = ARTICLES.filter(
+  const matches = articles.filter(
     (a) =>
       (category === "All" || a.category === category) &&
       `${a.title} ${a.summary} ${a.age} ${a.category}`
@@ -32,7 +33,7 @@ export function ArticleLibrary() {
             onChange={(e) => setCategory(e.target.value)}
             className="block w-full bg-paper border border-slate-300 rounded-xl p-3 mt-2"
           >
-            {["All", ...new Set(ARTICLES.map((a) => a.category))].map((c) => (
+            {["All", ...new Set(articles.map((a) => a.category))].map((c) => (
               <option key={c}>{c}</option>
             ))}
           </select>
@@ -50,8 +51,8 @@ export function ArticleLibrary() {
           >
             <div className="text-sm text-clay">
               {a.category}
-              <span className="block text-slate-500 mt-1">
-                {readingMinutes(a)} min read
+              <span className="block text-slate-600 mt-1">
+                {a.minutes} min read
               </span>
             </div>
             <div>
@@ -59,12 +60,13 @@ export function ArticleLibrary() {
                 <Link
                   className="hover:text-clay underline decoration-clay/30 underline-offset-4"
                   href={`/articles/${a.slug}`}
+                  prefetch={false}
                 >
                   {a.title}
                 </Link>
               </h2>
               <p className="text-slate-600 mt-3 leading-relaxed">{a.summary}</p>
-              <p className="text-xs text-slate-500 mt-3">{a.age}</p>
+              <p className="text-xs text-slate-600 mt-3">{a.age}</p>
             </div>
           </article>
         ))}
