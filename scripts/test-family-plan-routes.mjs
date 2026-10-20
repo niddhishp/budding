@@ -28,6 +28,8 @@ await db.query(
   "insert into public.children(id,user_id,name,dob) values($1,$2,'Synthetic child','2015-01-01')",
   [child, uid],
 );
+await db.query("update public.children set memory_enabled=false where id=$1", [child]);
+await db.query("insert into public.subscriptions(user_id,interval,status,razorpay_subscription_id,paid_through) values($1,'monthly','active','sub_handbook_fixture',now()+interval '1 day')", [uid]);
 const staffSession = "f4000000-0000-4000-8001-000000000002";
 await db.query(
   "insert into auth.sessions(id,user_id,aal) values($1,$2,'aal2')",
@@ -111,7 +113,16 @@ const server = createServer((req, res) => {
           }),
         ]);
         let result;
-        if (path === "/rest/v1/rpc/shop_demand") {
+        if (path === "/rest/v1/rpc/reserve_guidance") {
+          const p = JSON.parse(bytes);
+          result = (await db.query("select public.reserve_guidance($1,$2,$3,$4,$5,$6,$7) value", [p.p_id, p.p_user, p.p_child, p.p_kind, p.p_fingerprint, p.p_refines, p.p_free])).rows[0].value;
+        } else if (path === "/rest/v1/rpc/complete_guidance") {
+          const p = JSON.parse(bytes);
+          result = (await db.query("select public.complete_guidance($1,$2,$3) value", [p.p_id, p.p_lease, p.p_payload])).rows[0].value;
+        } else if (path === "/rest/v1/rpc/save_child_care") {
+          const p = JSON.parse(bytes);
+          result = (await db.query("select public.save_child_care($1,$2,$3) value", [p.target, p.expected, p.content])).rows[0].value;
+        } else if (path === "/rest/v1/rpc/shop_demand") {
           result = (await db.query("select * from public.shop_demand()")).rows;
         } else if (path === "/rest/v1/rpc/admin_session") {
           result = (await db.query("select public.admin_session() value"))
@@ -162,6 +173,14 @@ const server = createServer((req, res) => {
               "children",
               "family_entries",
               "child_profile_notebooks",
+              "child_care_state",
+              "growth_entries",
+              "decodes",
+              "reports",
+              "context_logs",
+              "subscriptions",
+              "guidance_requests",
+              "safety_events",
               "shop_records",
               "shop_catalog",
               "shop_discovery_runs",
@@ -179,15 +198,21 @@ const server = createServer((req, res) => {
                 "kind",
                 "section",
                 "revision",
+                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation",
               ].includes(key),
             );
             if (key === "kind" && value === "in.(feedback,preferences)") {
               where.push("kind in ('feedback','preferences')");
               continue;
             }
+            if (key === "safety_category" && value === "in.(none,parent_distress)") { where.push("safety_category in ('none','parent_distress')"); continue; }
+            if (key === "risk_level" && value === "in.(none,low)") { where.push("risk_level in ('none','low')"); continue; }
+            if (key === "refines" && value === "is.null") { where.push("refines is null"); continue; }
+            if (key === "analysis->conversation" && value === "is.null") { where.push("analysis->'conversation' is null"); continue; }
+            if (key === "created_at" && value.startsWith("gte.")) { values.push(value.slice(4)); where.push(`created_at >= $${values.length}`); continue; }
             assert(value.startsWith("eq."));
             values.push(value.slice(3));
-            where.push(`${key}=$${values.length}`);
+            where.push(`${key === "analysis->conversation->>mode" ? "analysis->'conversation'->>'mode'" : key}=$${values.length}`);
           }
           const condition = where.length ? " where " + where.join(" and ") : "";
           if (req.method === "DELETE") {
@@ -199,6 +224,14 @@ const server = createServer((req, res) => {
                 values,
               )
             ).rows;
+          } else if (req.method === "POST") {
+            assert.equal(table, "safety_events"); assert.equal(token, "synthetic-service-only");
+            const p = JSON.parse(bytes);
+            result = (await db.query("insert into public.safety_events(user_id,child_id,channel,level,category,reason) values($1,$2,$3,$4,$5,$6) returning *", [p.user_id,p.child_id,p.channel,p.level,p.category,p.reason])).rows;
+          } else if (req.method === "PATCH" && table === "guidance_requests") {
+            assert.equal(token, "synthetic-service-only");
+            const p = JSON.parse(bytes);
+            result = (await db.query(`update public.guidance_requests set state=$${values.length + 1},updated_at=$${values.length + 2}${condition} returning *`, [...values,p.state,p.updated_at])).rows;
           } else if (req.method === "PATCH") {
             assert.equal(table, "family_entries");
             assert.equal(token, "synthetic-service-only");
@@ -221,6 +254,7 @@ const server = createServer((req, res) => {
             )
           )
             result = result[0] ?? null;
+          if (req.method === "HEAD") res.setHeader("content-range", `0-${Math.max(0, result.length - 1)}/${result.length}`);
         }
         await db.query("reset role");
         await db.query("release savepoint request");
@@ -243,10 +277,22 @@ const base = `http://127.0.0.1:${server.address().port}`;
 process.env.NEXT_PUBLIC_SUPABASE_URL = base;
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "synthetic-only";
 process.env.SUPABASE_SERVICE_ROLE_KEY = "synthetic-service-only";
+process.env.ANTHROPIC_API_KEY = "synthetic-provider-only";
+process.env.ANTHROPIC_BASE_URL = base;
 const originalFetch = globalThis.fetch;
 let amazonFixture = false, amazonCalls = 0;
+let aiCalls = 0, rejectAiReview = false;
 globalThis.fetch = (input, init) => {
   const target = String(input);
+  if (target.startsWith(base + "/v1/messages")) {
+    aiCalls++;
+    const payload = JSON.parse(String(init.body)), props = payload.output_config.format.schema.properties;
+    const text = props.level ? { level: "none", category: "none", reason: "Synthetic routine question" }
+      : props.approved ? { approved: !rejectAiReview }
+      : { reply: "We can take this one step at a time. What would help today?", practiceReply: JSON.parse(payload.messages[0].content).mode === "rehearse" ? "But my friends can do it." : "", feedback: [] };
+    assert(payload.system[0].cache_control);
+    return Promise.resolve(Response.json({ id: "msg_fixture", type: "message", role: "assistant", model: "fixture", content: [{ type: "text", text: JSON.stringify(text) }], stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 20, output_tokens: 30 } }));
+  }
   if (amazonFixture && target === 'https://api.amazon.co.uk/auth/o2/token') return Promise.resolve(Response.json({ access_token: 'fixture-token', expires_in: 3600 }));
   if (amazonFixture && target === 'https://creatorsapi.amazon/catalog/v1/getItems') {
     amazonCalls++;
@@ -322,7 +368,7 @@ async function run(
       : {}),
   });
   const response = await workAsyncStorage.run(
-    { route: "/api/test", isStaticGeneration: false },
+    { route: "/api/test", isStaticGeneration: false, afterContext: { after() { /* Job is durably queued; worker has separate tests. */ } } },
     () =>
       workUnitAsyncStorage.run(
         {
@@ -342,6 +388,69 @@ async function run(
   return response;
 }
 try {
+  const analyze = await import("../src/app/api/analyze/route.ts");
+  const message = { childId: child, scenario: "Can we talk about a small parenting worry?", mode: "talk", requestId: crypto.randomUUID() };
+  await run(analyze, "POST", message, 401, null);
+  await run(analyze, "POST", message, 404, other);
+  assert.equal(aiCalls, 0);
+  const events = async payload => (await (await run(analyze, "POST", payload)).text()).trim().split("\n").map(line => JSON.parse(line));
+  const first = await events(message), done = first.find(e => e.type === "done");
+  assert(done, JSON.stringify(first));
+  assert.equal(done.decode.analysis.conversation.mode, "talk");
+  assert.equal(aiCalls, 3);
+  assert(!first.some(e => e.type === "delta"));
+  const repeated = await events(message);
+  assert.equal(repeated.find(e => e.type === "done").decode.id, done.decode.id);
+  assert.equal(aiCalls, 4, "Retry only rechecks safety, not generation");
+  const continued = await events({ ...message, scenario: "Starting homework has been hard.", requestId: crypto.randomUUID(), continues: done.decode.id });
+  assert(continued.some(e => e.type === "done"), JSON.stringify(continued));
+  await run(analyze, "POST", { ...message, requestId: crypto.randomUUID(), mode: "rehearse", continues: done.decode.id }, 422);
+  const practice = await events({ ...message, scenario: "Help me practise a phone conversation.", requestId: crypto.randomUUID(), mode: "rehearse", cardId: "digital-phone" });
+  assert(practice.some(e => e.type === "done" && e.decode.analysis.conversation.practiceReply));
+  const practiceId = practice.find(e => e.type === "done").decode.id;
+  const outcomes = await import("../src/app/api/decodes/[id]/outcome/route.ts");
+  await run(outcomes, "POST", { outcome: "worked" }, 422, uid, practiceId);
+  const share = await import("../src/app/api/share/route.ts");
+  await run(share, "POST", { decodeId: practiceId, language: "English", audience: "partner" }, 422);
+  const report = await import("../src/app/api/report/route.ts");
+  const beforeReport = aiCalls;
+  const reportResponse = await run(report, "POST", { childId: child }, 422);
+  assert.equal((await reportResponse.json()).code, "not_enough_data");
+  assert.equal(aiCalls, beforeReport, "Chats and rehearsal are not real weekly report observations");
+  const count = (await db.query("select count(*)::int n from public.decodes where user_id=$1", [uid])).rows[0].n;
+  rejectAiReview = true;
+  const rejected = await events({ ...message, requestId: crypto.randomUUID(), scenario: "A different synthetic routine question." });
+  rejectAiReview = false;
+  assert(rejected.some(e => e.type === "error"));
+  assert(!rejected.some(e => e.type === "done" || e.type === "delta"));
+  assert.equal((await db.query("select count(*)::int n from public.decodes where user_id=$1", [uid])).rows[0].n, count);
+  const callsBeforeEmergency = aiCalls;
+  const emergency = await events({ ...message, requestId: crypto.randomUUID(), scenario: "My child is not breathing" });
+  assert(emergency.some(e => e.type === "support"));
+  assert.equal(aiCalls, callsBeforeEmergency);
+  assert.equal((await db.query("select count(*)::int n from public.decodes where user_id=$1", [uid])).rows[0].n, count);
+  console.log("PASS: actual chat/rehearsal route, SQL receipt replay, tenant isolation, explicit continuation, mode isolation, content rejection without charge, and emergency bypass. AI transport simulated.");
+  const handbook = await import("../src/app/api/handbook/route.ts");
+  const care = await import("../src/app/api/care/route.ts");
+  const { DEFAULT_CARE } = await import("../src/lib/family-care.ts");
+  const q = `?childId=${child}`;
+  await run(handbook, "GET", null, 401, null, "unused", q);
+  await run(handbook, "GET", null, 404, other, "unused", q);
+  const before = await (await run(handbook, "GET", null, 200, uid, "unused", q)).json();
+  assert.equal(before.revision, 0);
+  const entry = { status: "saved", followUp: "2026-11-01", updatedOn: "2026-10-20" };
+  const update = { childId: child, revision: 0, cardId: "money-goal", entry };
+  await run(handbook, "PATCH", update, 404, other);
+  const h = await (await run(handbook, "PATCH", update)).json();
+  assert.deepEqual(h.progress["money-goal"], entry);
+  await run(handbook, "PATCH", update, 409);
+  await run(care, "PATCH", { childId: child, revision: h.revision, settings: { ...DEFAULT_CARE, favourites: ["existing-play"] } });
+  const retained = await (await run(handbook, "GET", null, 200, uid, "unused", q)).json();
+  assert.deepEqual(retained.progress["money-goal"], entry);
+  await run(handbook, "PATCH", { ...update, revision: retained.revision, entry: null });
+  const preserved = await (await run(care, "GET", null, 200, uid, "unused", q)).json();
+  assert.deepEqual(preserved.settings.favourites, ["existing-play"]);
+  console.log("PASS: actual Handbook/care handlers preserve each other's records, reject cross-parent and stale saves, and remove only chosen progress.");
   const shop = await import("../src/app/api/shop/route.ts");
   const media = await import("../src/app/api/shop/media/route.ts");
   await run(media, "GET", null, 401, null);

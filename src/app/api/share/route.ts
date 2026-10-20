@@ -43,6 +43,7 @@ export async function POST(req: Request) {
     .eq('id', decodeId)
     .maybeSingle<{ child_id: string; safety_category: string; scenario: string; analysis: AgentAnalysis | null; children: { name: string } | null }>();
   if (!decode?.analysis) return NextResponse.json({ error: 'Decode not found.' }, { status: 404 });
+  if (decode.analysis.conversation) return NextResponse.json({ error: 'Chat and fictional practice cannot be shared as a real parenting situation.' }, { status: 422 });
 
   if (decode.safety_category !== 'none') return NextResponse.json({ error: 'Use the original support information for this situation.' }, { status: 422 });
   reservation = await reserveGuidance({ id: crypto.randomUUID(), userId: user.id, childId: decode.child_id, kind: 'share', content: { decodeId, language, audience } });

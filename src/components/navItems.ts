@@ -1,19 +1,12 @@
 import {
   LayoutDashboard,
   UserCircle,
-  Sparkles,
-  Moon,
-  Compass,
-  CalendarDays,
-  ShieldCheck,
+  MessageCircle,
+  BookOpen,
   Heart,
-  Gift,
-  Footprints,
-  Sprout,
 } from "lucide-react";
 import type { Page } from "@/stores/appStore";
 import type { Child } from "@/types";
-import { familyNavigation } from "@/lib/family-navigation";
 
 type NavItem = {
   id: Page;
@@ -22,38 +15,15 @@ type NavItem = {
   highlight?: boolean;
 };
 export function navItemsForChild(
-  child: Child | undefined,
-  today?: string,
+  _child?: Child,
+  _today?: string,
 ): NavItem[] {
-  const relevant = familyNavigation(child, today);
+  void _child; void _today; // Compatibility for shared navigation callers; the five items are stable.
   return [
     { id: "dashboard", label: "Today", icon: LayoutDashboard },
-    { id: "family-plan", label: "Plan", icon: CalendarDays },
-    { id: "ask-ai", label: "Decode", icon: Sparkles },
-    ...(relevant.puberty
-      ? [
-          {
-            id: "puberty" as const,
-            label: "Puberty",
-            icon: Sprout,
-            highlight: true,
-          },
-        ]
-      : []),
-    ...(relevant.born
-      ? [{ id: "safety" as const, label: "Safety", icon: ShieldCheck }]
-      : []),
-    { id: "parent-space", label: "Your Space", icon: Heart },
-    ...(relevant.born
-      ? [
-          { id: "gifts" as const, label: "Gifts", icon: Gift },
-          { id: "play" as const, label: "Play", icon: Footprints },
-        ]
-      : []),
-    ...(relevant.stories
-      ? [{ id: "stories" as const, label: "Stories", icon: Moon }]
-      : []),
-    { id: "discover", label: "Discover", icon: Compass },
+    { id: "ask-ai", label: "Ask", icon: MessageCircle },
+    { id: "handbook", label: "Handbook", icon: BookOpen },
     { id: "child-profile", label: "Child", icon: UserCircle },
+    { id: "parent-space", label: "You", icon: Heart },
   ];
 }

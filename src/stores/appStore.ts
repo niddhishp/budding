@@ -18,6 +18,7 @@ import type {
 } from "@/types";
 
 export type Page =
+  | "handbook"
   | "puberty"
   | "safety"
   | "shop"
@@ -110,6 +111,10 @@ interface AppState {
 
   // Navigation
   currentPage: Page;
+  handbookCardId: string | null;
+  openHandbook: (id?: string) => void;
+  askIntent: { mode: "guidance" | "talk" | "rehearse"; prompt: string; cardId?: string } | null;
+  openAsk: (mode: "guidance" | "talk" | "rehearse", prompt?: string, cardId?: string) => void;
   setPage: (page: Page) => void;
   sidebarOpen: boolean;
   toggleSidebar: () => void;
@@ -305,7 +310,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   currentPage: "dashboard",
-  setPage: (page) => set({ currentPage: page }),
+  handbookCardId: null,
+  openHandbook: (id) => set({ currentPage: "handbook", handbookCardId: id ?? null }),
+  askIntent: null,
+  openAsk: (mode, prompt = "", cardId) => set({ currentPage: "ask-ai", askIntent: { mode, prompt, cardId } }),
+  setPage: (page) => set({ currentPage: page, ...(page === "ask-ai" ? { askIntent: null } : {}), ...(page === "handbook" ? { handbookCardId: null } : {}) }),
   sidebarOpen: true,
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
 
@@ -315,7 +324,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const child = get().children.find(c => c.id === id);
     if (!child) return;
     rememberSelection(id);
-    set({ selectedChildId: id, currentPage: pageAfterChildSwitch(get().currentPage, child) });
+    set({ selectedChildId: id, currentPage: pageAfterChildSwitch(get().currentPage, child), handbookCardId: null, askIntent: null });
   },
   addChild: async (input) => {
     const { data, error } = await getSupabase()

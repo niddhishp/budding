@@ -26,10 +26,11 @@ export function pageAfterChildSwitch(page: Page, child: Child): Page {
 }
 
 export function activeNavigation(page: Page): Page {
-  if (["growth", "health", "interests", "photo-timeline"].includes(page))
+  if (["growth", "health", "interests", "photo-timeline", "family-plan", "shop", "gifts", "milestones", "development"].includes(page))
     return "child-profile";
-  if (["shop", "milestones", "development", "pregnancy"].includes(page))
-    return "discover";
+  if (["puberty", "safety", "play", "stories", "discover", "pregnancy", "emotional-lab", "parent-coach", "family-hub", "life-skills", "community"].includes(page))
+    return "handbook";
+  if (page === "wellbeing") return "parent-space";
   if (page === "library") return "ask-ai";
   return page;
 }

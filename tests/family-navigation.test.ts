@@ -52,40 +52,17 @@ test("navigation uses birthdays: puberty preparation 8–17, Stories through 12"
   assert.equal(familyNavigation(child("2027-01-01"), today).born, false);
 });
 
-test("promoted spaces are direct destinations and pregnancy never inherits child-only navigation", () => {
-  const items = navItemsForChild(child("2015-09-01"), today);
-  for (const id of [
-    "safety",
-    "parent-space",
-    "gifts",
-    "play",
-    "puberty",
-    "stories",
-  ])
-    assert(items.some((i) => i.id === id));
-  assert(items.find((i) => i.id === "puberty")?.highlight);
-  assert(
-    !navItemsForChild(child("2010-01-01"), today).some(
-      (i) => i.id === "stories",
-    ),
-  );
-  const expecting = navItemsForChild(child(null), today);
-  assert(expecting.some((i) => i.id === "parent-space"));
-  assert(
-    !expecting.some((i) =>
-      ["puberty", "stories", "play", "safety", "gifts"].includes(i.id),
-    ),
-  );
-  for (const id of [
-    "safety",
-    "parent-space",
-    "gifts",
-    "play",
-    "puberty",
-  ] as const)
-    assert.equal(activeNavigation(id), id);
+test("five stable destinations retain nested handbook and family tools for every profile", () => {
+  for (const profile of [child("2015-09-01"), child("2010-01-01"), child(null), undefined]) {
+    assert.deepEqual(navItemsForChild(profile, today).map(i => i.label), ["Today", "Ask", "Handbook", "Child", "You"]);
+  }
+  for (const id of ["safety", "puberty", "play", "stories", "pregnancy", "discover"] as const)
+    assert.equal(activeNavigation(id), "handbook");
+  assert.equal(activeNavigation("parent-space"), "parent-space");
+  assert.equal(activeNavigation("gifts"), "child-profile");
   assert.equal(activeNavigation("health"), "child-profile");
-  assert.equal(activeNavigation("shop"), "discover");
+  assert.equal(activeNavigation("shop"), "child-profile");
+  assert.equal(activeNavigation("family-plan"), "child-profile");
 });
 
 test("switching children leaves an inapplicable age-specific page, without removing the story library", () => {

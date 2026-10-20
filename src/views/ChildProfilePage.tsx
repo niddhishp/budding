@@ -61,6 +61,10 @@ export function ChildProfilePage() {
       </motion.div>
 
       <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        <button onClick={() => setPage("handbook")} className="text-left border-y py-6 px-3">
+          <span className="block font-heading text-2xl">Their handbook →</span>
+          <span className="text-sm text-slate-600">Conversations for this age and your saved follow-ups.</span>
+        </button>
         <button
           onClick={() => setPage("photo-timeline")}
           className="text-left border-y py-6 px-3"
@@ -80,6 +84,11 @@ export function ChildProfilePage() {
           </span>
         </button>
       </div>
+      {child.dateOfBirth && <div className="flex flex-wrap gap-6 border-b pb-6 mb-8">
+        <button className="text-clay underline py-2" onClick={() => setPage("gifts")}>Gifts & rewards →</button>
+        <button className="text-clay underline py-2" onClick={() => setPage("shop")}>Shop for Kids →</button>
+        <button className="text-clay underline py-2" onClick={() => setPage("milestones")}>Developmental observations →</button>
+      </div>}
       {child.age.stage !== "pregnancy" && (
         <section className="mb-12">
           <ParentGuideLinks key={`guides-${child.id}`} child={child} />

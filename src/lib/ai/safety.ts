@@ -50,6 +50,9 @@ Rate on content, not tone. "I'm going to lose it" from a tired parent is parent_
 
 // Instant, model-free screen: obvious emergencies never wait on an API round-trip.
 const PATTERNS: { re: RegExp; category: SafetyCategory }[] = [
+  { re: /आत्महत्या|खुदकुशी|தற்கொலை|தற்கொலை செய்ய|ആത്മഹത്യ/i, category: 'child_self_harm' },
+  { re: /सांस नहीं ले|साँस नहीं ले|மூச்சு விடவில்லை|மூச்சு வரவில்லை|ശ്വാസം എടുക്കുന്നില്ല|ശ്വാസമില്ല/i, category: 'medical' },
+  { re: /यौन शोषण|यौन दुर्व्यवहार|பாலியல் துன்புறுத்தல்|பாலியல் வன்கொடுமை|ലൈംഗിക പീഡനം/i, category: 'abuse' },
   { re: /\bsuicid|\bkill (him|her|my|them)sel(f|ves)\b|\bwants? to die\b|\bwant(s)? to end (it|(his|her) life)|marna chahta|marna chahti|khudkushi/i, category: 'child_self_harm' },
   { re: /\bself[- ]?harm|\bcutting (him|her)self|\bcuts (him|her)self|\bburn(s|ing)? (him|her)self/i, category: 'child_self_harm' },
   { re: /\b(sexual(ly)?|physical(ly)?) abus|\bmolest|\btouched (him|her) (inappropriately|there)|\bbad touch/i, category: 'abuse' },

@@ -5,10 +5,26 @@ import { classifySafety, guidancePath, bypassesPaywall } from '../../src/lib/ai/
 import { lintAnalysis, repairAnalysis } from '../../src/lib/ai/critic';
 import { checkedCall } from '../../src/lib/ai/checked-content';
 import { DecodeError, type structuredCall, type StructuredOpts } from '../../src/lib/ai/llm';
+import { CONSTITUTION } from '../../src/lib/ai/doctrine/constitution';
 
 const fake = (fn: (opts: StructuredOpts<unknown>) => Promise<unknown>) => fn as typeof structuredCall;
 const validator = z.object({ sayThis: z.string() });
 const options = { system: 'Parenting content', user: 'Synthetic everyday moment', schema: { type: 'object' }, validator, maxTokens: 100 };
+
+test('checked calls include the shared constitution exactly once', async () => {
+  let calls = 0;
+  await checkedCall({ ...options, system: CONSTITUTION }, fake(async opts => {
+    assert.equal(opts.system.split(CONSTITUTION).length - 1, 1);
+    return ++calls === 1 ? { sayThis: 'We can try a smaller step.' } : { approved: true };
+  }));
+});
+test('Indic emergency phrases take the model-free safety path', async () => {
+  let calls = 0;
+  const unavailable = fake(async () => { calls++; throw Error('No provider'); });
+  for (const message of ['बच्चा सांस नहीं ले रहा', 'குழந்தைக்கு மூச்சு வரவில்லை', 'കുട്ടി ശ്വാസം എടുക്കുന്നില്ല', 'ആത്മഹത്യ', 'தற்கொலை', 'यौन शोषण'])
+    assert.equal(guidancePath(await classifySafety(message, undefined, unavailable)), 'support');
+  assert.equal(calls, 0);
+});
 
 test('urgent patterns do not wait for the classifier; outage never becomes ordinary', async () => {
   let calls = 0;

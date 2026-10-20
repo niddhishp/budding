@@ -8,7 +8,7 @@ function database(paused = false, missing = false) {
   const filters: Record<string, unknown> = {};
   const db = { from(table: string) {
     tables.push(table);
-    const query = { select() { return query; }, eq(key: string, value: unknown) { filters[`${table}.${key}`] = value; return query; }, not() { return query; }, or() { return query; }, order() { return query; }, limit() { return query; },
+    const query = { select() { return query; }, eq(key: string, value: unknown) { filters[`${table}.${key}`] = value; return query; }, is(key: string, value: unknown) { filters[`${table}.${key}`] = value; return query; }, in(key: string, value: unknown) { filters[`${table}.${key}`] = value; return query; }, not() { return query; }, or() { return query; }, order() { return query; }, limit() { return query; },
       async maybeSingle() {
         if (table === 'children') return { data: { id: 'child', name: 'Synthetic', dob: '2020-01-01', memory_enabled: !paused }, error: null };
         const id = Number(filters['decodes.id']);
@@ -41,6 +41,13 @@ test('pause stops memory reads but explicit continuity still checks parent, chil
   assert.equal(filters['decodes.user_id'], 'parent');
   assert.equal(filters['decodes.child_id'], 'child');
   assert.equal(filters['decodes.safety_category'], 'none');
+  assert.equal(filters['decodes.analysis->conversation'], null);
+});
+test('chosen conversations only load the same mode and low-risk context', async () => {
+  const { db, filters } = database(true);
+  await loadSituationChain(db, 'child', 'parent', '3', 'rehearse');
+  assert.equal(filters['decodes.analysis->conversation->>mode'], 'rehearse');
+  assert.deepEqual(filters['decodes.risk_level'], ['none', 'low']);
 });
 test('an unavailable earlier situation fails closed', async () => {
   await assert.rejects(loadSituationChain(database(false, true).db, 'child', 'parent', '1'), /unavailable/);

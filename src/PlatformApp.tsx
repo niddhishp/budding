@@ -6,20 +6,17 @@ import { useAppStore } from "@/stores/appStore";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { DashboardPage } from "@/views/DashboardPage";
-import { AskAIPage } from "@/views/AskAIPage";
+import { AskPage } from "@/views/AskPage";
 import { ChildProfilePage } from "@/views/ChildProfilePage";
-import { EmotionalLabPage } from "@/views/EmotionalLabPage";
-import { ParentCoachPage } from "@/views/ParentCoachPage";
-import { FamilyHubPage } from "@/views/FamilyHubPage";
-import { LifeSkillsPage } from "@/views/LifeSkillsPage";
-import { CommunityPage } from "@/views/CommunityPage";
-import { WellbeingPage } from "@/views/WellbeingPage";
 import { StoriesPage } from "@/views/StoriesPage";
 import { QuickLog } from "@/components/QuickLog";
 import { GenomeOnboarding } from "@/components/GenomeOnboarding";
 import { ConsentGate } from "@/components/ConsentGate";
 import { PlanSheet } from "@/components/PlanSheet";
 import { ExpertSheet } from "@/components/ExpertSheet";
+import { HandbookPage } from "@/views/HandbookPage";
+import { useTodayDate } from "@/components/care/useTodayDate";
+import { computeAge } from "@/lib/age";
 const ParentGuidesPage = dynamic(() =>
   import("@/views/ParentGuidesPage").then((m) => m.ParentGuidesPage),
 );
@@ -74,10 +71,17 @@ function PlatformApp() {
     selectedChildId,
   } = useAppStore();
   const editChild = children.find((c) => c.id === editingChildId);
+  const today = useTodayDate();
 
   useEffect(() => {
     load();
   }, [load]);
+  useEffect(() => {
+    if (status !== "ready") return;
+    useAppStore.setState(state => ({ children: state.children.map(child => ({
+      ...child, age: computeAge(child.dateOfBirth, child.dueDate, new Date(`${today}T00:00:00`)),
+    })) }));
+  }, [today, status]);
 
   if (status === "loading") {
     return (
@@ -111,6 +115,8 @@ function PlatformApp() {
 
   const renderPage = () => {
     switch (currentPage) {
+      case "handbook":
+        return <HandbookPage key={selectedChildId} />;
       case "puberty":
         return (
           <ParentGuidesPage
@@ -134,7 +140,7 @@ function PlatformApp() {
         return <PhotoTimelinePage key={selectedChildId} />;
       case "ask-ai":
       case "library":
-        return <AskAIPage />;
+        return <AskPage key={`${selectedChildId}-${useAppStore.getState().askIntent?.mode ?? "guidance"}-${useAppStore.getState().askIntent?.prompt ?? ""}`} />;
       case "child-profile":
         return <ChildProfilePage />;
       case "development":
@@ -155,17 +161,13 @@ function PlatformApp() {
       case "parent-space":
         return <ParentSpacePage />;
       case "emotional-lab":
-        return <EmotionalLabPage />;
       case "parent-coach":
-        return <ParentCoachPage />;
       case "family-hub":
-        return <FamilyHubPage />;
       case "life-skills":
-        return <LifeSkillsPage />;
       case "community":
-        return <CommunityPage />;
+        return <HandbookPage key={selectedChildId} />;
       case "wellbeing":
-        return <WellbeingPage />;
+        return <ParentSpacePage />;
       case "stories":
         return <StoriesPage />;
       default:

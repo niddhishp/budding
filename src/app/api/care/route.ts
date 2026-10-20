@@ -67,10 +67,13 @@ export async function PATCH(req: Request) {
     .safeParse(await req.json().catch(() => null));
   if (!input.success)
     return json({ error: "Check the care settings and try again." }, 400);
+  // Keep Handbook progress when an older open care screen saves its settings.
+  const current = await access.supabase.from("child_care_state").select("value").eq("child_id", input.data.childId).eq("user_id", access.user.id).maybeSingle();
+  if (current.error) return json({ error: "Could not check current care settings." }, 503);
   const { data, error } = await access.supabase.rpc("save_child_care", {
     target: input.data.childId,
     expected: input.data.revision,
-    content: input.data.settings,
+    content: { ...input.data.settings, ...(current.data?.value?.handbook ? { handbook: current.data.value.handbook } : {}) },
   });
   if (error)
     return json(

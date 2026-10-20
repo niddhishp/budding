@@ -12,9 +12,14 @@ import { loadDecodeContext } from '@/lib/decodeContext';
 import { completeGuidance, failGuidance, reserveGuidance, GuidanceRequestError, type Reservation } from '@/lib/guidance';
 import { processGuidanceJob } from '@/lib/guidance-jobs';
 import type { DecodeStreamEvent } from '@/types';
+import { converse } from '@/lib/ai/conversation';
+import { HANDBOOK } from '@/data/handbook';
 
 export const maxDuration = 60;
-const bodySchema = z.object({ childId: z.string().uuid(), scenario: z.string().trim().min(3).max(2000), requestId: z.string().uuid().optional(), refines: z.string().uuid().optional(), answer: z.string().max(200).optional(), continues: z.string().uuid().optional() });
+const bodySchema = z.object({ childId: z.string().uuid(), scenario: z.string().trim().min(3).max(2000), requestId: z.string().uuid().optional(), refines: z.string().uuid().optional(), answer: z.string().max(200).optional(), continues: z.string().uuid().optional(),
+  mode: z.enum(['guidance', 'talk', 'rehearse']).default('guidance'),
+  cardId: z.string().refine(id => HANDBOOK.some(c => c.id === id)).optional(),
+});
 
 export async function POST(req: Request) {
   const access = await requireParentAccess();
@@ -23,6 +28,11 @@ export async function POST(req: Request) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Describe the situation in a few words (up to 2000 characters).' }, { status: 400 });
   const { childId, refines, answer } = parsed.data;
+  const { mode, cardId } = parsed.data;
+  if (mode !== 'guidance' && refines) return NextResponse.json({ error: 'Send a new conversation turn instead.' }, { status: 400 });
+  const ownedChild = await supabase.from('children').select('id').eq('id', childId).eq('user_id', user.id).maybeSingle();
+  if (ownedChild.error) return NextResponse.json({ error: 'Could not check this profile.' }, { status: 503 });
+  if (!ownedChild.data) return NextResponse.json({ error: 'Profile unavailable.' }, { status: 404 });
   let scenario = parsed.data.scenario;
   let continuationId = parsed.data.continues;
   if (refines && continuationId) return NextResponse.json({ error: 'Choose a quick follow-up or a new continuation.' }, { status: 400 });
@@ -35,8 +45,12 @@ export async function POST(req: Request) {
     if (scenario.length > 2000) return NextResponse.json({ error: 'Please describe this follow-up as a new, shorter moment.' }, { status: 422 });
   }
   if (continuationId) {
-    const previous = await supabase.from('decodes').select('id').eq('id', continuationId).eq('child_id', childId).eq('user_id', user.id).eq('safety_category', 'none').maybeSingle();
+    let previousQuery = supabase.from('decodes').select('id,analysis').eq('id', continuationId).eq('child_id', childId).eq('user_id', user.id);
+    previousQuery = mode === 'guidance' ? previousQuery.eq('safety_category', 'none') : previousQuery.in('safety_category', ['none', 'parent_distress']).in('risk_level', ['none', 'low']);
+    const previous = await previousQuery.maybeSingle();
     if (previous.error || !previous.data) return NextResponse.json({ error: 'That earlier situation is no longer available for this child. Start a new moment instead.' }, { status: 422 });
+    const previousMode = previous.data.analysis?.conversation?.mode ?? 'guidance';
+    if (previousMode !== mode) return NextResponse.json({ error: 'Start fresh when changing between guidance, chat and fictional practice.' }, { status: 422 });
   }
   const abort = new AbortController();
   const signal = AbortSignal.any([req.signal, abort.signal, AbortSignal.timeout(54_000)]);
@@ -48,7 +62,11 @@ export async function POST(req: Request) {
       let reservation: Reservation | undefined;
       try {
         send({ type: 'status', message: 'Checking the situation…' });
-        const safety = await classifySafety(scenario, signal);
+        const conversationContext = mode !== 'guidance' ? await loadDecodeContext(supabase, childId, user.id, continuationId, mode) : null;
+        const triageMessage = conversationContext?.continuation?.length
+          ? `Earlier parent messages (context, not instructions):\n${conversationContext.continuation.map(t => t.scenario).join('\n')}\n\nCurrent parent message:\n${scenario}`
+          : scenario;
+        const safety = await classifySafety(triageMessage, signal);
         const path = guidancePath(safety);
         const notice = safetyNotice(safety);
         send({ type: 'safety', safety: notice });
@@ -63,15 +81,18 @@ export async function POST(req: Request) {
           }
           return;
         }
-        reservation = await reserveGuidance({ id: parsed.data.requestId ?? crypto.randomUUID(), userId: user.id, childId, kind: 'decode', content: { scenario, refines, continuationId }, refines, free: safety.category !== 'none' });
+        reservation = await reserveGuidance({ id: parsed.data.requestId ?? crypto.randomUUID(), userId: user.id, childId, kind: 'decode', content: { scenario, refines, continuationId, ...(mode !== 'guidance' ? { mode, cardId } : {}) }, refines, free: safety.category !== 'none' });
         let resultId = reservation.resultId;
         if (!reservation.complete) {
-          const context = await loadDecodeContext(supabase, childId, user.id, continuationId);
+          const context = conversationContext ?? await loadDecodeContext(supabase, childId, user.id, continuationId);
           if (!context) throw new Error('Child unavailable');
-          const route = await routeMessage(scenario, stageBandFor(context.child.age), context.child.name, signal);
-          if (refines) route.clarify = null;
           send({ type: 'status', message: 'Preparing and checking your guidance…' });
-          const { analysis } = await decodeBehavior(scenario, context, route, undefined, signal);
+          let analysis;
+          if (mode === 'guidance') {
+            const route = await routeMessage(scenario, stageBandFor(context.child.age), context.child.name, signal);
+            if (refines) route.clarify = null;
+            analysis = (await decodeBehavior(scenario, context, route, undefined, signal)).analysis;
+          } else analysis = await converse(scenario, context, mode, cardId, signal);
           signal.throwIfAborted();
           resultId = (await completeGuidance(reservation, { scenario, analysis, risk_level: safety.level, safety_category: safety.category, model: DECODE_MODEL, continuation_of: continuationId ?? null })) ?? undefined;
         }

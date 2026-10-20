@@ -6,7 +6,7 @@ export class RequestScope {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     controller.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
     this.controllers.add(controller);
-    return { signal: controller.signal, active: () => !controller.signal.aborted,
+    return { signal: controller.signal, active: () => !controller.signal.aborted, cancel: () => controller.abort(),
       finish: () => { clearTimeout(timer); this.controllers.delete(controller); } };
   }
   cancel() { for (const c of this.controllers) c.abort(); this.controllers.clear(); }

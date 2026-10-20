@@ -26,10 +26,10 @@ export default function TermsPage() {
 
       <h2>Plans and billing</h2>
       <ul>
-        <li>Free: {FREE_DECODES_PER_WEEK} decodes per rolling 7 days.</li>
+        <li>Free: {FREE_DECODES_PER_WEEK} Ask turns per rolling 7 days, shared across practical guidance, chat and practice.</li>
         <li>
           Plus: {PRICES.monthly.amount}/{PRICES.monthly.per} or {PRICES.yearly.amount}/{PRICES.yearly.per}, billed in advance
-          through Razorpay and renewing automatically until cancelled. Fair use is {PLUS_DECODES_PER_DAY} decodes per day.
+          through Razorpay and renewing automatically until cancelled. Fair use is {PLUS_DECODES_PER_DAY} Ask turns per rolling day, shared across practical guidance, chat and practice.
         </li>
         <li>Cancel anytime from the account menu. You keep Plus until the end of the period you paid for; we do not refund partial periods except where the law requires.</li>
         <li>We will give you at least 30 days&apos; notice of any price change.</li>

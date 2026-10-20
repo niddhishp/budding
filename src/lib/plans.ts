@@ -13,7 +13,7 @@ export const PRICES: Record<BillingInterval, { amount: string; per: string; note
 };
 
 export const PLUS_FEATURES = [
-  `${PLUS_DECODES_PER_DAY} decodes per rolling day`,
+  `${PLUS_DECODES_PER_DAY} Ask turns per rolling day — guidance, chat or practice`,
   'Share scripts with grandparents and caregivers in Hindi, Malayalam, Tamil and 6 more languages',
   'Guidance that learns from what worked for your child',
   'A weekly pattern report for each child, ready to show your pediatrician',
@@ -21,7 +21,7 @@ export const PLUS_FEATURES = [
 ];
 
 export const FREE_FEATURES = [
-  `${FREE_DECODES_PER_WEEK} decodes a week`,
+  `${FREE_DECODES_PER_WEEK} Ask turns a week — guidance, chat or practice`,
   'Daily guidance for your child',
   'Share scripts in English',
 ];

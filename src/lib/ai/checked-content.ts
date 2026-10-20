@@ -21,6 +21,6 @@ export async function checkContent<T extends Record<string, unknown>>(value: T, 
 }
 
 export async function checkedCall<T extends Record<string, unknown>>(opts: StructuredOpts<T> & { additionalContent?: unknown }, call = structuredCall): Promise<T> {
-  const policyOpts = { ...opts, system: `${CONSTITUTION}\n\n${opts.system}`, timeoutMs: opts.timeoutMs ?? 25_000 };
+  const policyOpts = { ...opts, system: opts.system.startsWith(CONSTITUTION) ? opts.system : `${CONSTITUTION}\n\n${opts.system}`, timeoutMs: opts.timeoutMs ?? 25_000 };
   return checkContent(await call(policyOpts), policyOpts, call);
 }

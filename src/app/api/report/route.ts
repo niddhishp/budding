@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     supabase.from('context_logs').select('content, log_type, created_at')
       .eq('child_id', childId).gte('created_at', since).order('created_at', { ascending: true }).limit(60),
     supabase.from('decodes').select('scenario, analysis, outcome, created_at')
-      .eq('child_id', childId).eq('safety_category', 'none').gte('created_at', since).order('created_at', { ascending: true }).limit(40),
+      .eq('child_id', childId).eq('safety_category', 'none').is('analysis->conversation', null).gte('created_at', since).order('created_at', { ascending: true }).limit(40),
   ]);
   if (childRes.error || logsRes.error || decodesRes.error) throw new Error('Report sources unavailable');
   if (!childRes.data) return NextResponse.json({ error: 'Child not found.' }, { status: 404 });

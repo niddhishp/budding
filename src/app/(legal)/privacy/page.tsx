@@ -31,7 +31,8 @@ export default function PrivacyPage() {
           chosen chart reference, milestone observations and reminder
           preferences, saved play activities, pregnancy preparations and notes,
           vaccination and medication records, check-up dates, and your
-          observations about interests and talents. These records stay separate
+          observations about interests and talents, and Handbook conversation
+          status and follow-up dates. These records stay separate
           from AI memory and are not automatically sent to an AI provider or
           clinician.
         </li>
@@ -104,6 +105,16 @@ export default function PrivacyPage() {
       </p>
 
       <h2>How Kahiye uses AI</h2>
+      <p>
+        Ask includes practical guidance, parent-facing chat and clearly labelled
+        fictional rehearsal. Submitted messages and checked replies are saved
+        under the selected child. Continuing a chat includes up to four earlier
+        turns you chose to continue; starting fresh does not include those turns.
+        Chat and rehearsal do not automatically create child memories. A practice
+        reply is not a statement about what your actual child thinks or will say.
+        If you choose to prepare for a saved family event, its title and date are
+        shown in an editable prompt and are sent only when you submit it.
+      </p>
       <p>
         Kahiye&apos;s custom-designed AI guidance combines research-informed
         parenting frameworks, age-specific context and safety checks to help you

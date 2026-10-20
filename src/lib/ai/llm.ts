@@ -45,7 +45,8 @@ function requestParams(opts: StructuredOpts<unknown>) {
     model,
     max_tokens: opts.maxTokens,
     ...(full ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
-    system: opts.system,
+    // Cache only stable system instructions; family content stays in the user turn.
+    system: [{ type: 'text' as const, text: opts.system, cache_control: { type: 'ephemeral' as const } }],
     messages: [{ role: 'user' as const, content: opts.user }],
     output_config: {
       ...(full ? { effort: opts.effort ?? EFFORT } : {}),

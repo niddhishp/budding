@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { useAppStore } from "@/stores/appStore";
+import { activeNavigation } from "@/lib/family-navigation";
 export function CareFrame({
   title,
   intro,
@@ -13,21 +14,15 @@ export function CareFrame({
   const page = useAppStore((s) => s.currentPage);
   return (
     <div className="max-w-4xl mx-auto px-5 py-8 pb-28">
-      {!["discover", "puberty", "safety", "parent-space", "gifts", "play"].includes(page) && (
+      {!["handbook", "parent-space"].includes(page) && (
         <button
-          onClick={() =>
-            setPage(
-              ["growth", "health", "interests"].includes(page)
-                ? "child-profile"
-                : "discover",
-            )
-          }
+          onClick={() => setPage(activeNavigation(page) === "child-profile" ? "child-profile" : "handbook")}
           className="text-clay underline text-sm mb-6"
         >
           ←{" "}
-          {["growth", "health", "interests"].includes(page)
+          {activeNavigation(page) === "child-profile"
             ? "Child profile"
-            : "Discover"}
+            : "Handbook"}
         </button>
       )}
       <h1 className="font-heading text-4xl mb-4">{title}</h1>

@@ -1,4 +1,5 @@
 import type { AgeInfo, DevelopmentalStage } from '@/types';
+import { todayDate } from '@/lib/family-care';
 
 const DAY_MS = 86_400_000;
 const PREGNANCY_DAYS = 280;
@@ -17,7 +18,7 @@ function stageForYears(years: number): DevelopmentalStage {
 }
 
 /** Compute age and developmental stage from a date of birth or, before birth, a due date. */
-export function computeAge(dob: string | null, dueDate: string | null, now = new Date()): AgeInfo {
+export function computeAge(dob: string | null, dueDate: string | null, now = new Date(`${todayDate()}T00:00:00`)): AgeInfo {
   if (!dob || parseDate(dob) > now) {
     const due = dueDate ? parseDate(dueDate) : dob ? parseDate(dob) : now;
     const daysUntilDue = Math.round((due.getTime() - now.getTime()) / DAY_MS);

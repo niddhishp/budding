@@ -139,6 +139,8 @@ export interface Hypothesis {
 
 /** Structured output of one decode. v2 fields are optional so older stored decodes still render. */
 export interface AgentAnalysis {
+  /** Parent-facing AI chat or fictional rehearsal, not words attributed to the actual child. */
+  conversation?: { mode: 'talk' | 'rehearse'; reply: string; practiceReply: string; feedback: string[]; cardId?: string };
   /** Single calm instruction for this second when the moment is happening now; empty otherwise. */
   rightNow?: string;
   /** The exact words to say — 1 to 3 short sentences. */

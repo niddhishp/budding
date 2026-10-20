@@ -41,6 +41,8 @@ try {
   console.log('PASS: profile Boy/Girl persistence, editing, clearing, constraints, consent and family isolation. Fixtures rolled back.');
   console.log('PASS: guide preference isolation, consent, anonymous denial, validation and unrelated profile preservation. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/memory-continuity.sql','utf8'));
+  await client.query(readFileSync('tests/sql/conversation-boundaries.sql','utf8'));
+  console.log('PASS: chat/practice cannot create outcome memories, worker memories, or cross-mode continuations. Fixtures rolled back.');
   console.log('PASS: memory revisions, ownership, corrections, stop/rerate, pause, pending extraction and continuity boundaries. Fixtures rolled back.');
   await import('./test-guidance-db.mjs');
   await client.query(readFileSync('tests/sql/consultation-delivery.sql','utf8'));

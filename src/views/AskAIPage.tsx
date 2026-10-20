@@ -45,11 +45,11 @@ function createRecognition(): Recognition | null {
   return Ctor ? new Ctor() : null;
 }
 
-export function AskAIPage() {
+export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }) {
   const { selectedChildId, children, entitlement, setEntitlement, openPaywall, openExpert } = useAppStore();
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
-  const [scenario, setScenario] = useState('');
+  const [scenario, setScenario] = useState(initialScenario);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [current, setCurrent] = useState<Decode | null>(null);
   const [continuation, setContinuation] = useState<Decode | null>(null);
@@ -82,6 +82,7 @@ export function AskAIPage() {
       .from('decodes')
       .select(DECODE_COLUMNS)
       .eq('child_id', selectedChildId)
+      .is('analysis->conversation', null)
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(offset, offset + 9)
@@ -287,7 +288,7 @@ export function AskAIPage() {
                 {isAnalyzing ? (
                   <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Thinking</span>
                 ) : (
-                  <span className="flex items-center gap-2">Decode <Send className="w-4 h-4" /></span>
+                  <span className="flex items-center gap-2">Find the words <Send className="w-4 h-4" /></span>
                 )}
               </Button>
             </div>
@@ -297,11 +298,11 @@ export function AskAIPage() {
             <p className="mt-3 text-xs text-slate-400">
               {entitlement.plan === 'free' ? (
                 <>
-                  {Math.max(0, entitlement.limit - entitlement.used)} of {entitlement.limit} free decodes left this week ·{' '}
+                  {Math.max(0, entitlement.limit - entitlement.used)} of {entitlement.limit} free Ask turns left this week ·{' '}
                   <button onClick={() => openPaywall()} className="text-leaf font-medium hover:underline">See Plus</button>
                 </>
               ) : (
-                <>Kahiye Plus · {entitlement.limit} decodes per rolling day</>
+                <>Kahiye Plus · {entitlement.limit} Ask turns per rolling day</>
               )}
             </p>
           )}
@@ -482,7 +483,7 @@ export function AskAIPage() {
           <p className="text-sm text-slate-500 mb-4">Open past guidance, or choose a situation to continue. Earlier moments are only included when you choose them.</p>
           {history.length === 0 ? (
             <p className="text-sm text-slate-400 leading-relaxed">
-              Your decodes for {selectedChild?.name} will appear here. Mark whether each one worked, and Kahiye learns what fits {selectedChild?.name}.
+              Your guidance for {selectedChild?.name} will appear here. Your feedback can help shape future suggestions; it is not a score for your child.
             </p>
           ) : (
             <div className="space-y-3">
@@ -524,7 +525,7 @@ function RightNow({ text }: { text: string }) {
   );
 }
 
-function SafetyBanner({ notice, onExpert }: { notice: SafetyNotice; onExpert: () => void }) {
+export function SafetyBanner({ notice, onExpert }: { notice: SafetyNotice; onExpert: () => void }) {
   // Tier 1 (parent distress) is support, not alarm.
   if (notice.tier === 1) {
     return (
