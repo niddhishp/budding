@@ -33,12 +33,16 @@ test('evaluation stops before routing or generation on emergency, elevated risk 
   assert.equal(emergency.path, 'support');
   assert.equal(emergency.analysis, undefined);
   for (const fails of [false, true]) {
-    let calls = 0;
-    const call = (async () => { calls++; if (fails) throw Error('offline'); return { level: 'elevated', category: 'wellbeing_concern', reason: 'fixture' }; }) as typeof structuredCall;
+    const calls: string[] = [];
+    const call = (async (opts: { schema: { properties?: Record<string, unknown> } }) => {
+      calls.push('level' in (opts.schema.properties ?? {}) ? 'safety' : 'modules' in (opts.schema.properties ?? {}) ? 'router' : 'generation');
+      if (fails) throw Error('offline'); return { level: 'elevated', category: 'wellbeing_concern', reason: 'fixture' };
+    }) as typeof structuredCall;
     const result = await evaluateTurn('Something feels wrong lately', context, 'guidance', {}, call);
     assert.equal(result.path, fails ? 'unavailable' : 'support');
     assert.equal(result.analysis, undefined);
-    assert.equal(calls, 1);
+    // Routing runs alongside triage (as in the live route) and is discarded; no advice is generated.
+    assert.deepEqual(calls.sort(), ['router', 'safety']);
   }
 });
 

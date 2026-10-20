@@ -9,10 +9,16 @@ import { DecodeError, FAST_MODEL, structuredCall } from '@/lib/ai/llm';
 
 export interface Violation { rule: string; field: string; excerpt: string }
 
-const CONDITIONS = '(adhd|add|autism|autistic|asd|ocd|odd|oppositional defiant|conduct disorder|bipolar|depression|depressed|anxiety disorder|dyslexi[ac]|dyspraxi[ac]|sensory processing disorder|spd|personality disorder)';
+// Names and diagnostic phrases match in any case. Acronyms that are also ordinary words ("odd", "add") match
+// only in capitals, so "this is odd" or "is add one more step" are not treated as a diagnosis.
+const CONDITIONS = '(adhd|attention deficit|autism|autistic|asd|ocd|obsessive compulsive|oppositional defiant|conduct disorder|bipolar|depression|depressed|anxiety disorder|dyslexi[ac]|dyspraxi[ac]|sensory processing disorder|personality disorder)';
+const ACRONYMS = '(ADD|ODD|SPD)';
+const ASSIGNING = ['has', 'have', 'is', 'are', 'sounds like', 'looks like', 'could be', 'may be', 'might be', 'probably', 'likely', 'signs of', 'symptoms of'];
+const anyCase = (word: string) => word.replace(/[a-z]/g, c => `[${c}${c.toUpperCase()}]`);
 const RULES: { rule: string; re: RegExp; fields?: string[] }[] = [
   // Assigning a condition: "he has ADHD", "sounds like autism", "may be autistic".
-  { rule: 'diagnosis', re: new RegExp(`\\b(has|have|is|are|sounds like|looks like|could be|may be|might be|probably|likely|signs of|symptoms of)\\s+(an?\\s+)?${CONDITIONS}\\b`, 'i') },
+  { rule: 'diagnosis', re: new RegExp(`\\b(${ASSIGNING.join('|')})\\s+(an?\\s+)?${CONDITIONS}\\b`, 'i') },
+  { rule: 'diagnosis', re: new RegExp(`\\b(${ASSIGNING.map(anyCase).join('|')})\\s+([aA]n?\\s+)?${ACRONYMS}\\b`) },
   // Physical punishment suggested (not negated).
   { rule: 'physical_punishment', re: /(?<!\b(?:don'?t|do not|never|not|no|avoid|without|instead of)\s+(?:\w+\s+){0,2})\b(spank|slap|smack|beat|whack|pinch|pull (his|her) ear|hit (him|her|them) (back|once|lightly))\b/i },
   // Shaming, labelling or threats inside the words to say.

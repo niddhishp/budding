@@ -1,7 +1,7 @@
 import type { AgeInfo } from '@/types';
 
-/** Seven overlapping stage bands (no false age precision): every agent output is conditioned on one. */
-export type StageBand = 'pregnancy' | 'infant' | 'toddler' | 'preschool' | 'middle' | 'early_teen' | 'late_teen';
+/** Eight overlapping stage bands (no false age precision): every agent output is conditioned on one. */
+export type StageBand = 'pregnancy' | 'infant' | 'toddler' | 'preschool' | 'school_early' | 'school_late' | 'early_teen' | 'late_teen';
 
 interface StageDoctrine {
   label: string;
@@ -40,11 +40,18 @@ export const STAGES: Record<StageBand, StageDoctrine> = {
     posture: 'co-regulation, routines, playful problem-solving, simple choices, repair after conflict',
     scriptStyle: 'short sentences; playful framing works; give two acceptable choices',
   },
-  middle: {
-    label: 'School years (6–12 years)',
-    engine: 'competence, executive function and the peer world',
-    typical: 'homework battles, screens and first devices, friendships and exclusion, comparison, chores, lying to avoid trouble, worry',
-    posture: 'collaborative problem-solving; involve the child in the plan; process praise; build habits; private correction, never public shaming',
+  school_early: {
+    label: 'Early school years (6–8 years)',
+    engine: 'concrete thinking, rules and fairness, early reading and the first real friendships',
+    typical: 'meltdowns after school, homework resistance, "it\'s not fair", tattling, fears and worries, losing at games, test nerves, small lies to avoid trouble',
+    posture: 'co-regulate first, then solve the problem together; predictable routines; short practice of the skill; specific praise for effort; private correction, never public shaming',
+    scriptStyle: 'short and concrete, one or two sentences; name the feeling, then one clear next step or two choices; play and humour still work',
+  },
+  school_late: {
+    label: 'Later school years (9–12 years)',
+    engine: 'competence, executive function, self-image and the peer world',
+    typical: 'homework battles, screens and first devices, friendships and exclusion, comparison, chores, lying to avoid trouble, worry, early body changes',
+    posture: 'collaborative problem-solving; involve the child in the plan; process praise; build habits; respect growing privacy; private correction, never public shaming',
     scriptStyle: 'respectful, direct, a question that invites their view; skip the lecture',
   },
   early_teen: {
@@ -69,7 +76,8 @@ export function stageBandFor(age: AgeInfo): StageBand {
   if (months < 12) return 'infant';
   if (age.years < 3) return 'toddler';
   if (age.years < 6) return 'preschool';
-  if (age.years < 12) return 'middle';
+  if (age.years < 9) return 'school_early';
+  if (age.years < 12) return 'school_late';
   if (age.years < 15) return 'early_teen';
   return 'late_teen';
 }

@@ -7,6 +7,7 @@
  *   npm run eval -- --only=dx-adhd     one case
  *   npm run eval -- --safety-only      triage only
  *   npm run eval -- --judge            optional paid model judge, not clinical approval
+ *   npm run eval -- --single-call      guidance through the one-call WhatsApp path instead of the app's two stages
  *
  * Needs OPENROUTER_API_KEY in .env.local. Writes scripts/eval/results/<timestamp>.json.
  * Exits non-zero if any case fails, so it can gate a deploy.
@@ -19,7 +20,7 @@ import { z } from 'zod';
 import { bypassesPaywall } from '../../src/lib/ai/safety';
 import { lintAnalysis } from '../../src/lib/ai/critic';
 import { MODEL, FAST_MODEL, structuredCall } from '../../src/lib/ai/llm';
-import { evaluateTurn } from './pipeline';
+import { evaluateTurn, type TurnTimings } from './pipeline';
 import { OpenRouterEval } from './openrouter';
 import { CONVERSATION_CASES } from './conversation-cases';
 import { computeAge } from '../../src/lib/age';
@@ -123,6 +124,11 @@ interface Result {
   path?: string;
   notice?: unknown;
   routerSource?: string;
+  /** Per-stage latency: triage, routing (in parallel with triage), checked immediate answer, checked explanation. */
+  timings?: TurnTimings;
+  /** False when the explanation (stage B) was withheld and only the immediate answer would be saved. */
+  detailAvailable?: boolean;
+  generation: 'staged' | 'single-call';
   clinicalStatus: 'unreviewed';
 }
 
@@ -131,16 +137,20 @@ async function runCase(c: EvalCase): Promise<Result> {
   const failures: string[] = [];
   const child = fixtureChild(c);
   const mode = c.mode ?? 'guidance';
-  const result: Result = { id: c.id, suite: c.suite, pass: false, failures, ms: 0, mode, clinicalStatus: 'unreviewed' };
+  const singleCall = has('single-call');
+  const result: Result = { id: c.id, suite: c.suite, pass: false, failures, ms: 0, mode, generation: singleCall ? 'single-call' : 'staged', clinicalStatus: 'unreviewed' };
 
   try {
     const output = await evaluateTurn(c.message, {
       child, recentLogs: [], pastDecodes: [], memories: [],
       continuation: c.continuation?.map((t, i) => ({ ...t, id: `synthetic-${i}`, outcome: null, createdAt: new Date().toISOString() })),
-    }, mode, { cardId: c.cardId, safetyOnly: c.safetyOnly || has('safety-only'), signal: AbortSignal.timeout(54_000) }, call);
+    }, mode, { cardId: c.cardId, safetyOnly: c.safetyOnly || has('safety-only'), signal: AbortSignal.timeout(54_000), singleCall }, call);
     const { safety, route, analysis, path } = output;
     result.path = path;
     result.notice = output.notice;
+    result.timings = output.timings;
+    result.detailAvailable = output.detailAvailable;
+    if (output.detailAvailable === false) failures.push('explanation (stage B) withheld; only the immediate answer would be saved');
     result.safety = { level: safety.level, category: safety.category, bypassesPaywall: bypassesPaywall(safety) };
     result.modules = route?.modules;
     result.routerSource = route?.source;
@@ -183,6 +193,13 @@ async function runCase(c: EvalCase): Promise<Result> {
   result.ms = Date.now() - started;
   return result;
 }
+
+const secs = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
+const median = (values: readonly number[]) => {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+};
 
 /** Run with bounded concurrency to stay inside rate limits. */
 async function pool<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>): Promise<R[]> {
@@ -236,7 +253,9 @@ async function main() {
     const r = await runCase(c);
     completed.push(r);
     persist();
-    console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${c.suite.padEnd(13)} ${c.id.padEnd(26)} ${(r.ms / 1000).toFixed(1)}s${r.judge ? `  judge ${r.judge.score}/5` : ''}`);
+    const t = r.timings;
+    const stages = t?.firstMs !== undefined ? `  (safety ${secs(t.safetyMs)} · first ${secs(t.safetyMs + t.firstMs)} · detail +${secs(t.detailMs ?? 0)})` : '';
+    console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${c.suite.padEnd(13)} ${c.id.padEnd(26)} ${(r.ms / 1000).toFixed(1)}s${stages}${r.judge ? `  judge ${r.judge.score}/5` : ''}`);
     for (const f of r.failures) console.log(`        ↳ ${f}`);
     return r;
   });
@@ -250,6 +269,17 @@ async function main() {
   }
   console.log(`\n${passed}/${results.length} passed`);
   for (const [s, v] of bySuite) console.log(`  ${s.padEnd(13)} ${v.pass}/${v.total}`);
+  // Time to the first checked words is what a parent waits for; report it separately from the full answer.
+  const staged = results.filter(r => r.timings?.firstMs !== undefined).map(r => r.timings!);
+  if (staged.length) {
+    console.log(`\nLatency over ${staged.length} staged guidance case(s), median / max:`);
+    for (const [label, values] of [
+      ['safety', staged.map(t => t.safetyMs)],
+      ['routing', staged.map(t => t.routeMs ?? 0)],
+      ['first answer', staged.map(t => t.safetyMs + t.firstMs!)],
+      ['full answer', staged.map(t => t.totalMs)],
+    ] as const) console.log(`  ${label.padEnd(13)} ${secs(median(values))} / ${secs(Math.max(...values))}`);
+  }
 
   persist();
   console.log(`\nReport: ${file}`);

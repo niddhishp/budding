@@ -14,7 +14,8 @@ import { readNdjson } from '@/lib/ndjson';
 import Link from 'next/link';
 import { useRequestScope } from '@/hooks/useRequestScope';
 import { GuidanceTrust } from '@/components/GuidanceTrust';
-import type { Child, Decode, DecodeOutcome, DecodeStreamEvent, SafetyNotice } from '@/types';
+import { CLARIFY_WINDOW_MS } from '@/lib/plans';
+import type { AgentAnalysis, Child, Decode, DecodeOutcome, DecodeStreamEvent, HandbookFallback, ImmediateAnalysis, SafetyNotice } from '@/types';
 
 const SPRING_TRANSITION = { type: 'spring', stiffness: 100, damping: 20 } as const;
 
@@ -59,12 +60,15 @@ function createRecognition(): Recognition | null {
 }
 
 export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }) {
-  const { selectedChildId, children, entitlement, setEntitlement, openPaywall, openExpert } = useAppStore();
+  const { selectedChildId, children, entitlement, setEntitlement, openPaywall, openExpert, openHandbook } = useAppStore();
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
   const [scenario, setScenario] = useState(initialScenario);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [current, setCurrent] = useState<Decode | null>(null);
+  // The checked immediate answer, shown while the checked explanation is still being prepared.
+  const [first, setFirst] = useState<ImmediateAnalysis | null>(null);
+  const [fallback, setFallback] = useState<{ message: string; card: HandbookFallback } | null>(null);
   const [continuation, setContinuation] = useState<Decode | null>(null);
   const scenarioInput = useRef<HTMLTextAreaElement>(null);
   const [safety, setSafety] = useState<SafetyNotice | null>(null);
@@ -77,11 +81,11 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
   const answerRef = useRef<HTMLDivElement>(null);
   const revealAnswer = useRef(false);
   useEffect(() => {
-    if (!current || isAnalyzing || !revealAnswer.current) return;
+    if (!revealAnswer.current || (!first && (!current || isAnalyzing))) return;
     revealAnswer.current = false;
     const calm = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     answerRef.current?.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
-  }, [current, isAnalyzing]);
+  }, [current, first, isAnalyzing]);
   const [support, setSupport] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<Record<string, { state: 'saving' | 'saved' | 'failed'; value: DecodeOutcome }>>({});
   const savingOutcomes = useRef(new Set<string>());
@@ -127,6 +131,8 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
 
   useEffect(() => {
     setCurrent(null);
+    setFirst(null);
+    setFallback(null);
     setContinuation(null);
     setSafety(null);
     setError(null);
@@ -169,9 +175,12 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
     setIsAnalyzing(true);
     setProgress('Reading what you shared…');
     setCurrent(null);
+    setFirst(null);
+    setFallback(null);
     setSafety(null);
     setError(null);
     setSupport(null);
+    let shownFirst = false;
     const task = scope.start();
     activeRequest.current = task;
     const requestKey = JSON.stringify({ childId: selectedChild.id, text, refines: refine?.decode.id, continues: refine ? undefined : continuation?.id });
@@ -203,10 +212,21 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
             setSafety(event.safety);
             break;
           case 'delta': break; // Never display unvalidated legacy token events.
+          case 'first':
+            // Already checked on the server; bring it into view straight away.
+            shownFirst = true;
+            revealAnswer.current = true;
+            setFirst(event.analysis);
+            break;
+          case 'fallback':
+            terminal = true;
+            setFallback({ message: event.message, card: event.card });
+            break;
           case 'done':
             if (event.decode.childId !== selectedChild.id) throw new Error('Response child mismatch');
             terminal = true;
-            revealAnswer.current = true;
+            // The immediate answer is already in view; do not jump the page again when the detail arrives.
+            if (!shownFirst) revealAnswer.current = true;
             setCurrent(event.decode);
             setContinuation(null);
             setScenario('');
@@ -246,11 +266,14 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
     finally { task.finish(); savingOutcomes.current.delete(decode.id); }
   };
 
-  const analysis = current?.analysis;
+  // A saved answer once 'done' arrives; until then, the checked immediate answer alone.
+  const saved = current && !isAnalyzing ? current : null;
+  const analysis: (ImmediateAnalysis & Partial<AgentAnalysis>) | null = saved?.analysis ?? first;
   const examples = selectedChild ? EXAMPLES[selectedChild.age.stage] : [];
   const openSaved = (decode: Decode, continueIt = false) => {
     recognitionRef.current?.stop();
     setCurrent(continueIt ? null : decode); setContinuation(continueIt ? decode : null);
+    setFirst(null); setFallback(null);
     setScenario(''); setError(null); setSafety(null); setSupport(null);
     if (!continueIt) { revealAnswer.current = true; return; }
     scenarioInput.current?.focus();
@@ -330,7 +353,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
             </p>
           )}
 
-          {!current && !continuation && !isAnalyzing && !error && (
+          {!current && !first && !fallback && !continuation && !isAnalyzing && !error && (
             <div className="mt-8">
               <p className="text-sm font-medium text-slate-500 tracking-wider uppercase mb-4">Common moments</p>
               <div className="flex flex-wrap gap-2">
@@ -353,37 +376,40 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
             </div>
           )}
 
-          {isAnalyzing && <div className="mt-8" role="status"><p className="text-slate-700">{progress}</p><button className="mt-3 underline text-clay" onClick={() => { scope.cancel(); activeRequest.current = null; setIsAnalyzing(false); setError('Stopped. Your moment is still here; retry to recover any saved result.'); }}>Stop</button></div>}
+          {isAnalyzing && !first && <div className="mt-8" role="status"><p className="text-slate-700">{progress}</p><button className="mt-3 underline text-clay" onClick={() => { scope.cancel(); activeRequest.current = null; setIsAnalyzing(false); setError('Stopped. Your moment is still here; retry to recover any saved result.'); }}>Stop</button></div>}
           {support && <div role="status" className="mt-6 p-5 rounded-2xl bg-paper-deep"><p>{support}</p><Link href="/help-now" className="inline-block mt-3 text-clay underline">Immediate support</Link></div>}
           {safety && <SafetyBanner notice={safety} onExpert={() => openExpert('safety', scenario.trim())} />}
 
-          {analysis && current && !isAnalyzing && (
+          {fallback && !isAnalyzing && <HandbookStart fallback={fallback} onOpen={() => openHandbook(fallback.card.id)} />}
+
+          {analysis && (
             <motion.div ref={answerRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-8 space-y-8 scroll-mt-6">
-              {analysis.rightNow && <RightNow text={analysis.rightNow} />}
-
-              {/* Say this — first, biggest */}
-              <div className="p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-leaf" /> Say this
-                </h3>
-                <p className="text-2xl md:text-3xl font-heading text-slate-850 leading-snug">"{analysis.sayThis}"</p>
-                <p className="mt-3 text-xs text-slate-500">An example, not magic words. Say it your way.</p>
+              {/* 1. Right now + Say this — first, biggest */}
+              <div className="space-y-4">
+                {analysis.rightNow && <RightNow text={analysis.rightNow} />}
+                <div className="p-6 md:p-8 rounded-[2rem] bg-white border border-slate-200/60 shadow-sm">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-leaf" /> Say this
+                  </h3>
+                  <p className="text-2xl md:text-3xl font-heading text-slate-850 leading-snug">"{analysis.sayThis}"</p>
+                  <p className="mt-3 text-xs text-slate-500">An example, not magic words. Say it your way.</p>
+                </div>
+                {saved?.safetyCategory === 'none' && <button
+                  onClick={() => setSharing(saved)}
+                  className="w-full flex items-center justify-center gap-2 h-12 rounded-full bg-[#25D366]/10 text-[#128C4B] font-medium hover:bg-[#25D366]/15 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" /> Send the same words to grandparents or caregivers
+                </button>}
               </div>
-              {current.safetyCategory === 'none' && <button
-                onClick={() => setSharing(current)}
-                className="w-full flex items-center justify-center gap-2 h-12 rounded-full bg-[#25D366]/10 text-[#128C4B] font-medium hover:bg-[#25D366]/15 transition-colors"
-              >
-                <Share2 className="w-4 h-4" /> Send the same words to grandparents or caregivers
-              </button>}
 
-              {analysis.clarify && !current.refines && Date.now() - new Date(current.createdAt).getTime() < 30 * 60 * 1000 && (
+              {saved && analysis.clarify && !saved.refines && Date.now() - new Date(saved.createdAt).getTime() < CLARIFY_WINDOW_MS && (
                 <div className="p-5 rounded-[1.5rem] bg-paper-deep">
                   <p className="font-medium text-slate-800 mb-3">{analysis.clarify.question}</p>
                   <div className="flex flex-wrap gap-2">
                     {analysis.clarify.options.map((opt) => (
                       <button
                         key={opt}
-                        onClick={() => handleAnalyze({ decode: current, question: analysis.clarify!.question, answer: opt })}
+                        onClick={() => handleAnalyze({ decode: saved, question: analysis.clarify!.question, answer: opt })}
                         className="px-4 py-2 rounded-full bg-surface border border-slate-200 text-sm text-slate-700 hover:border-clay"
                       >
                         {opt}
@@ -394,6 +420,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
                 </div>
               )}
 
+              {/* 2. Do this now + Leave out */}
               <div>
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Do this now</h3>
                 <ol className="space-y-2">
@@ -404,99 +431,38 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
                     </li>
                   ))}
                 </ol>
+                <p className="mt-4 p-4 rounded-2xl bg-paper-deep text-sm leading-relaxed text-slate-800"><span className="font-semibold block mb-1">Leave out</span>{analysis.avoid}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-paper-deep text-slate-800">
-                <p className="text-sm leading-relaxed"><span className="font-semibold block mb-1">Leave out</span>{analysis.avoid}</p>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-clay" /> What may be happening
-                </h3>
-                {analysis.hypotheses?.length ? (
-                  <ul className="space-y-3">
-                    {analysis.hypotheses.map((h, i) => (
-                      <li key={i} className="flex gap-3">
-                        <span className={`mt-1 h-fit flex-shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${i === 0 ? 'bg-clay/10 text-clay' : 'bg-slate-100 text-slate-500'}`}>
-                          {h.likelihood}
-                        </span>
-                        <span className={i === 0 ? 'text-lg text-slate-800 leading-relaxed' : 'text-slate-600 leading-relaxed'}>{h.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-lg text-slate-800 leading-relaxed">{analysis.interpretation}</p>
-                )}
-                <p className="mt-4 text-slate-500 leading-relaxed">{analysis.developmentalContext}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clay/5 border border-clay/10 text-clay text-sm font-medium">
-                    <Heart className="w-4 h-4" /> Needs: {analysis.emotionalNeed}
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-50 border border-slate-100 text-slate-600 text-sm font-medium">
-                    <Shield className="w-4 h-4" /> Builds: {analysis.skillBeingBuilt}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4" /> Later, when calm
-                </h3>
-                <p className="text-slate-700 leading-relaxed">{analysis.afterwards}</p>
-              </div>
-
-              {(analysis.watchFor || analysis.seekHelpIf) && (
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {analysis.watchFor && (
-                    <div className="p-4 rounded-2xl bg-slate-50">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Watch for</p>
-                      <p className="text-sm text-slate-700 leading-relaxed">{analysis.watchFor}</p>
-                    </div>
-                  )}
-                  {analysis.seekHelpIf && (
-                    <div className="p-4 rounded-2xl bg-amber-50">
-                      <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1.5">Talk to a professional if</p>
-                      <p className="text-sm text-amber-900 leading-relaxed">{analysis.seekHelpIf}</p>
-                    </div>
-                  )}
+              {/* Safety-relevant, so never folded away. */}
+              {saved && analysis.seekHelpIf && (
+                <div className="p-4 rounded-2xl bg-amber-50">
+                  <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1.5">Talk to a professional if</p>
+                  <p className="text-sm text-amber-900 leading-relaxed">{analysis.seekHelpIf}</p>
                 </div>
               )}
 
-              {analysis.whyItWorks && (
-                <details className="group rounded-2xl border border-slate-200 px-5 py-4">
-                  <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-semibold text-slate-700">
-                    Why this works
-                    {analysis.evidence?.[0] && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-leaf/10 text-leaf">{analysis.evidence[0].label}</span>
-                    )}
-                  </summary>
-                  <p className="mt-3 text-sm text-slate-700 leading-relaxed">{analysis.whyItWorks}</p>
-                  {!!analysis.evidence?.length && (
-                    <ul className="mt-4 space-y-2.5">
-                      {analysis.evidence.map((e) => (
-                        <li key={e.id} className="text-sm leading-relaxed">
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 mr-2">{e.label}</span>
-                          <span className="text-slate-600">{e.claim}</span>
-                          <span className="block text-xs text-slate-400 mt-0.5">{e.source}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+              {/* 3. Understand why — one collapsed block */}
+              {!saved && isAnalyzing && (
+                <p role="status" className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="w-4 h-4 animate-spin" /> Adding the why…</p>
+              )}
+              {!saved && !isAnalyzing && <p className="text-sm text-slate-500">This answer was not saved. Retry the same moment to recover it.</p>}
+              {saved && analysis.detailUnavailable && <p className="text-sm text-slate-500">More detail isn&apos;t available for this one.</p>}
+              {saved && !analysis.detailUnavailable && <UnderstandWhy analysis={analysis} />}
+
+              {/* 4. Did it work, continue, and the saved moment */}
+              {saved && <>
+                <OutcomeBar decode={saved} onSelect={recordOutcome} saving={outcomes[saved.id]?.state === 'saving'} />
+                {saved.safetyCategory === 'none' && <button className="w-full rounded-full border border-clay text-clay py-3 font-medium" onClick={() => openSaved(saved, true)}>Continue this situation</button>}
+                {outcomes[saved.id] && <p role="status" className="text-sm">{outcomes[saved.id].state === 'saving' ? 'Saving feedback…' : outcomes[saved.id].state === 'saved' ? 'Feedback saved.' : 'Feedback was not saved. Tap your choice to retry.'}</p>}
+                <details className="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600">
+                  <summary className="cursor-pointer py-1">Your moment · {saved.continuationOf ? 'continued' : 'saved'} {new Date(saved.createdAt).toLocaleDateString()}</summary>
+                  <p className="mt-2 whitespace-pre-wrap break-words">{saved.scenario}</p>
                 </details>
-              )}
-
-              <OutcomeBar decode={current} onSelect={recordOutcome} saving={outcomes[current.id]?.state === 'saving'} />
-              {current.safetyCategory === 'none' && <button className="w-full rounded-full border border-clay text-clay py-3 font-medium" onClick={() => openSaved(current, true)}>Continue this situation</button>}
-              {outcomes[current.id] && <p role="status" className="text-sm">{outcomes[current.id].state === 'saving' ? 'Saving feedback…' : outcomes[current.id].state === 'saved' ? 'Feedback saved.' : 'Feedback was not saved. Tap your choice to retry.'}</p>}
-
-              <details className="rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600">
-                <summary className="cursor-pointer py-1">Your moment · {current.continuationOf ? 'continued' : 'saved'} {new Date(current.createdAt).toLocaleDateString()}</summary>
-                <p className="mt-2 whitespace-pre-wrap break-words">{current.scenario}</p>
-              </details>
+              </>}
 
               <p className="text-xs text-slate-500 leading-relaxed">
-                General guidance, not a diagnosis. If you're worried about your child's health or safety, talk to your pediatrician.
+                General guidance, not a diagnosis. Worried about health or safety? Talk to your paediatrician.
               </p>
               <GuidanceTrust />
             </motion.div>
@@ -560,6 +526,87 @@ function RightNow({ text }: { text: string }) {
     <div className="mt-8 flex items-start gap-3 p-5 rounded-[1.5rem] bg-slate-850 text-white" aria-live="polite">
       <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-turmeric whitespace-nowrap">Right now</span>
       <p className="text-lg leading-snug">{text}</p>
+    </div>
+  );
+}
+
+/** Everything that explains the answer, folded into one block so the words to say stay in front. */
+function UnderstandWhy({ analysis }: { analysis: Partial<AgentAnalysis> }) {
+  return (
+    <details className="group rounded-2xl border border-slate-200 px-5 py-4">
+      <summary className="cursor-pointer list-none flex items-center justify-between text-sm font-semibold text-slate-700">
+        <span className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-clay" /> Understand why</span>
+        {analysis.evidence?.[0] && (
+          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-leaf/10 text-leaf">{analysis.evidence[0].label}</span>
+        )}
+      </summary>
+      <div className="mt-4 space-y-6">
+        <div>
+          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">What may be happening</h4>
+          {analysis.hypotheses?.length ? (
+            <ul className="space-y-3">
+              {analysis.hypotheses.map((h, i) => (
+                <li key={i} className="flex gap-3">
+                  <span className={`mt-1 h-fit flex-shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full ${i === 0 ? 'bg-clay/10 text-clay' : 'bg-slate-100 text-slate-500'}`}>
+                    {h.likelihood}
+                  </span>
+                  <span className={i === 0 ? 'text-slate-800 leading-relaxed' : 'text-slate-600 leading-relaxed'}>{h.text}</span>
+                </li>
+              ))}
+            </ul>
+          ) : analysis.interpretation ? (
+            <p className="text-slate-800 leading-relaxed">{analysis.interpretation}</p>
+          ) : null}
+          {analysis.developmentalContext && <p className="mt-4 text-slate-500 leading-relaxed">{analysis.developmentalContext}</p>}
+          {(analysis.emotionalNeed || analysis.skillBeingBuilt) && <div className="mt-4 flex flex-wrap gap-2">
+            {analysis.emotionalNeed && <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-clay/5 border border-clay/10 text-clay text-sm font-medium">
+              <Heart className="w-4 h-4" /> Needs: {analysis.emotionalNeed}
+            </span>}
+            {analysis.skillBeingBuilt && <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-50 border border-slate-100 text-slate-600 text-sm font-medium">
+              <Shield className="w-4 h-4" /> Builds: {analysis.skillBeingBuilt}
+            </span>}
+          </div>}
+        </div>
+        {analysis.afterwards && <div>
+          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-2"><Clock className="w-4 h-4" /> Later, when calm</h4>
+          <p className="text-slate-700 leading-relaxed">{analysis.afterwards}</p>
+        </div>}
+        {analysis.watchFor && <div>
+          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Watch for</h4>
+          <p className="text-sm text-slate-700 leading-relaxed">{analysis.watchFor}</p>
+        </div>}
+        {analysis.whyItWorks && <div>
+          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Why this works</h4>
+          <p className="text-sm text-slate-700 leading-relaxed">{analysis.whyItWorks}</p>
+          {!!analysis.evidence?.length && (
+            <ul className="mt-4 space-y-2.5">
+              {analysis.evidence.map((e) => (
+                <li key={e.id} className="text-sm leading-relaxed">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 mr-2">{e.label}</span>
+                  <span className="text-slate-600">{e.claim}</span>
+                  <span className="block text-xs text-slate-500 mt-0.5">{e.source}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>}
+      </div>
+    </details>
+  );
+}
+
+/** Shown when no custom answer could be checked: reviewed editorial words from the Handbook, not generated text. */
+function HandbookStart({ fallback, onOpen }: { fallback: { message: string; card: HandbookFallback }; onOpen: () => void }) {
+  const { message, card } = fallback;
+  return (
+    <div role="status" className="mt-8 p-6 rounded-[2rem] bg-paper-deep space-y-3">
+      <p className="text-sm text-slate-700">{message}</p>
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">From your Handbook · {card.title}</p>
+      <p className="text-xl font-heading text-slate-850 leading-snug">"{card.words}"</p>
+      <p className="text-sm text-slate-700 leading-relaxed">{card.activity}</p>
+      <p className="text-sm text-slate-700 leading-relaxed"><span className="font-semibold">Leave out: </span>{card.avoid}</p>
+      <button className="text-clay underline py-2" onClick={onOpen}>Open this in your Handbook</button>
+      <p className="text-xs text-slate-500">This did not use your allowance.</p>
     </div>
   );
 }

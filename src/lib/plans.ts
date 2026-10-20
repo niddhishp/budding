@@ -8,6 +8,11 @@ export const FREE_DECODES_PER_WEEK = 3;
 export const PLUS_DECODES_PER_DAY = 10;
 /** A chat or practice conversation uses one Ask turn and may continue up to this many messages. */
 export const CONVERSATION_MESSAGE_LIMIT = 10;
+/**
+ * A free quick follow-up (answering an Ask clarifying question) is accepted for this long after the
+ * original answer. Must match `interval '30 minutes'` in reserve_guidance (supabase/012).
+ */
+export const CLARIFY_WINDOW_MS = 30 * 60 * 1000;
 /** Free families: caregiver messages per rolling 30 days in a language other than English. */
 export const FREE_TRANSLATED_SHARES_PER_MONTH = 5;
 

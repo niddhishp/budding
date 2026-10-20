@@ -1,17 +1,17 @@
 import { describePatterns } from '@/lib/moments';
 import 'server-only';
 import { z } from 'zod';
-import { FAST_MODEL, MODEL, structuredCall } from '@/lib/ai/llm';
+import { DecodeError, FAST_MODEL, MODEL, structuredCall } from '@/lib/ai/llm';
 import { CONSTITUTION } from '@/lib/ai/doctrine/constitution';
 import { STAGES, stageBandFor } from '@/lib/ai/doctrine/stages';
 import { getModule } from '@/lib/ai/doctrine/modules';
 import { CARD_IDS, TIER_LABEL, getCard } from '@/lib/ai/doctrine/evidence';
 import { checkedCall } from '@/lib/ai/checked-content';
 import type { Route } from '@/lib/ai/router';
-import type { AgentAnalysis, Child, Memory } from '@/types';
+import type { AgentAnalysis, Child, ImmediateAnalysis, Memory } from '@/types';
 
 // Back-compat re-exports for report/story/week-guide and routes.
-export { structuredCall, DecodeError } from '@/lib/ai/llm';
+export { structuredCall, DecodeError };
 export const DECODE_MODEL = MODEL;
 
 /*
@@ -193,7 +193,8 @@ function toAnalysis(g: Generated, route: Route): AgentAnalysis {
 }
 
 /**
- * Generates and checks the complete decode before returning any parenting text.
+ * Single-call path: generates and checks the complete decode before returning any parenting text.
+ * Used by WhatsApp (which cannot render a partial answer); the app uses decodeStaged.
  */
 export async function decodeBehavior(
   scenario: string,
@@ -211,6 +212,112 @@ export async function decodeBehavior(
   }, call);
   // No raw token callback: only complete, checked content may leave this module.
   return { analysis: toAnalysis(generated, route), violations: [], repaired: false };
+}
+
+// ─── Two-stage checked generation (Ask in the app) ───────────────────────────
+//
+// Stage A writes only what the parent needs this minute, and is linted and reviewed on its own before the
+// caller may show it. Stage B receives Stage A's checked words as fixed input and writes the explanation;
+// lint/repair only touch Stage B's fields, and the review sees the COMBINED answer. Nothing unchecked
+// leaves this module, and a Stage B failure never withdraws or rewrites Stage A.
+
+const IMMEDIATE_FIELDS = ['rightNow', 'sayThis', 'doThis', 'avoid'] as const;
+const DETAIL_FIELDS = ['hypotheses', 'emotionalNeed', 'afterwards', 'watchFor', 'seekHelpIf', 'skillBeingBuilt', 'developmentalContext', 'whyItWorks', 'evidenceIds'] as const;
+
+const immediateSchema = z.object({
+  rightNow: z.string(),
+  sayThis: z.string().min(1),
+  doThis: z.array(z.string().min(1)).min(1).max(3),
+  avoid: z.string().min(1),
+});
+const detailSchema = generatedSchema.pick({
+  hypotheses: true, emotionalNeed: true, afterwards: true, watchFor: true, seekHelpIf: true,
+  skillBeingBuilt: true, developmentalContext: true, whyItWorks: true, evidenceIds: true,
+});
+type Immediate = z.infer<typeof immediateSchema>;
+type Detail = z.infer<typeof detailSchema>;
+
+function pickJsonSchema(fields: readonly (keyof typeof GENERATED_JSON_SCHEMA.properties)[], overrides: Record<string, unknown> = {}) {
+  return {
+    type: 'object', additionalProperties: false, required: [...fields],
+    properties: Object.fromEntries(fields.map((f) => [f, overrides[f] ?? GENERATED_JSON_SCHEMA.properties[f]])),
+  };
+}
+const IMMEDIATE_JSON_SCHEMA = pickJsonSchema(IMMEDIATE_FIELDS, {
+  doThis: { type: 'array', items: { type: 'string' }, description: '2-3 concrete actions for the next few minutes, each under 20 words, in order.' },
+});
+const DETAIL_JSON_SCHEMA = pickJsonSchema(DETAIL_FIELDS);
+
+const IMMEDIATE_TASK = `<task stage="immediate">
+Write ONLY what the parent needs in the next few minutes: rightNow, sayThis, 2-3 doThis steps and avoid.
+Be brief and concrete. The explanation is written separately, so do not explain here.
+</task>`;
+const DETAIL_TASK = `<task stage="explanation">
+The parent has already been shown the checked immediate answer in <already_shown>. Those words are fixed.
+Write the explanation that sits behind them: hypotheses, developmental context, the need and skill, what to do later, what to watch for, when to seek help, why it works and evidence.
+Stay consistent with the immediate answer and do not repeat it. If anything in the situation means the immediate answer is not enough, say so plainly in seekHelpIf.
+</task>`;
+
+export const IMMEDIATE_MAX_TOKENS = 2500;
+export const DETAIL_MAX_TOKENS = 5000;
+
+function immediateAnalysis(g: Immediate): ImmediateAnalysis {
+  return { rightNow: g.rightNow.trim(), sayThis: g.sayThis, doThis: g.doThis, avoid: g.avoid };
+}
+
+/** Combines a checked immediate answer with an optional checked explanation into the saved shape. */
+export function combineStages(first: ImmediateAnalysis, detail: Detail | null, route: Route): AgentAnalysis {
+  if (detail) return toAnalysis({ ...first, rightNow: first.rightNow ?? '', ...detail }, route);
+  return {
+    ...first,
+    hypotheses: [], interpretation: '', emotionalNeed: '', afterwards: '', watchFor: '', seekHelpIf: '',
+    skillBeingBuilt: '', developmentalContext: '', whyItWorks: '', evidence: [],
+    clarify: route.clarify, modules: route.modules, detailUnavailable: true,
+  };
+}
+
+export interface StagedResult {
+  analysis: AgentAnalysis;
+  first: ImmediateAnalysis;
+  detailAvailable: boolean;
+  timings: { firstMs: number; detailMs: number };
+}
+
+/**
+ * Stage A must succeed (it throws otherwise, and nothing has been shown). `onFirst` receives only the
+ * checked Stage A answer. Stage B failure, rejection, timeout or cancellation returns Stage A alone.
+ */
+export async function decodeStaged(
+  scenario: string,
+  ctx: DecodeContext,
+  route: Route,
+  onFirst: (first: ImmediateAnalysis) => void,
+  signal?: AbortSignal,
+  call = structuredCall,
+): Promise<StagedResult> {
+  const user = composeUserTurn(scenario, ctx, route);
+  const started = Date.now();
+  const first = immediateAnalysis(await checkedCall({
+    system: `${CONSTITUTION}\n\n${IMMEDIATE_TASK}`, user,
+    schema: IMMEDIATE_JSON_SCHEMA, validator: immediateSchema,
+    maxTokens: IMMEDIATE_MAX_TOKENS, timeoutMs: 20_000, signal, additionalContent: route.clarify,
+  }, call));
+  const firstMs = Date.now() - started;
+  onFirst(first);
+  let detail: Detail | null = null;
+  try {
+    signal?.throwIfAborted();
+    detail = await checkedCall({
+      system: `${CONSTITUTION}\n\n${DETAIL_TASK}`,
+      user: `${user}\n<already_shown>\n${JSON.stringify(first)}\n</already_shown>`,
+      schema: DETAIL_JSON_SCHEMA, validator: detailSchema,
+      maxTokens: DETAIL_MAX_TOKENS, signal, additionalContent: route.clarify,
+      reviewAs: (checked) => ({ ...first, ...checked }),
+    }, call);
+  } catch (error) {
+    console.warn('[decode] explanation withheld; saving the checked immediate answer', { name: error instanceof Error ? error.name : 'unknown', code: error instanceof DecodeError ? error.code : undefined });
+  }
+  return { analysis: combineStages(first, detail, route), first, detailAvailable: !!detail, timings: { firstMs, detailMs: Date.now() - started - firstMs } };
 }
 
 // ─── Caregiver sharing ───────────────────────────────────────────────────────
