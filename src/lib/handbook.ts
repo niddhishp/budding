@@ -41,7 +41,9 @@ export function suggestedConversation(child: Child, progress: HandbookProgress, 
   return remaining[Math.floor(Date.parse(`${today}T00:00:00Z`) / 604800000) % Math.max(1, remaining.length)];
 }
 export function cardAgeLabel(card: HandbookCard) {
-  return card.minMonths < 0 ? "Before birth" : `${Math.floor(card.minMonths / 12)}–${Math.floor(card.maxMonths / 12)} years`;
+  if (card.minMonths < 0) return "Before birth";
+  if (card.maxMonths < 12) return "Under 1 year";
+  return `${Math.floor(card.minMonths / 12)}–${Math.floor(card.maxMonths / 12)} years`;
 }
 export function birthdayWithin(child: Child, today = todayDate(), days = 30) {
   if (ageMonths(child.dateOfBirth, today) === null || !child.dateOfBirth) return null;

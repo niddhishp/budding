@@ -41,7 +41,7 @@ try {
     assert(!dashboard.includes("takes in more than most children"));
     assert(!dashboard.includes("A deep feeler"));
     if (years >= 3) {
-      Object.assign(initial, { currentPage: "handbook", handbookCardId: years === 4 ? "money-choose" : years === 11 ? "money-goal" : "money-scam" });
+      Object.assign(initial, { currentPage: "handbook", handbookCardId: years === 4 ? "money-choose" : years === 11 ? "money-wants" : "money-account" });
       const card = renderToStaticMarkup(<HandbookPage />);
       assert(card.includes("Practise the conversation"));
       assert(card.includes("Keep for later"));
