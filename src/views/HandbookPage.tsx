@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { HANDBOOK, HANDBOOK_SOURCES, TRACKS, type HandbookCard, type Track } from "@/data/handbook";
+import { HANDBOOK_FILMS, filmEmbed } from "@/data/handbook-films";
 import { cardAgeLabel, cardsForChild, nextConversations, suggestedConversation } from "@/lib/handbook";
 import { familyNavigation } from "@/lib/family-navigation";
 import { CareFrame, CareError, fieldClass, buttonClass } from "@/components/care/CareFrame";
@@ -61,6 +62,7 @@ function Handbook({ child }: { child: Child }) {
         <button className="text-clay underline py-2" onClick={() => openAsk("talk", `Help me draft a respectful agreement with another caregiver about "${selected.title}". Include one shared limit, the words we can use, who will help, and a review date we choose. Ask about our situation first.`, selected.id)}>Draft a caregiver agreement</button>
         <p className="text-sm text-slate-600">You review any wording. Nothing is sent to another person.</p>
       </details>
+      <CardFilm id={selected.id} />
       <section className="py-8">
         <h3 className="font-heading text-2xl">Keep it for your family</h3>
         <p className="text-slate-600 mt-2">No rush to tick things off. These are your notes about trying a conversation, not a score for your child.</p>
@@ -99,6 +101,17 @@ function Handbook({ child }: { child: Child }) {
       <p className="text-xs text-slate-600 leading-6 mt-8">Kahiye editorial conversation starters, informed by linked guidance. They are not individual assessments or therapy. Clinical and safeguarding review is pending; sensitive concerns belong with a qualified professional. <Link className="underline" href="/help-now">Immediate support</Link> remains available.</p>
     </>}
   </CareFrame>;
+}
+function CardFilm({ id }: { id: string }) {
+  const film = HANDBOOK_FILMS[id], src = film && filmEmbed(film.url);
+  if (!film || !src) return null;
+  return <figure className="py-8 border-b">
+    <figcaption className="font-heading text-2xl">See it play out</figcaption>
+    <p className="text-sm text-slate-600 mt-1">A short Kahiye film · {film.minutes} min</p>
+    <div className="relative mt-4 aspect-video overflow-hidden rounded-2xl bg-slate-900">
+      <iframe src={src} title={film.title} loading="lazy" className="absolute inset-0 h-full w-full" allow="fullscreen; picture-in-picture" allowFullScreen />
+    </div>
+  </figure>;
 }
 function SourceNote({ card }: { card: HandbookCard }) {
   const source = HANDBOOK_SOURCES[card.source];

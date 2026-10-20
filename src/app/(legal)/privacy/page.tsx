@@ -1,4 +1,5 @@
 import { POLICY_VERSION } from "@/lib/consent";
+import { LEGAL_IDENTITY, PENDING_CONTACT } from '@/lib/legal-identity';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { publicMetadata } from '@/lib/seo';
 
@@ -13,8 +14,7 @@ export default function PrivacyPage() {
       <p className="text-sm text-slate-500">Version {POLICY_VERSION}</p>
 
       <p>
-        Kahiye (&ldquo;we&rdquo;) is operated by [Company legal name],
-        [registered address], India. This policy explains what we collect when
+        Kahiye (&ldquo;we&rdquo;) is operated by {LEGAL_IDENTITY.operator}, {LEGAL_IDENTITY.address ?? 'India'}{LEGAL_IDENTITY.address ? ', India' : ''}. This policy explains what we collect when
         you use kahiye.app, why, and the choices you have. It is written to meet
         India&apos;s Digital Personal Data Protection Act, 2023.
       </p>
@@ -199,7 +199,9 @@ export default function PrivacyPage() {
 
       <h2>Grievance Officer</h2>
       <p>
-        [Name], [email], [phone]. We respond within 30 days. If you are not
+        {LEGAL_IDENTITY.grievanceName && LEGAL_IDENTITY.grievanceEmail
+          ? <>{LEGAL_IDENTITY.grievanceName}, <a href={`mailto:${LEGAL_IDENTITY.grievanceEmail}`}>{LEGAL_IDENTITY.grievanceEmail}</a>{LEGAL_IDENTITY.grievancePhone ? `, ${LEGAL_IDENTITY.grievancePhone}` : ''}.</>
+          : <>Our Grievance Officer&apos;s contact details are {PENDING_CONTACT}.</>} We respond within 30 days. If you are not
         satisfied, you may approach the Data Protection Board of India.
       </p>
 

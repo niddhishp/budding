@@ -9,6 +9,7 @@ import { MemoryPanel } from "@/components/MemoryPanel";
 import { intakeBandForAge } from "@/lib/temperament";
 import { HoroscopeCard } from "@/components/care/HoroscopeCard";
 import { MemoryStrip } from "@/components/child/MemoryStrip";
+import { WhatWorks } from "@/components/child/WhatWorks";
 import { useFamilyPlan } from "@/components/care/useFamilyPlan";
 import { useTodayDate } from "@/components/care/useTodayDate";
 import { familyNavigation } from "@/lib/family-navigation";
@@ -62,6 +63,8 @@ function ChildProfile({ child }: { child: Child }) {
         <div className="min-w-0">
           {born && <MemoryStrip child={child} entries={family.data?.entries} loading={!family.data && !family.error} />}
           {family.error && born && <p className="text-sm mb-6">Photo memories could not be loaded. <button className="underline" onClick={family.reload}>Try again</button></p>}
+
+          {born && <WhatWorks child={child} />}
 
           {born && <GrowthSnapshot child={child} />}
 

@@ -1,11 +1,12 @@
 import { POLICY_VERSION } from '@/lib/consent';
+import { LEGAL_IDENTITY, PENDING_CONTACT } from '@/lib/legal-identity';
 import { CONVERSATION_MESSAGE_LIMIT, FREE_DECODES_PER_WEEK, PLUS_DECODES_PER_DAY, PRICES } from '@/lib/plans';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { publicMetadata } from '@/lib/seo';
 
 export const metadata = publicMetadata('Terms of use | Kahiye', 'Read the terms for using Kahiye, including account responsibilities, guidance limits, subscription terms and how the service handles parenting information.', '/terms');
 
-// DRAFT — have counsel review before launch. Replace every [bracketed] placeholder.
+// Have counsel review before paid plans open. Operator details come from src/lib/legal-identity.ts.
 export default function TermsPage() {
   return (
     <>
@@ -13,7 +14,7 @@ export default function TermsPage() {
       <h1>Terms of Use</h1>
       <p className="text-sm text-slate-500">Version {POLICY_VERSION}</p>
 
-      <p>These terms are an agreement between you and [Company legal name] for your use of Kahiye.</p>
+      <p>These terms are an agreement between you and {LEGAL_IDENTITY.operator}{LEGAL_IDENTITY.address ? `, ${LEGAL_IDENTITY.address}` : ''} for your use of Kahiye.</p>
 
       <h2>What Kahiye is, and isn&apos;t</h2>
       <p>
@@ -47,10 +48,10 @@ export default function TermsPage() {
       </p>
 
       <h2>Governing law</h2>
-      <p>These terms are governed by the laws of India, with courts in [Mumbai] having jurisdiction.</p>
+      <p>These terms are governed by the laws of India, with courts in {LEGAL_IDENTITY.jurisdiction} having jurisdiction.</p>
 
       <h2>Contact</h2>
-      <p>[support email]</p>
+      <p>{LEGAL_IDENTITY.supportEmail ? <a href={`mailto:${LEGAL_IDENTITY.supportEmail}`}>{LEGAL_IDENTITY.supportEmail}</a> : <>Our support email is {PENDING_CONTACT}.</>}</p>
     </>
   );
 }

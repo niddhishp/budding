@@ -52,5 +52,11 @@ export function launchReadiness(env: Environment = process.env): LaunchService[]
     service('finance', 'Financial partner referrals', [
       { label: 'FINANCE_REFERRALS_ENABLED=true', met: env.FINANCE_REFERRALS_ENABLED === 'true' },
     ], 'Confirm approved partner arrangements, disclosures and allowed destinations in Curated shop. The savings-goal planner works without referrals; this switch does not verify a partner.', env.FINANCE_REFERRALS_ENABLED === 'true'),
+    service('legal', 'Legal details on privacy and terms', [
+      ...required('NEXT_PUBLIC_LEGAL_ADDRESS', 'NEXT_PUBLIC_GRIEVANCE_NAME', 'NEXT_PUBLIC_GRIEVANCE_EMAIL', 'NEXT_PUBLIC_SUPPORT_EMAIL'),
+    ], 'Use the principal place of business from the GST registration (or a chosen office address). The grievance and support inboxes must be real, monitored mailboxes. Have counsel review both pages before paid plans open.'),
+    service('auth-email', 'Sign-up and password emails', [
+      { label: 'Supabase custom SMTP set to the verified kahiye.app sender (checked by a real sign-up)', met: env.AUTH_SMTP_VERIFIED === 'true' },
+    ], 'Supabase’s built-in mailer is for testing only and sends very few emails an hour. Configure custom SMTP (Resend) in Supabase Auth settings, send a real sign-up and password reset to an owned inbox, then set AUTH_SMTP_VERIFIED=true as the record.'),
   ];
 }

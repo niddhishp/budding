@@ -5,7 +5,9 @@ import { assessDeliveryWorker } from '../../src/lib/delivery-health';
 
 test('missing provider setup stays explicit and credentials never become an approval', () => {
   const reports = launchReadiness({});
-  assert.equal(reports.length, 7);
+  assert.equal(reports.length, 9);
+  assert.deepEqual(reports.slice(-2).map(r => r.id), ['legal', 'auth-email']);
+  assert(reports.slice(-2).every(r => r.state === 'incomplete'), 'Missing legal details and unverified auth email are shown as incomplete');
   for (const service of reports) {
     assert.notEqual(service.state, 'configured');
     assert.ok(service.requirements.some(item => !item.met));
