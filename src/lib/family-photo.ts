@@ -25,3 +25,14 @@ export async function prepareFamilyPhoto(bytes: Buffer) {
 }
 export const photoPath = (userId: string, id: string, hash: string) =>
   `${userId}/${id}-${hash}.jpg`;
+/** A small private copy for the memory strip, stored beside the photo it was made from. */
+export const thumbPath = (userId: string, id: string, hash: string) =>
+  `${userId}/${id}-${hash}-thumb.webp`;
+export const THUMB_WIDTH = 640;
+export async function makeThumbnail(photo: Buffer) {
+  const { data, info } = await sharp(photo, { limitInputPixels: 24_000_000 })
+    .resize({ width: THUMB_WIDTH, height: THUMB_WIDTH * 1.5, fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 72 })
+    .toBuffer({ resolveWithObject: true });
+  return { thumb: data, width: info.width, height: info.height };
+}

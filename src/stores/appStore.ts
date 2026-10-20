@@ -114,6 +114,9 @@ interface AppState {
   handbookCardId: string | null;
   openHandbook: (id?: string) => void;
   askIntent: { mode: "guidance" | "talk" | "rehearse"; prompt: string; cardId?: string } | null;
+  /** Open the photo editor with a new memory form, optionally with a suggested title. */
+  photoIntent: { title: string } | null;
+  openPhotos: (add?: { title: string }) => void;
   openAsk: (mode: "guidance" | "talk" | "rehearse", prompt?: string, cardId?: string) => void;
   setPage: (page: Page) => void;
   sidebarOpen: boolean;
@@ -313,8 +316,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   handbookCardId: null,
   openHandbook: (id) => set({ currentPage: "handbook", handbookCardId: id ?? null }),
   askIntent: null,
+  photoIntent: null,
+  openPhotos: (add) => set({ currentPage: "photo-timeline", photoIntent: add ?? null }),
   openAsk: (mode, prompt = "", cardId) => set({ currentPage: "ask-ai", askIntent: { mode, prompt, cardId } }),
-  setPage: (page) => set({ currentPage: page, ...(page === "ask-ai" ? { askIntent: null } : {}), ...(page === "handbook" ? { handbookCardId: null } : {}) }),
+  setPage: (page) => set({ currentPage: page, ...(page === "ask-ai" ? { askIntent: null } : {}), ...(page === "handbook" ? { handbookCardId: null } : {}), ...(page === "photo-timeline" ? { photoIntent: null } : {}) }),
   sidebarOpen: true,
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
 
@@ -324,7 +329,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const child = get().children.find(c => c.id === id);
     if (!child) return;
     rememberSelection(id);
-    set({ selectedChildId: id, currentPage: pageAfterChildSwitch(get().currentPage, child), handbookCardId: null, askIntent: null });
+    set({ selectedChildId: id, currentPage: pageAfterChildSwitch(get().currentPage, child), handbookCardId: null, askIntent: null, photoIntent: null });
   },
   addChild: async (input) => {
     const { data, error } = await getSupabase()

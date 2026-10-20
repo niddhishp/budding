@@ -179,3 +179,18 @@
     animation-range: entry 0% entry 35%;
   }
 }
+
+/* Photo memory strip: native sideways scrolling with a gentle, CSS-only parallax. */
+.memory-track { scrollbar-width: thin; }
+@media (pointer: fine) { .memory-track { scrollbar-width: none; } }
+.memory-drift { transform: translateX(-5%); }
+@keyframes memory-drift { from { transform: translateX(0); } to { transform: translateX(-10%); } }
+@supports (animation-timeline: view()) {
+  .memory-drift {
+    animation: memory-drift linear both;
+    animation-timeline: view(inline);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .memory-drift { animation: none !important; transform: translateX(-5%); }
+}

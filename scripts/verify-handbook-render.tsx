@@ -9,6 +9,7 @@ import { HandbookPage } from "../src/views/HandbookPage";
 import { DashboardPage } from "../src/views/DashboardPage";
 import { AskPage } from "../src/views/AskPage";
 import { SafetyBanner } from "../src/views/AskAIPage";
+import { MemoryStrip } from "../src/components/child/MemoryStrip";
 import { BottomNav } from "../src/components/BottomNav";
 import { ChildProfilePage } from "../src/views/ChildProfilePage";
 Object.assign(globalThis, { React });
@@ -58,7 +59,11 @@ try {
     const practice = renderToStaticMarkup(<AskPage />);
     assert(practice.includes("A fictional practice conversation"));
     const childPage = renderToStaticMarkup(<ChildProfilePage />);
-    for (const label of ["Shop for Kids", "Gifts &amp; rewards", "Photo timeline", "Family plan"]) assert(childPage.includes(label));
+    for (const label of ["Useful finds", "Gifts &amp; rewards", "Photo memories", "Family plan &amp; savings", "Health diary", "This season’s patterns", "Growing up, together"]) assert(childPage.includes(label), `Child page keeps ${label}`);
+    assert(!childPage.includes("Journey"));
+    const emptyStrip = renderToStaticMarkup(<MemoryStrip child={child} entries={[]} loading={false} />);
+    assert(emptyStrip.includes("Example") && emptyStrip.includes(`Add ${child.name}’s first memory`), "An empty photo strip shows labelled example prints");
+    assert(!emptyStrip.includes("/api/family-photos/"), "Examples never request a real photo");
   }
   console.log("PASS: real Handbook/Today/Ask/Child components for ages 1, 4, 11 and 16; exactly five mobile destinations, age relevance, fiction/AI labels, preserved family tools and no fixed temperament claims.");
 } finally { Object.assign(initial, original); }

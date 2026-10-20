@@ -1,304 +1,140 @@
 import { ParentGuideLinks } from "@/components/care/ParentGuideLinks";
 import { GrowthSnapshot } from "@/components/care/GrowthSnapshot";
 import { observedPatterns } from "@/lib/moments";
-import { useAppStore } from "@/stores/appStore";
-import {
-  milestones as allMilestones,
-  stageInfo,
-} from "@/data/developmentalData";
-import { motion } from "framer-motion";
-import { Badge } from "@/components/ui/badge";
-import { Star, Circle, Target, RefreshCw } from "lucide-react";
+import { useAppStore, type Page } from "@/stores/appStore";
+import { milestones as allMilestones, stageInfo } from "@/data/developmentalData";
+import { RefreshCw } from "lucide-react";
 import { WeeklyReportCard } from "@/components/WeeklyReportCard";
 import { MemoryPanel } from "@/components/MemoryPanel";
 import { intakeBandForAge } from "@/lib/temperament";
 import { HoroscopeCard } from "@/components/care/HoroscopeCard";
-
-const SPRING_TRANSITION = {
-  type: "spring",
-  stiffness: 100,
-  damping: 20,
-} as const;
+import { MemoryStrip } from "@/components/child/MemoryStrip";
+import { useFamilyPlan } from "@/components/care/useFamilyPlan";
+import { useTodayDate } from "@/components/care/useTodayDate";
+import { familyNavigation } from "@/lib/family-navigation";
+import type { Child } from "@/types";
 
 export function ChildProfilePage() {
-  const { selectedChildId, children, setEditingChild, setPage } = useAppStore();
+  const { selectedChildId, children } = useAppStore();
   const child = children.find((c) => c.id === selectedChildId);
+  if (!child) return <div className="p-8 text-center text-slate-500">Select a child</div>;
+  return <ChildProfile key={child.id} child={child} />;
+}
 
-  if (!child)
-    return <div className="p-8 text-center text-slate-500">Select a child</div>;
+const LINKS: { page: Page; title: string; line: string; born?: boolean }[] = [
+  { page: "handbook", title: "Their handbook", line: "Conversations for this age, and your follow-ups." },
+  { page: "health", title: "Health diary", line: "Vaccinations, medicines and check-ups.", born: true },
+  { page: "interests", title: "Interests", line: "Notice what they love. Make room to explore.", born: true },
+  { page: "stories", title: "Story library", line: "Bedtime stories made for them.", born: true },
+  { page: "family-plan", title: "Family plan & savings", line: "Dates to remember, goals to save towards." },
+  { page: "milestones", title: "Developmental observations", line: "What you notice, in your own words.", born: true },
+];
 
+function ChildProfile({ child }: { child: Child }) {
+  const { setEditingChild, setPage } = useAppStore();
+  const today = useTodayDate();
+  const born = familyNavigation(child, today).born;
+  const family = useFamilyPlan();
   const stage = stageInfo[child.age.stage];
-  const childMilestones = allMilestones.filter(
-    (m) => m.stage === child.age.stage,
-  );
-
+  const childMilestones = allMilestones.filter((m) => m.stage === child.age.stage);
   const patterns = observedPatterns(child);
   // Legacy (toddler-only) intake, or answers given for an earlier age band.
-  const outdated =
-    child.age.stage !== "pregnancy" &&
-    child.intakeBand !== intakeBandForAge(child.age.years, child.age.months);
+  const outdated = born && child.intakeBand !== intakeBandForAge(child.age.years, child.age.months);
 
   return (
-    <div className="max-w-4xl mx-auto pt-12 pb-24 px-4 sm:px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={SPRING_TRANSITION}
-        className="mb-16 text-center"
-      >
-        <div className="w-24 h-24 mx-auto rounded-full bg-clay/10 flex items-center justify-center mb-6">
-          <span className="font-heading text-4xl text-clay">
-            {child.name.charAt(0)}
-          </span>
+    <div className="max-w-6xl mx-auto pt-8 md:pt-12 pb-24 px-4 sm:px-6">
+      <header className="flex flex-wrap items-center gap-4 mb-8">
+        <div className="w-14 h-14 rounded-full bg-clay/10 flex items-center justify-center shrink-0" aria-hidden>
+          <span className="font-heading text-2xl text-clay">{child.name.charAt(0)}</span>
         </div>
-        <h1 className="font-heading text-4xl md:text-5xl text-slate-850 leading-tight mb-3">
-          {child.name}'s Journey
-        </h1>
-        <p className="text-slate-500 uppercase tracking-widest text-sm font-medium">
-          {child.gender && <>{child.gender === 'girl' ? 'Girl' : 'Boy'} &middot; </>}
-          {child.age.label} &middot; {stage?.title}
-        </p>
-      </motion.div>
-
-      <div className="grid sm:grid-cols-2 gap-4 mb-8">
-        <button onClick={() => setPage("handbook")} className="text-left border-y py-6 px-3">
-          <span className="block font-heading text-2xl">Their handbook →</span>
-          <span className="text-sm text-slate-600">Conversations for this age and your saved follow-ups.</span>
+        <div className="min-w-0 flex-1">
+          <h1 className="font-heading text-4xl text-slate-850 leading-tight">{child.name}</h1>
+          <p className="text-slate-600 mt-1">
+            {child.gender && <>{child.gender === "girl" ? "Girl" : "Boy"} · </>}{child.age.label} · {stage?.title}
+          </p>
+        </div>
+        <button onClick={() => setEditingChild(child.id)} className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2.5 text-sm text-slate-700 hover:border-clay">
+          <RefreshCw className="w-4 h-4" aria-hidden /> Update profile
         </button>
-        <button
-          onClick={() => setPage("photo-timeline")}
-          className="text-left border-y py-6 px-3"
-        >
-          <span className="block font-heading text-2xl">Photo timeline →</span>
-          <span className="text-sm text-slate-600">
-            Keep their milestones and your favourite moments.
-          </span>
-        </button>
-        <button
-          onClick={() => setPage("family-plan")}
-          className="text-left border-y py-6 px-3"
-        >
-          <span className="block font-heading text-2xl">Family plan →</span>
-          <span className="text-sm text-slate-600">
-            Dates to remember and goals to save towards.
-          </span>
-        </button>
-      </div>
-      {child.dateOfBirth && <div className="flex flex-wrap gap-6 border-b pb-6 mb-8">
-        <button className="text-clay underline py-2" onClick={() => setPage("gifts")}>Gifts & rewards →</button>
-        <button className="text-clay underline py-2" onClick={() => setPage("shop")}>Shop for Kids →</button>
-        <button className="text-clay underline py-2" onClick={() => setPage("milestones")}>Developmental observations →</button>
-      </div>}
-      {child.age.stage !== "pregnancy" && (
-        <section className="mb-12">
-          <ParentGuideLinks key={`guides-${child.id}`} child={child} />
-          <button className="text-clay underline mb-6" onClick={() => setPage("stories")}>Open {child.name}’s story library →</button>
-          <GrowthSnapshot key={child.id} child={child} />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <button
-              className="text-left border-y py-6 px-3"
-              onClick={() => setPage("health")}
-            >
-              <span className="block font-heading text-2xl">
-                Health diary →
-              </span>
-              <span className="text-sm text-slate-600">
-                Vaccinations, medication & check-ups
-              </span>
-            </button>
-            <button
-              className="text-left border-y py-6 px-3"
-              onClick={() => setPage("interests")}
-            >
-              <span className="block font-heading text-2xl">
-                Interests & talents →
-              </span>
-              <span className="text-sm text-slate-600">
-                Notice what they love. Make room to explore.
-              </span>
-            </button>
-          </div>
-        </section>
-      )}
+      </header>
 
-      {child.age.stage !== "pregnancy" && (
-        <WeeklyReportCard key={child.id} child={child} />
-      )}
-      {child.age.stage !== "pregnancy" && (
-        <HoroscopeCard key={`sign-${child.id}`} child={child} profile />
-      )}
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_340px] xl:gap-12">
+        <div className="min-w-0">
+          {born && <MemoryStrip child={child} entries={family.data?.entries} loading={!family.data && !family.error} />}
+          {family.error && born && <p className="text-sm mb-6">Photo memories could not be loaded. <button className="underline" onClick={family.reload}>Try again</button></p>}
 
-      <div className="grid md:grid-cols-12 gap-12">
-        {/* Left Column - The Memory Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...SPRING_TRANSITION, delay: 0.1 }}
-          className="md:col-span-8"
-        >
-          <div className="relative border-l border-slate-200/60 ml-4 md:ml-6 space-y-12 pb-12">
-            <div className="relative pl-8 md:pl-12">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-canvas border-2 border-clay flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-clay" />
-              </div>
-              <p className="text-sm text-clay font-medium tracking-widest uppercase mb-2">
-                Current Phase
-              </p>
-              <h2 className="text-2xl font-heading text-slate-850 mb-4">
-                {stage?.title}
-              </h2>
-              <p className="text-slate-600 leading-relaxed mb-6">
-                {stage?.description}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {stage?.keyThemes.map((theme, i) => (
-                  <Badge
-                    key={i}
-                    variant="secondary"
-                    className="bg-clay/10 text-clay border-0 font-medium px-3 py-1"
-                  >
-                    {theme}
-                  </Badge>
-                ))}
-              </div>
+          {born && <GrowthSnapshot child={child} />}
+
+          {stage && <section className="border-y py-7 my-8" aria-labelledby="stage-title">
+            <p className="text-sm text-clay">This stage</p>
+            <h2 id="stage-title" className="font-heading text-2xl text-slate-850 mt-2">{stage.title}</h2>
+            <p className="text-slate-600 leading-7 mt-3">{stage.description}</p>
+            <div className="flex flex-wrap gap-2 mt-4">
+              {stage.keyThemes.map((theme) => <span key={theme} className="rounded-full bg-clay/10 text-clay px-3 py-1 text-sm">{theme}</span>)}
             </div>
+            {!!childMilestones.length && <details className="mt-5">
+              <summary className="cursor-pointer py-2 text-slate-800">Things you may notice at this stage</summary>
+              <p className="text-sm text-slate-500 mt-2">General examples, not a record of your child’s progress.</p>
+              <ul className="mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-2">
+                {childMilestones.map((m) => <li key={m.id} className="text-slate-700">{m.title} <span className="text-sm text-slate-500">· {m.ageRange}</span></li>)}
+              </ul>
+            </details>}
+          </section>}
 
-            <div className="relative pl-8 md:pl-12">
-              <div className="absolute -left-3 top-0 w-6 h-6 rounded-full bg-canvas border border-slate-300 flex items-center justify-center">
-                <Star className="w-3 h-3 text-slate-400" />
-              </div>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-heading text-slate-850">
-                  Things you may notice
-                </h3>
-              </div>
+          {born && <WeeklyReportCard child={child} />}
 
-              <p className="text-sm text-slate-500 mb-4">
-                General stage examples, not a record of your child’s progress.
-              </p>
-              <div className="space-y-4">
-                {childMilestones.map((milestone) => (
-                  <div
-                    key={milestone.id}
-                    className="flex gap-4 p-5 rounded-[2rem] border bg-white/50 border-slate-200/60"
-                  >
-                    <Circle className="w-5 h-5 text-slate-300 shrink-0 mt-1" />
-                    <div>
-                      <p className="text-base mb-1 text-slate-700">
-                        {milestone.title}
-                      </p>
-                      <p className="text-xs text-slate-500 uppercase tracking-wider">
-                        {milestone.ageRange}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <nav aria-label={`More for ${child.name}`} className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 my-8">
+            {LINKS.filter((l) => born || !l.born).map((l) => <button key={l.page} onClick={() => setPage(l.page)} className="text-left rounded-2xl border border-slate-200 bg-surface p-5 hover:border-clay transition-colors">
+              <span className="block font-heading text-xl text-slate-850">{l.title}</span>
+              <span className="block text-sm text-slate-600 mt-1">{l.line}</span>
+            </button>)}
+          </nav>
+        </div>
+
+        <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start" aria-label={`Alongside ${child.name}`}>
+          {born && <ParentGuideLinks child={child} />}
+          {born && <HoroscopeCard child={child} profile />}
+          <section className="rounded-2xl border border-slate-200 bg-surface p-6" aria-labelledby="patterns-title">
+            <h2 id="patterns-title" className="font-heading text-xl text-slate-850">This season’s patterns</h2>
+            <div className="space-y-4 mt-4">
+              {patterns.length ? patterns.map((p) => <div key={p.key}>
+                <p className="text-sm font-medium text-slate-800">{p.situation}</p>
+                <p className="text-sm text-slate-600 mt-1">{p.answer}</p>
+              </div>) : <p className="text-sm text-slate-600">
+                {born ? "No current moments added. You can get help without answering any questions." : "There will be time to notice their little patterns after they arrive."}
+              </p>}
+              <p className="text-xs text-slate-500">Observations change with the day. They are not a score or a fixed type.</p>
+              {outdated && <p className="text-sm text-clay">Earlier answers are kept. Add current moments whenever you are ready.</p>}
             </div>
-          </div>
-        </motion.div>
-
-        {/* Right Sidebar - Parent observations */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...SPRING_TRANSITION, delay: 0.2 }}
-          className="md:col-span-4 space-y-6"
-        >
-          <div className="p-8 rounded-[2rem] border border-slate-200/60 bg-white/50 backdrop-blur-md shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-leaf/10 flex items-center justify-center">
-                <Target className="w-5 h-5 text-leaf" />
-              </div>
-              <h3 className="font-semibold text-slate-850 text-lg">
-                This season's patterns
-              </h3>
+            <ProfileList label="Wants help with" items={child.focusAreas} />
+            <ProfileList label="At home" items={child.household} />
+            <ProfileList label="Languages" items={child.homeLanguages} />
+            {child.profileNotes && <div className="mt-4"><p className="text-xs font-medium text-slate-500 mb-1">Notes</p><p className="text-sm text-slate-700 leading-relaxed">{child.profileNotes}</p></div>}
+          </section>
+          {born && <section className="rounded-2xl bg-paper-deep p-6" aria-labelledby="gifts-title">
+            <h2 id="gifts-title" className="font-heading text-xl text-slate-850">Gifts & finds</h2>
+            <p className="text-sm text-slate-600 mt-2">Ideas for birthdays and rewards, chosen for their age and what you prefer.</p>
+            <div className="flex flex-wrap gap-x-5 mt-3">
+              <button className="text-clay underline py-2" onClick={() => setPage("gifts")}>Gifts & rewards</button>
+              <button className="text-clay underline py-2" onClick={() => setPage("shop")}>Useful finds</button>
             </div>
-
-            <div className="space-y-5">
-              {patterns.length ? (
-                patterns.map((p) => (
-                  <div key={p.key}>
-                    <p className="text-sm font-medium text-slate-800">
-                      {p.situation}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-1">{p.answer}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-600">
-                  {child.age.stage === "pregnancy"
-                    ? "There will be time to notice their little patterns after they arrive."
-                    : "No current moments added. You can get help without answering any questions."}
-                </p>
-              )}
-              <p className="text-xs text-slate-500">
-                Your observations can change with the day. They are not a score
-                or a fixed type.
-              </p>
-            </div>
-
-            {outdated && (
-              <p className="mt-6 text-sm text-clay leading-relaxed">
-                Any earlier answers are kept. Add current moments whenever you
-                are ready.
-              </p>
-            )}
-            <button
-              onClick={() => setEditingChild(child.id)}
-              className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:border-slate-300"
-            >
-              <RefreshCw className="w-4 h-4" /> Update profile
-            </button>
-          </div>
-
-          {(child.focusAreas.length > 0 ||
-            child.household.length > 0 ||
-            child.homeLanguages.length > 0 ||
-            child.profileNotes) && (
-            <div className="p-8 rounded-[2rem] border border-slate-200/60 bg-white/50 shadow-sm space-y-5">
-              <ProfileList label="Wants help with" items={child.focusAreas} />
-              <ProfileList label="At home" items={child.household} />
-              <ProfileList label="Languages" items={child.homeLanguages} />
-              {child.profileNotes && (
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">
-                    Notes
-                  </p>
-                  <p className="text-sm text-slate-700 leading-relaxed">
-                    {child.profileNotes}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </motion.div>
+            <p className="text-xs text-slate-600 mt-2">Some retailer links earn Kahiye a small fee. It never changes what we suggest.</p>
+          </section>}
+        </aside>
       </div>
 
-      <div className="mt-12">
-        <MemoryPanel key={child.id} child={child} />
-      </div>
+      <details className="mt-10 border-t pt-6">
+        <summary className="cursor-pointer font-heading text-xl text-slate-850 py-2">What Kahiye remembers about {child.name}</summary>
+        <div className="mt-4"><MemoryPanel child={child} /></div>
+      </details>
     </div>
   );
 }
 
 function ProfileList({ label, items }: { label: string; items: string[] }) {
   if (!items.length) return null;
-  return (
-    <div>
-      <p className="text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">
-        {label}
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {items.map((item) => (
-          <span
-            key={item}
-            className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-sm"
-          >
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
+  return <div className="mt-4">
+    <p className="text-xs font-medium text-slate-500 mb-2">{label}</p>
+    <div className="flex flex-wrap gap-2">{items.map((item) => <span key={item} className="px-3 py-1 rounded-full bg-paper-deep text-slate-700 text-sm">{item}</span>)}</div>
+  </div>;
 }

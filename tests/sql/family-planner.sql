@@ -38,5 +38,5 @@ end $$;
 reset role;
 do $$ begin if (select public from storage.buckets where id='family-photos') then raise exception 'photos public';end if;end $$;
 delete from auth.users where id='f3000000-0000-4000-8000-000000000001';
-do $$ begin if exists(select 1 from public.family_entries) then raise exception 'erasure failed';end if;if not exists(select 1 from public.family_photo_cleanup where path like 'f3000000-0000-4000-8000-000000000001/%') then raise exception 'erasure recovery missing';end if;end $$;
+do $$ begin if exists(select 1 from public.family_entries) then raise exception 'erasure failed';end if;if not exists(select 1 from public.family_photo_cleanup where path like 'f3000000-0000-4000-8000-000000000001/%') then raise exception 'erasure recovery missing';end if;if not exists(select 1 from public.family_photo_cleanup where path like 'f3000000-0000-4000-8000-000000000001/%-thumb.webp') then raise exception 'thumbnail erasure missing';end if;end $$;
 rollback;

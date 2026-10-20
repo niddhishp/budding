@@ -700,6 +700,17 @@ try {
     "jpeg",
   );
   await run(image, "GET", null, 404, other, memory.id);
+  // The memory strip's thumbnail: made once, kept privately beside the photo, reused, never served to another family.
+  const thumb = await run(image, "GET", null, 200, uid, memory.id, "?size=thumb");
+  assert.equal(thumb.headers.get("cache-control"), "private, max-age=3600");
+  const thumbMeta = await sharp(Buffer.from(await thumb.arrayBuffer())).metadata();
+  assert.equal(thumbMeta.format, "webp");
+  assert(thumbMeta.width <= 640);
+  assert.equal(objects.size, 2, "The thumbnail is stored beside the photo");
+  assert([...objects.keys()].some(k => k.includes(`${uid}/${memory.id}-`) && k.endsWith("-thumb.webp")), "Thumbnail stays in the owner's private folder");
+  assert.equal((await sharp(Buffer.from(await (await run(image, "GET", null, 200, uid, memory.id, "?size=thumb")).arrayBuffer())).metadata()).format, "webp");
+  assert.equal(objects.size, 2, "A stored thumbnail is reused");
+  await run(image, "GET", null, 404, other, memory.id, "?size=thumb");
   const archived = (
     await (
       await run(plan, "PUT", {

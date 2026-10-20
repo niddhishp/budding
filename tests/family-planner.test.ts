@@ -99,3 +99,31 @@ test("photo processing strips metadata, bounds resolution and rejects unsafe for
     `owner/entry-${processed.hash}.jpg`,
   );
 });
+test("photo memories are per child, ordered oldest first and labelled with the child's age then", async () => {
+  const { memoriesFor, ageAtPhoto } = await import("../src/lib/family-planner");
+  const memory = (id: string, child: string, date: string, archived = false) =>
+    ({ id, child_id: child, kind: "memory", revision: 1, photo_ready: true, value: { title: id, date, note: "", archived } }) as never;
+  const entries = [memory("b", "c1", "2024-05-01"), memory("a", "c1", "2024-05-01"), memory("z", "c1", "2023-01-01"),
+    memory("x", "c2", "2022-01-01"), memory("old", "c1", "2020-01-01", true),
+    { id: "e", child_id: "c1", kind: "event", revision: 1, value: { title: "e", date: "2021-01-01" } } as never];
+  assert.deepEqual(memoriesFor(entries, "c1").map(e => e.id), ["z", "a", "b"]);
+  assert.deepEqual(memoriesFor(entries, "c1", true).map(e => e.id), ["old"]);
+  assert.equal(ageAtPhoto("2020-03-15", "2020-03-20"), "Newborn");
+  assert.equal(ageAtPhoto("2020-03-15", "2021-01-14"), "9 mo");
+  assert.equal(ageAtPhoto("2020-03-15", "2022-03-15"), "2 yrs");
+  assert.equal(ageAtPhoto("2020-03-15", "2024-07-20"), "4 yrs 4 mo");
+  assert.equal(ageAtPhoto("2020-03-15", "2019-01-01"), null);
+  assert.equal(ageAtPhoto(null, "2024-01-01"), null);
+});
+test("memory thumbnails are small private copies with stable owner-scoped names", async () => {
+  const sharp = (await import("sharp")).default;
+  const { makeThumbnail, thumbPath, photoPath, THUMB_WIDTH } = await import("../src/lib/family-photo");
+  const photo = await sharp({ create: { width: 1600, height: 1200, channels: 3, background: "#c96" } }).jpeg().toBuffer();
+  const { thumb, width, height } = await makeThumbnail(photo);
+  assert.equal(width, THUMB_WIDTH);
+  assert.equal(height, 480);
+  assert.equal((await sharp(thumb).metadata()).format, "webp");
+  assert(thumb.length < photo.length);
+  assert.equal(thumbPath("u", "i", "h"), "u/i-h-thumb.webp");
+  assert.equal(photoPath("u", "i", "h"), "u/i-h.jpg");
+});

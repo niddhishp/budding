@@ -134,3 +134,20 @@ export const inr = (n: number) =>
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(n);
+
+/** A child's photo memories, oldest first (date, then id), excluding other children and the other archive state. */
+export function memoriesFor(entries: FamilyEntry[], childId: string, archived = false) {
+  return entries
+    .filter(e => e.kind === "memory" && e.child_id === childId && !!e.value.archived === archived)
+    .sort((a, b) => a.value.date.localeCompare(b.value.date) || a.id.localeCompare(b.id));
+}
+/** The child's age on the day a photo was taken, in plain words; null when either date is unknown or before birth. */
+export function ageAtPhoto(dateOfBirth: string | null, photoDate: string) {
+  if (!dateOfBirth || !/^\d{4}-\d{2}-\d{2}$/.test(photoDate) || photoDate < dateOfBirth) return null;
+  const [by, bm, bd] = dateOfBirth.split("-").map(Number), [py, pm, pd] = photoDate.split("-").map(Number);
+  const months = (py - by) * 12 + (pm - bm) - (pd < bd ? 1 : 0);
+  if (months < 1) return "Newborn";
+  if (months < 24) return `${months} mo`;
+  const years = Math.floor(months / 12), rest = months % 12;
+  return rest ? `${years} yrs ${rest} mo` : `${years} yrs`;
+}
