@@ -1,6 +1,26 @@
 # Kahiye — engineering handoff (living document)
 
-**Latest release (20 October):** [Parent moments](PARENT-MOMENTS.md), migration 026.
+**Latest release (20 October), after eight persona-skill reviews** (`C:\Users\Admin\.claude\skills\10_personas`: Jobs, Gates, Musk, Altman, Buffett, Karpathy, Uncle Bob, Nerdzão Elite):
+- [Child page and photo memories](CHILD-MOMENTS.md), migration 028:
+  - a two-column Child page with a sticky right rail (Growing up, horoscope, patterns, gifts)
+  - a private photo strip inside Child, with CSS-only parallax and labelled example prints when empty
+  - private WebP thumbnails, which are erased with their photo
+- [Ages 3–8 content](CONTENT-3-8.md):
+  - 14 new Handbook cards (81 in total): potty training, bedwetting, picky eating, tantrums, siblings, grief and more
+  - 6 public articles (47 public pages)
+  - a 3–5 band in Growing up
+  - Handbook card sharing in 9 languages
+- [Faster Ask](FASTER-ASK.md):
+  - two checked stages: "Say this" first, then the why
+  - triage and routing run in parallel
+  - an age-aware safety check
+  - a Handbook fallback when a custom answer is withheld
+  - a server-enforced 30-minute follow-up window
+  - the 6–12 band split into 6–8 and 9–12
+- Verified: 131 tests, the database (18 suites), routes (7 suites), providers, render, build and SEO.
+- Not yet measured with a live model: latency. Still pending: clinical review of the new cards and articles.
+
+**Previous release (20 October):** [Parent moments](PARENT-MOMENTS.md), migration 026.
 - **Sharing:** Free families get 5 messages a month in other languages; English stays free.
 - **Ask:** answers are scrolled into view, sharing sits under "Say this", and voice input uses the home language.
 - **Today:** a "How did it go?" follow-up, plus a single "More for {name}" section.

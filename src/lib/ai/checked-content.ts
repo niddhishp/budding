@@ -12,17 +12,28 @@ Check warning-sign lists carefully: self-harm/suicidal thoughts, breathing diffi
 Telling a parent not to change a prescribed dose on their own and to contact their clinician/pharmacist is a permitted safety boundary, not a dosing recommendation. Observation notes for a clinician are allowed when they do not delay contacting them or getting immediate help for urgent signs. Evaluate the actual instruction, not isolated words such as "dose" or "days".
 ${CONSTITUTION}`;
 
-export async function checkContent<T extends Record<string, unknown>>(value: T, opts: StructuredOpts<T> & { additionalContent?: unknown }, call = structuredCall): Promise<T> {
+export interface CheckOptions<T> {
+  additionalContent?: unknown;
+  /**
+   * What the independent review sees. Defaults to the generated value. A second stage passes the
+   * combined answer (earlier checked fields + these new fields) so cross-field contradictions are caught,
+   * while lint and repair only ever rewrite the newly generated fields.
+   */
+  reviewAs?: (checked: T) => unknown;
+}
+
+export async function checkContent<T extends Record<string, unknown>>(value: T, opts: StructuredOpts<T> & CheckOptions<T>, call = structuredCall): Promise<T> {
   const violations = lintAnalysis(value);
   const checked = violations.length ? (await repairAnalysis(value, violations, opts.schema, opts.validator, opts.signal, call)).analysis : value;
+  const proposed = opts.reviewAs ? opts.reviewAs(checked) : checked;
   const review = await call({ model: FAST_MODEL, system: reviewSystem,
-    user: JSON.stringify({ source: opts.user, proposed: checked, additionalContent: opts.additionalContent }), schema: reviewJson, validator: reviewSchema,
+    user: JSON.stringify({ source: opts.user, proposed, additionalContent: opts.additionalContent }), schema: reviewJson, validator: reviewSchema,
     maxTokens: 300, timeoutMs: 6000, signal: opts.signal });
   if (!review.approved) throw new DecodeError('unsafe', 'The response did not pass the content check');
   return checked;
 }
 
-export async function checkedCall<T extends Record<string, unknown>>(opts: StructuredOpts<T> & { additionalContent?: unknown }, call = structuredCall): Promise<T> {
+export async function checkedCall<T extends Record<string, unknown>>(opts: StructuredOpts<T> & CheckOptions<T>, call = structuredCall): Promise<T> {
   const policyOpts = { ...opts, system: opts.system.startsWith(CONSTITUTION) ? opts.system : `${CONSTITUTION}\n\n${opts.system}`, timeoutMs: opts.timeoutMs ?? 25_000 };
   return checkContent(await call(policyOpts), policyOpts, call);
 }

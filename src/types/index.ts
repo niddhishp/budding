@@ -173,7 +173,15 @@ export interface AgentAnalysis {
   clarify?: { question: string; options: string[] } | null;
   /** Doctrine modules the router selected (v2, for analytics/eval). */
   modules?: string[];
+  /** True when only the checked immediate answer was saved because the explanation could not be checked. */
+  detailUnavailable?: boolean;
 }
+
+/** The first, independently checked part of an Ask answer: what to do and say right now. */
+export type ImmediateAnalysis = Pick<AgentAnalysis, 'rightNow' | 'sayThis' | 'doThis' | 'avoid'>;
+
+/** Static, editorial Handbook card offered when a custom answer could not be checked. */
+export interface HandbookFallback { id: string; title: string; words: string; activity: string; avoid: string }
 
 export type RiskLevel = 'none' | 'low' | 'elevated' | 'urgent';
 export type DecodeOutcome = 'worked' | 'partly' | 'did_not_work';
@@ -219,6 +227,10 @@ export type DecodeStreamEvent =
   | { type: 'support'; message: string }
   | { type: 'safety'; safety: SafetyNotice | null }
   | { type: 'delta'; text: string }
+  /** The immediate answer, already linted and reviewed; the saved decode follows in 'done'. */
+  | { type: 'first'; analysis: ImmediateAnalysis }
+  /** Terminal: no custom answer could be checked; nothing was charged. */
+  | { type: 'fallback'; message: string; card: HandbookFallback }
   | { type: 'done'; decode: Decode; entitlement: Entitlement }
   | { type: 'error'; error: string; code?: string };
 

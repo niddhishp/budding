@@ -46,7 +46,25 @@ level:
 
 category: the main concern — parent_distress (overwhelm, burnout, "I can't do this"), parent_harm_risk (parent fears they will hurt the child, or already has), child_self_harm (self-harm or suicidal talk by the child), abuse (any abuse or neglect by anyone, including disclosures), medical (a physical emergency), violence (serious violence between people), missing_child, exam_distress (exam/results pressure with distress), wellbeing_concern (other worrying mental/developmental signs), or none.
 
-Rate on content, not tone. "I'm going to lose it" from a tired parent is parent_distress at "low", not harm risk. Messages may be in English, Hindi, Hinglish or other Indian languages.`;
+Rate on content, not tone. "I'm going to lose it" from a tired parent is parent_distress at "low", not harm risk. Messages may be in English, Hindi, Hinglish or other Indian languages.
+
+Use the child's age when it is given. Many intense moments are ordinary for young children; a worrying sign at one age can be expected at another. Calibration examples:
+- A 4-year-old cries hard at nursery drop-off and settles within a few minutes of the parent leaving: "low", none.
+- A 5-year-old shouts "I'll kill you!" at a sibling while playing superheroes: "low", none. Pretend play and big words are not violence.
+- A 7-year-old has a tummy ache and cries about a spelling test tomorrow: "low", none. Ordinary test nerves are not exam_distress.
+- "I'm so tired, I'm going to lose it" after bedtime battles: "low", parent_distress. Not parent_harm_risk.
+- A 6-year-old keeps "dying" in a video game and throws the controller: "low", none.
+Keep genuine risks escalated at every age: a child saying they want to die or to hurt themselves, any injury, abuse disclosure, a parent who fears they will hurt their child, or worry and distress that persist for weeks are never "low" because the child is young.`;
+
+export interface SafetyAgeContext { years: number; months: number; stage: string; stageLabel?: string }
+
+/** Age context for triage: the child's age and stage band, never their name or other profile details. */
+export function safetyUserTurn(message: string, age?: SafetyAgeContext) {
+  const child = !age ? '' : age.stage === 'pregnancy'
+    ? '<child age="not yet born" />\n'
+    : `<child age="${age.years} years ${age.months} months"${age.stageLabel ? ` stage="${age.stageLabel}"` : ''} />\n`;
+  return `${child}<message>\n${message}\n</message>`;
+}
 
 // Instant, model-free screen: obvious emergencies never wait on an API round-trip.
 const PATTERNS: { re: RegExp; category: SafetyCategory }[] = [
@@ -61,14 +79,14 @@ const PATTERNS: { re: RegExp; category: SafetyCategory }[] = [
   { re: /\b(i|i'm|im) (might|will|going to|could|want to) (hurt|hit|shake|kill) (my|the) (baby|child|kid|son|daughter)\b|\bshook (my|the) baby\b/i, category: 'parent_harm_risk' },
 ];
 
-export async function classifySafety(message: string, signal?: AbortSignal, call = structuredCall): Promise<SafetyResult> {
+export async function classifySafety(message: string, signal?: AbortSignal, call = structuredCall, age?: SafetyAgeContext): Promise<SafetyResult> {
   const hit = PATTERNS.find((p) => p.re.test(message));
   if (hit) return { level: 'urgent', category: hit.category, reason: 'Matched an emergency pattern.' };
   try {
     return await call({
       model: FAST_MODEL,
       system: SAFETY_SYSTEM,
-      user: `<message>\n${message}\n</message>`,
+      user: safetyUserTurn(message, age),
       schema: SAFETY_JSON_SCHEMA,
       validator: safetySchema,
       maxTokens: 1500, signal, timeoutMs: 6000,

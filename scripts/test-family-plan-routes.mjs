@@ -8,6 +8,8 @@ globalThis.AsyncLocalStorage = AsyncLocalStorage;
 const dbUrl = process.env.TEST_DATABASE_URL;
 if (!dbUrl || !["localhost", "127.0.0.1"].includes(new URL(dbUrl).hostname))
   throw Error("Disposable local SQL required");
+// PostgREST returns SQL dates as "YYYY-MM-DD" text; mirror that instead of node-postgres Date objects.
+pg.types.setTypeParser(1082, value => value);
 const db = new pg.Client({ connectionString: dbUrl });
 await db.connect();
 await db.query("begin");
@@ -299,18 +301,37 @@ process.env.ANTHROPIC_BASE_URL = base;
 const originalFetch = globalThis.fetch;
 let amazonFixture = false, amazonCalls = 0;
 let aiCalls = 0, rejectAiReview = false, lastShareInput = "";
+let failDetail = false, rejectFirst = false, holdTriageForRouter = false;
+const aiLog = [], safetyPrompts = [], triageOrder = [];
+let routerSeen = () => {}, routerStarted = Promise.resolve();
+const expectRouter = () => { routerStarted = new Promise(r => { routerSeen = r; }); };
 globalThis.fetch = (input, init) => {
   const target = String(input);
   if (target.startsWith(base + "/v1/messages")) {
     aiCalls++;
     const payload = JSON.parse(String(init.body)), props = payload.output_config.format.schema.properties;
-    const text = props.level ? { level: "none", category: "none", reason: "Synthetic routine question" }
-      : props.approved ? { approved: !rejectAiReview }
-      // Caregiver share messages: record what the model was given so the card source can be checked.
-      : props.message ? (lastShareInput = payload.messages[0].content, { message: "Synthetic caregiver message." })
-      : { reply: "We can take this one step at a time. What would help today?", practiceReply: JSON.parse(payload.messages[0].content).mode === "rehearse" ? "But my friends can do it." : "", feedback: [] };
+    const user = payload.messages[0].content;
+    // Ask guidance: router, two checked stages, and reviews of each (the second sees the combined answer).
+    const kind = props.level ? "safety" : props.modules ? "router" : props.approved ? ("hypotheses" in JSON.parse(user).proposed ? "review-detail" : "review") : props.rightNow ? "first" : props.hypotheses ? "detail" : props.message ? "share" : "chat";
+    aiLog.push(kind);
+    if (kind === "safety") safetyPrompts.push(user);
+    if (kind === "router") routerSeen();
+    // Caregiver share messages: record what the model was given so the card source can be checked.
+    if (kind === "share") lastShareInput = user;
+    if (kind === "detail" && failDetail) return Promise.reject(new TypeError("Synthetic provider outage"));
+    const text = kind === "safety" ? { level: "none", category: "none", reason: "Synthetic routine question" }
+      : kind === "router" ? { modules: ["meltdown"], mode: "right_now", goal: "calm_now", clarifyNeeded: true, clarifyQuestion: "Does this happen most evenings?", clarifyOptions: ["Most evenings", "Just today"] }
+      : kind === "review" ? { approved: !rejectAiReview && !(rejectFirst && JSON.parse(user).proposed.sayThis) }
+      : kind === "review-detail" ? { approved: true }
+      : kind === "first" ? { rightNow: "Sit beside them and lower your voice.", sayThis: "This is hard. I am right here.", doThis: ["Offer water.", "Start with one small step together."], avoid: "Arguing about it while they are upset." }
+      : kind === "detail" ? { hypotheses: [{ text: "Tired after a long school day.", likelihood: "most likely" }], emotionalNeed: "Comfort", afterwards: "Plan a snack break first next time.", watchFor: "", seekHelpIf: "", skillBeingBuilt: "Starting hard tasks", developmentalContext: "Common at this age.", whyItWorks: "Calm support helps a child restart.", evidenceIds: [] }
+      : kind === "share" ? { message: "Synthetic caregiver message." }
+      : { reply: "We can take this one step at a time. What would help today?", practiceReply: JSON.parse(user).mode === "rehearse" ? "But my friends can do it." : "", feedback: [] };
     assert(payload.system[0].cache_control);
-    return Promise.resolve(Response.json({ id: "msg_fixture", type: "message", role: "assistant", model: "fixture", content: [{ type: "text", text: JSON.stringify(text) }], stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 20, output_tokens: 30 } }));
+    const respond = () => Response.json({ id: "msg_fixture", type: "message", role: "assistant", model: "fixture", content: [{ type: "text", text: JSON.stringify(text) }], stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 20, output_tokens: 30 } });
+    // Guidance triage is held until routing has started, proving the two run concurrently.
+    if (kind === "safety" && holdTriageForRouter) return Promise.race([routerStarted.then(() => "parallel"), new Promise(r => setTimeout(() => r("sequential"), 3000))]).then(order => { triageOrder.push(order); return respond(); });
+    return Promise.resolve(respond());
   }
   if (amazonFixture && target === 'https://api.amazon.co.uk/auth/o2/token') return Promise.resolve(Response.json({ access_token: 'fixture-token', expires_in: 3600 }));
   if (amazonFixture && target === 'https://creatorsapi.amazon/catalog/v1/getItems') {
@@ -490,6 +511,76 @@ try {
   assert.equal(aiCalls, callsBeforeEmergency);
   assert.equal((await db.query("select count(*)::int n from public.decodes where user_id=$1", [uid])).rows[0].n, count);
   console.log("PASS: actual chat/rehearsal route, SQL receipt replay, tenant isolation, explicit continuation, mode isolation, content rejection without charge, and emergency bypass. AI transport simulated.");
+  // ── Ask guidance: parallel triage/routing, two checked stages, one charge, fallback without charge ──
+  const decodeCount = async () => (await db.query("select count(*)::int n from public.decodes where user_id=$1 and analysis->'conversation' is null", [uid])).rows[0].n;
+  const ask = { childId: child, scenario: "Homework turns into tears every evening.", requestId: crypto.randomUUID() };
+  const guidanceBefore = await decodeCount();
+  aiLog.length = 0; holdTriageForRouter = true; expectRouter();
+  const g1 = await events(ask);
+  holdTriageForRouter = false;
+  assert.deepEqual(triageOrder, ["parallel"], "Routing starts while triage is still running");
+  assert.match(safetyPrompts.at(-1), /<child age="\d+ years \d+ months" stage="[^"]+" \/>/, "Triage receives the child's age band");
+  assert(!safetyPrompts.at(-1).includes("Synthetic child"), "Triage does not receive the child's name");
+  const firstAt = g1.findIndex(e => e.type === "first"), doneAt = g1.findIndex(e => e.type === "done"), safetyAt = g1.findIndex(e => e.type === "safety");
+  assert(safetyAt >= 0 && firstAt > safetyAt && doneAt > firstAt, JSON.stringify(g1.map(e => e.type)));
+  assert(aiLog.indexOf("first") > aiLog.indexOf("safety") && aiLog.indexOf("detail") > aiLog.indexOf("review"), "Generation starts only after triage; Stage B only after Stage A review");
+  assert(!g1.some(e => e.type === "delta"), "Raw tokens are never streamed");
+  const g1Done = g1[doneAt];
+  assert.equal(g1[firstAt].analysis.sayThis, g1Done.decode.analysis.sayThis, "The saved answer keeps the words already shown");
+  assert.deepEqual(Object.keys(g1[firstAt].analysis).sort(), ["avoid", "doThis", "rightNow", "sayThis"], "Only immediate fields are sent first");
+  assert.equal(g1Done.decode.analysis.hypotheses.length, 1);
+  assert.equal(g1Done.decode.analysis.detailUnavailable, undefined);
+  assert.equal(await decodeCount(), guidanceBefore + 1);
+  assert.equal((await db.query("select charged,state from public.guidance_requests where id=$1", [ask.requestId])).rows[0].charged, true);
+  // Replay recovers the saved answer: no generation, no further charge.
+  aiLog.length = 0;
+  const g1Again = await events(ask);
+  assert.equal(g1Again.find(e => e.type === "done").decode.id, g1Done.decode.id);
+  assert(!aiLog.includes("first") && !aiLog.includes("detail") && !g1Again.some(e => e.type === "first"));
+  assert.equal(g1Again.find(e => e.type === "done").entitlement.used, g1Done.entitlement.used);
+  // A quick follow-up within the window is free; an older one is refused before any model call or reservation.
+  const refined = await events({ childId: child, scenario: ask.scenario, requestId: crypto.randomUUID(), refines: g1Done.decode.id, answer: "Most evenings" });
+  const refinedDone = refined.find(e => e.type === "done");
+  assert(refinedDone, JSON.stringify(refined));
+  assert.equal((await db.query("select charged from public.guidance_requests where result_id=$1", [refinedDone.decode.id])).rows[0].charged, false);
+  assert.equal(refinedDone.entitlement.used, g1Done.entitlement.used, "A quick follow-up does not use the allowance");
+  await db.query("update public.decodes set created_at=now()-interval '31 minutes' where id=$1", [g1Done.decode.id]);
+  const lateRequest = crypto.randomUUID(), callsBeforeLate = aiCalls;
+  const late = await run(analyze, "POST", { childId: child, scenario: ask.scenario, requestId: lateRequest, refines: g1Done.decode.id, answer: "Just today" }, 422);
+  assert.equal((await late.json()).code, "refinement_limit");
+  assert.equal(aiCalls, callsBeforeLate, "An expired follow-up makes no model call");
+  assert.equal((await db.query("select count(*)::int n from public.guidance_requests where id=$1", [lateRequest])).rows[0].n, 0, "An expired follow-up reserves and charges nothing");
+  const sqlLate = (await db.query("select public.reserve_guidance($1,$2,$3,'decode','fixture',$4,false) value", [crypto.randomUUID(), uid, child, g1Done.decode.id])).rows[0].value;
+  assert.equal(sqlLate.status, "invalid_refinement", "SQL enforces the same window independently of the route");
+  // Stage B outage: the checked Stage A answer is saved, flagged, and counted exactly once.
+  failDetail = true;
+  const g2Request = crypto.randomUUID();
+  const g2 = await events({ ...ask, scenario: "Bedtime is a battle tonight.", requestId: g2Request });
+  failDetail = false;
+  const g2Done = g2.find(e => e.type === "done");
+  assert(g2.findIndex(e => e.type === "first") < g2.findIndex(e => e.type === "done") && g2Done, JSON.stringify(g2.map(e => e.type)));
+  assert.equal(g2Done.decode.analysis.detailUnavailable, true);
+  assert.equal(g2Done.decode.analysis.sayThis, "This is hard. I am right here.");
+  assert.equal(g2Done.decode.analysis.afterwards, "");
+  assert.equal(g2Done.entitlement.used, g1Done.entitlement.used + 1, "Only one charge for an answer saved without its explanation");
+  assert.deepEqual((await db.query("select charged,state from public.guidance_requests where id=$1", [g2Request])).rows[0], { charged: true, state: "complete" });
+  assert.equal(await decodeCount(), guidanceBefore + 3);
+  // Stage A withheld by review: the Handbook starting point is offered, nothing is saved or charged.
+  rejectFirst = true;
+  const g3Request = crypto.randomUUID();
+  const g3 = await events({ ...ask, scenario: "Homework again, with shouting.", requestId: g3Request });
+  rejectFirst = false;
+  const offered = g3.find(e => e.type === "fallback");
+  assert(offered && !g3.some(e => ["first", "done", "error", "delta"].includes(e.type)), JSON.stringify(g3.map(e => e.type)));
+  assert.match(offered.message, /couldn't check a custom answer/);
+  const { cardsForChild } = await import("../src/lib/handbook.ts");
+  const card = cardsForChild({ dateOfBirth: "2015-01-01", dueDate: null }).find(c => c.id === offered.card.id);
+  assert(card && card.words === offered.card.words && card.activity === offered.card.activity, "Static, age-matched Handbook words");
+  assert.equal((await db.query("select state from public.guidance_requests where id=$1", [g3Request])).rows[0].state, "failed");
+  assert.equal(await decodeCount(), guidanceBefore + 3, "A fallback saves no generated guidance");
+  const afterFallback = await events({ ...ask, scenario: "One more synthetic evening.", requestId: crypto.randomUUID() });
+  assert.equal(afterFallback.find(e => e.type === "done").entitlement.used, g2Done.entitlement.used + 1, "The fallback did not use the allowance");
+  console.log("PASS: actual Ask guidance route: triage and routing in parallel, age-aware triage, checked first answer before saved detail, replay without regeneration, free quick follow-up, expired follow-up refused without a model call or charge, stage B outage saved once, and Handbook fallback without charge. AI transport simulated.");
   const handbook = await import("../src/app/api/handbook/route.ts");
   const care = await import("../src/app/api/care/route.ts");
   const { DEFAULT_CARE } = await import("../src/lib/family-care.ts");
