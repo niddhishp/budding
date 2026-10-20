@@ -20,12 +20,22 @@ do $$ declare result jsonb; begin
  if result->>'status'<>'reserved' then raise exception 'Continued conversation messages consumed the allowance: %', result; end if;
  update public.guidance_requests set state='failed' where id='f6000000-0000-4000-8000-000000000041';
 end $$;
--- A third start uses the last free turn; a fourth is refused.
+-- Free allows 10 a week. Seven more ordinary answers make nine; an answer saved without its explanation
+-- because Kahiye could not check it does not count, and a parent-cancelled one does.
+insert into public.decodes(user_id,child_id,scenario,analysis,safety_category,risk_level)
+ select 'f6000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000011','Ordinary guidance '||g,'{"sayThis":"Try this"}','none','none' from generate_series(1,7) g;
+insert into public.decodes(user_id,child_id,scenario,analysis,safety_category,risk_level) values
+ ('f6000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000011','Kahiye could not add the why','{"sayThis":"Try this","detailUnavailable":true}','none','none');
+do $$ declare result jsonb; begin
+ result:=public.reserve_guidance('f6000000-0000-4000-8000-000000000044','f6000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000011','decode','fingerprint-d');
+ if result->>'status'<>'reserved' then raise exception 'Answer missing its explanation through Kahiye''s failure was counted: %', result; end if;
+ update public.guidance_requests set state='failed' where id='f6000000-0000-4000-8000-000000000044';
+end $$;
 insert into public.decodes(id,user_id,child_id,scenario,analysis,safety_category,risk_level) values
- ('f6000000-0000-4000-8000-000000000023','f6000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000011','Ordinary guidance','{"sayThis":"Try this"}','none','none');
+ ('f6000000-0000-4000-8000-000000000023','f6000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000011','Parent left early','{"sayThis":"Try this","detailCancelled":true}','none','none');
 do $$ declare result jsonb; begin
  result:=public.reserve_guidance('f6000000-0000-4000-8000-000000000042','f6000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000011','decode','fingerprint-b');
- if result->>'status'<>'limit' then raise exception 'Conversation starts and guidance were not counted: %', result; end if;
+ if result->>'status'<>'limit' or (result->>'limit')::int<>10 then raise exception 'Free allowance of 10 was not enforced: %', result; end if;
  -- The application marks an included conversation message as free; it is still reserved.
  result:=public.reserve_guidance('f6000000-0000-4000-8000-000000000043','f6000000-0000-4000-8000-000000000001','f6000000-0000-4000-8000-000000000011','decode','fingerprint-c',null,true);
  if result->>'status'<>'reserved' then raise exception 'Included conversation message was refused: %', result; end if;

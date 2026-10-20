@@ -47,11 +47,13 @@ try {
   await db.query("update public.guidance_requests set expires_at=now()-interval '1 second' where id=$1",[failedId]);
   await rejected('select public.complete_guidance($1,$2,$3)',[failedId,retry.lease,payload]);
   const retry2=await reserve(failedId); assert.equal(retry2.status,'reserved'); await complete(failedId,retry2.lease);
+  // Free allows 10 a week: fill to nine saved answers so this reservation takes the last turn.
+  await db.query("insert into public.decodes(user_id,child_id,scenario,analysis) select $1,$2,'Synthetic filler '||g,'{}' from generate_series(1,7) g",[user,child]);
   const thirdId=randomUUID(), third=await reserve(thirdId); assert.equal(third.status,'reserved');
   assert.equal((await reserve()).status,'limit');
   await db.query('delete from public.consents where user_id=$1',[user]);
   await rejected('select public.complete_guidance($1,$2,$3)',[thirdId,third.lease,payload],'42501');
-  assert.equal((await db.query('select count(*)::int n from public.decodes where user_id=$1 and refines is null',[user])).rows[0].n,2);
+  assert.equal((await db.query('select count(*)::int n from public.decodes where user_id=$1 and refines is null',[user])).rows[0].n,9); // two real answers plus seven fillers
   await db.query("insert into public.consents(user_id,policy_version) values($1,'2026-10-05')",[user]);
   await complete(thirdId,third.lease);
   assert.equal((await reserve(randomUUID(),'report')).status,'limit');
@@ -82,7 +84,8 @@ try {
 
   // Real concurrent connections, against committed synthetic records only.
   await fixture();
-  await db.query("insert into public.decodes(user_id,child_id,scenario,analysis) values($1,$2,'Synthetic one','{}'),($1,$2,'Synthetic two','{}')",[user,child]);
+  // Nine of the ten free turns used: exactly one remains for eight simultaneous requests.
+  await db.query("insert into public.decodes(user_id,child_id,scenario,analysis) select $1,$2,'Synthetic '||g,'{}' from generate_series(1,9) g",[user,child]);
   const clients=Array.from({length:8},()=>new pg.Client({connectionString:url}));
   try {
     await Promise.all(clients.map(async c=>{await c.connect();await c.query('set role service_role');}));

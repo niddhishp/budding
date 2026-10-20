@@ -1,5 +1,5 @@
 'use client';
-import { COHORT_DEFINITIONS, COHORT_METRICS, METRIC_DEFINITIONS, formatMetric, type OutcomeMetrics, type SummaryMetric } from '@/lib/outcome-metrics';
+import { CHECKIN_METRICS, COHORT_DEFINITIONS, COHORT_METRICS, METRIC_DEFINITIONS, formatMetric, type OutcomeMetrics, type SummaryMetric } from '@/lib/outcome-metrics';
 import { Heading, LoadState, formatTime, useRemote } from './shared';
 
 const GROUPS: { title: string; metrics: SummaryMetric[] }[] = [
@@ -37,6 +37,14 @@ export function ParentOutcomes() {
           </tr>)}</tbody>
         </table>
       </section>)}
+      <section className="mb-10">
+        <h2 className="font-heading text-2xl mb-2">Are evenings getting easier?</h2>
+        <p className="text-sm text-muted-foreground mb-4 max-w-2xl">From the optional two-question check-in on Today, every two weeks. This is the change the product exists to make; usage alone cannot show it.</p>
+        <table className="w-full text-sm border-t border-border"><tbody>{CHECKIN_METRICS.map(([key, label, definition, format]) => <tr key={key} className="border-t border-border align-top">
+          <th scope="row" className="py-4 pr-4 text-left font-normal"><span className="block font-semibold">{label}</span><span className="block text-xs text-muted-foreground mt-1 leading-relaxed">{definition}</span></th>
+          <td className="py-4 pl-3 text-right tabular-nums whitespace-nowrap">{formatMetric(data.checkins?.[key], format)}</td>
+        </tr>)}</tbody></table>
+      </section>
       <section className="mb-10">
         <h2 className="font-heading text-2xl mb-2">Weekly cohorts</h2>
         <p className="text-sm text-muted-foreground mb-4 max-w-2xl">Families grouped by the India-time week (from Monday) of their first ordinary guidance, newest first. Rates use only families who have had the full 14 or 30 days, so recent weeks fill in over time.</p>

@@ -58,6 +58,8 @@ export async function getEntitlement(supabase: SupabaseClient, userId: string): 
     .is('refines', null)
     // Later messages in a chat or practice conversation are included in its starting turn.
     .or('continuation_of.is.null,analysis->conversation.is.null')
+    // An answer saved without its explanation because Kahiye could not check it is not counted.
+    .is('analysis->>detailUnavailable', null)
     .gte('created_at', new Date(Date.now() - windowMs).toISOString());
 
   if (usageError || count === null) throw new Error('Usage lookup unavailable');

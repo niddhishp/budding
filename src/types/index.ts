@@ -175,10 +175,13 @@ export interface AgentAnalysis {
   modules?: string[];
   /** True when only the checked immediate answer was saved because the explanation could not be checked. */
   detailUnavailable?: boolean;
+  /** True when the parent left after the checked immediate answer was shown, before the explanation. */
+  detailCancelled?: boolean;
 }
 
 /** The first, independently checked part of an Ask answer: what to do and say right now. */
-export type ImmediateAnalysis = Pick<AgentAnalysis, 'rightNow' | 'sayThis' | 'doThis' | 'avoid'>;
+/** Stage A: what the parent needs now, including when to seek help, which never waits for the explanation. */
+export type ImmediateAnalysis = Pick<AgentAnalysis, 'rightNow' | 'sayThis' | 'doThis' | 'avoid' | 'seekHelpIf'>;
 
 /** Static, editorial Handbook card offered when a custom answer could not be checked. */
 export interface HandbookFallback { id: string; title: string; words: string; activity: string; avoid: string }

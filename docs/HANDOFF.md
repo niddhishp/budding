@@ -1,6 +1,13 @@
 # Kahiye — engineering handoff (living document)
 
-**Latest release (20 October), after eight persona-skill reviews** (`C:\Users\Admin\.claude\skills\10_personas`: Jobs, Gates, Musk, Altman, Buffett, Karpathy, Uncle Bob, Nerdzão Elite):
+**Latest release (20 October):** [Fair charging, free allowance 10, evidence check-in](EVIDENCE-LOOP.md), migrations 029–030.
+- **Fair charging:** an answer missing its explanation through Kahiye's own failure is not counted; a parent cancelling after "Say this" still is.
+- **Safety line:** "Talk to a professional if" now arrives with "Say this".
+- **Free allowance:** 10 Ask turns a week until checkout opens.
+- **Evidence check-in:** an optional fortnightly two-question check-in on Today, with suppressed "Are evenings getting easier?" metrics in admin.
+- **Founding pilot:** the runbook is ready, and the pilot stays closed until clinical review is published.
+
+**Previous release (20 October), after eight persona-skill reviews** (`C:\Users\Admin\.claude\skills\10_personas`: Jobs, Gates, Musk, Altman, Buffett, Karpathy, Uncle Bob, Nerdzão Elite):
 - [Child page and photo memories](CHILD-MOMENTS.md), migration 028:
   - a two-column Child page with a sticky right rail (Growing up, horoscope, patterns, gifts)
   - a private photo strip inside Child, with CSS-only parallax and labelled example prints when empty

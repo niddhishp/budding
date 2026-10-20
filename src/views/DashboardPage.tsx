@@ -10,6 +10,7 @@ import { GrowthSnapshot } from "@/components/care/GrowthSnapshot";
 import { WeekGuideCard } from "@/components/WeekGuideCard";
 import { observedPatterns } from "@/lib/moments";
 import { OutcomeFollowUp } from "@/components/OutcomeFollowUp";
+import { FamilyCheckin } from "@/components/FamilyCheckin";
 import type { Child } from "@/types";
 
 export function DashboardPage() {
@@ -43,6 +44,7 @@ function Today({ child }: { child: Child }) {
       </div>
     </section>
     {relevance.born && <OutcomeFollowUp childId={child.id} />}
+    {relevance.born && child.age.years >= 2 && <FamilyCheckin child={child} />}
     {conversation && <section className="border-y py-7 mb-8">
       <p className="text-sm text-clay">{entry?.followUp && entry.followUp <= today ? "You wanted to come back to this" : "One conversation to make room for"}</p>
       <h2 className="font-heading text-3xl mt-3">{conversation.title}</h2>

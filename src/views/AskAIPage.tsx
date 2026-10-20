@@ -435,7 +435,7 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
               </div>
 
               {/* Safety-relevant, so never folded away. */}
-              {saved && analysis.seekHelpIf && (
+              {analysis.seekHelpIf && (
                 <div className="p-4 rounded-2xl bg-amber-50">
                   <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1.5">Talk to a professional if</p>
                   <p className="text-sm text-amber-900 leading-relaxed">{analysis.seekHelpIf}</p>
@@ -447,8 +447,8 @@ export function AskAIPage({ initialScenario = "" }: { initialScenario?: string }
                 <p role="status" className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="w-4 h-4 animate-spin" /> Adding the why…</p>
               )}
               {!saved && !isAnalyzing && <p className="text-sm text-slate-500">This answer was not saved. Retry the same moment to recover it.</p>}
-              {saved && analysis.detailUnavailable && <p className="text-sm text-slate-500">More detail isn&apos;t available for this one.</p>}
-              {saved && !analysis.detailUnavailable && <UnderstandWhy analysis={analysis} />}
+              {saved && (analysis.detailUnavailable || analysis.detailCancelled) && <p className="text-sm text-slate-500">More detail isn&apos;t available for this one.{analysis.detailUnavailable && ' It did not use one of your Ask turns.'}</p>}
+              {saved && !analysis.detailUnavailable && !analysis.detailCancelled && <UnderstandWhy analysis={analysis} />}
 
               {/* 4. Did it work, continue, and the saved moment */}
               {saved && <>

@@ -16,7 +16,18 @@ export const COHORT_METRICS = [
 ] as const;
 export type CohortMetric = typeof COHORT_METRICS[number];
 
+/** Whether family evenings get easier, from the optional fortnightly check-in (aggregate, suppressed). */
+export const CHECKIN_METRICS = [
+  ['families_checked_in', 'Families who checked in', 'Families who answered the two-question check-in at least once.', 'count'],
+  ['checkins', 'Check-ins', 'All check-in answers saved.', 'count'],
+  ['families_with_followup', 'Families with a later check-in', 'A first check-in and another at least 28 days later, for the same child.', 'count'],
+  ['fewer_hard_evenings_rate', 'Fewer hard evenings', 'Share of those children whose latest week had fewer evenings ending in a fight or tears than the first.', 'percent'],
+  ['more_hard_evenings_rate', 'More hard evenings', 'Share whose latest week had more such evenings than the first.', 'percent'],
+  ['more_confident_rate', 'Parent more confident', 'Share where the parent rated their confidence higher than at the first check-in.', 'percent'],
+] as const;
+export type CheckinMetric = typeof CHECKIN_METRICS[number][0];
 export interface OutcomeMetrics {
+  checkins?: Partial<Record<CheckinMetric, MetricCell>>;
   generated_at: string;
   minimum_families: number;
   current: { registered_families: MetricCell; plus_subscribers: MetricCell };

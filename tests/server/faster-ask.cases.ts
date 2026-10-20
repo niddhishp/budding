@@ -38,7 +38,7 @@ function child(years: number, months = 0): Child {
 }
 const context = (c = child(7, 2)): DecodeContext => ({ child: c, recentLogs: [], pastDecodes: [], memories: [] });
 const route: Route = { modules: ['emotions'], mode: 'right_now', goal: 'calm_now', clarify: null, source: 'fallback' };
-const FIRST = { rightNow: 'Kneel down beside her.', sayThis: 'You are upset. I am here.', doThis: ['Breathe slowly together.', 'Offer water.'], avoid: 'Lecturing mid-meltdown, because she cannot hear it yet.' };
+const FIRST = { rightNow: 'Kneel down beside her.', sayThis: 'You are upset. I am here.', doThis: ['Breathe slowly together.', 'Offer water.'], avoid: 'Lecturing mid-meltdown, because she cannot hear it yet.', seekHelpIf: '' };
 const DETAIL = {
   hypotheses: [{ text: 'She is tired after school.', likelihood: 'most likely' }], emotionalNeed: 'Comfort', afterwards: 'Talk about it at bedtime.',
   watchFor: '', seekHelpIf: '', skillBeingBuilt: 'Calming down', developmentalContext: 'Common at seven.', whyItWorks: 'Calm adults help children calm.', evidenceIds: [],
@@ -218,4 +218,18 @@ test('evaluation starts routing alongside triage, discards it off the ordinary p
   assert.equal(support.path, 'support');
   assert.equal(support.analysis, undefined);
   assert(!escalated.includes('first') && !escalated.includes('detail'), 'No advice generation off the ordinary path');
+});
+
+test('a parent leaving after the words appear is recorded differently from Kahiye failing to add the why', async () => {
+  const controller = new AbortController();
+  const result = await decodeStaged('Bedtime battle', context(), route, () => controller.abort(), controller.signal, fake(async opts => {
+    const k = kind(opts);
+    if (k === 'first') return { ...FIRST, seekHelpIf: 'If bedtime fear stops sleep most nights for weeks, talk to your paediatrician.' };
+    if (k === 'review') return { approved: true };
+    throw Error(`Unexpected ${k} after the parent left`);
+  }));
+  assert.equal(result.analysis.detailCancelled, true);
+  assert.equal(result.analysis.detailUnavailable, undefined, 'Cancelled answers are still counted');
+  assert.equal(result.first.seekHelpIf, 'If bedtime fear stops sleep most nights for weeks, talk to your paediatrician.', 'When to seek help arrives with the first, checked answer');
+  assert.equal(result.analysis.seekHelpIf, result.first.seekHelpIf);
 });

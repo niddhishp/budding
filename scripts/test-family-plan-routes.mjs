@@ -197,7 +197,7 @@ const server = createServer((req, res) => {
               "shop_catalog",
               "shop_discovery_runs",
               // Family export reads, each filtered by user_id under RLS.
-              "consent_events", "whatsapp_links", "memories", "stories", "expert_requests",
+              "consent_events", "whatsapp_links", "memories", "stories", "expert_requests", "family_checkins",
             ].includes(table),
           );
           const values = [],
@@ -212,12 +212,13 @@ const server = createServer((req, res) => {
                 "kind",
                 "section",
                 "revision",
-                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation", "or", "share_language",
+                "safety_category", "risk_level", "refines", "created_at", "lease", "state", "analysis->conversation->>mode", "analysis->conversation", "or", "share_language", "analysis->>detailUnavailable",
               ].includes(key),
             );
             // Usage excludes later messages in a chat or practice conversation.
             if (key === "or" && value === "(continuation_of.is.null,analysis->conversation.is.null)") { where.push("(continuation_of is null or analysis->'conversation' is null)"); continue; }
             if (key === "share_language" && value === "not.is.null") { where.push("share_language is not null"); continue; }
+            if (key === "analysis->>detailUnavailable" && value === "is.null") { where.push("analysis->>'detailUnavailable' is null"); continue; }
             if (key === "kind" && value === "in.(feedback,preferences)") {
               where.push("kind in ('feedback','preferences')");
               continue;
@@ -323,7 +324,7 @@ globalThis.fetch = (input, init) => {
       : kind === "router" ? { modules: ["meltdown"], mode: "right_now", goal: "calm_now", clarifyNeeded: true, clarifyQuestion: "Does this happen most evenings?", clarifyOptions: ["Most evenings", "Just today"] }
       : kind === "review" ? { approved: !rejectAiReview && !(rejectFirst && JSON.parse(user).proposed.sayThis) }
       : kind === "review-detail" ? { approved: true }
-      : kind === "first" ? { rightNow: "Sit beside them and lower your voice.", sayThis: "This is hard. I am right here.", doThis: ["Offer water.", "Start with one small step together."], avoid: "Arguing about it while they are upset." }
+      : kind === "first" ? { rightNow: "Sit beside them and lower your voice.", sayThis: "This is hard. I am right here.", doThis: ["Offer water.", "Start with one small step together."], avoid: "Arguing about it while they are upset.", seekHelpIf: "" }
       : kind === "detail" ? { hypotheses: [{ text: "Tired after a long school day.", likelihood: "most likely" }], emotionalNeed: "Comfort", afterwards: "Plan a snack break first next time.", watchFor: "", seekHelpIf: "", skillBeingBuilt: "Starting hard tasks", developmentalContext: "Common at this age.", whyItWorks: "Calm support helps a child restart.", evidenceIds: [] }
       : kind === "share" ? { message: "Synthetic caregiver message." }
       : { reply: "We can take this one step at a time. What would help today?", practiceReply: JSON.parse(user).mode === "rehearse" ? "But my friends can do it." : "", feedback: [] };
@@ -527,7 +528,7 @@ try {
   assert(!g1.some(e => e.type === "delta"), "Raw tokens are never streamed");
   const g1Done = g1[doneAt];
   assert.equal(g1[firstAt].analysis.sayThis, g1Done.decode.analysis.sayThis, "The saved answer keeps the words already shown");
-  assert.deepEqual(Object.keys(g1[firstAt].analysis).sort(), ["avoid", "doThis", "rightNow", "sayThis"], "Only immediate fields are sent first");
+  assert.deepEqual(Object.keys(g1[firstAt].analysis).sort(), ["avoid", "doThis", "rightNow", "sayThis", "seekHelpIf"], "Only immediate fields, including when to seek help, are sent first");
   assert.equal(g1Done.decode.analysis.hypotheses.length, 1);
   assert.equal(g1Done.decode.analysis.detailUnavailable, undefined);
   assert.equal(await decodeCount(), guidanceBefore + 1);
@@ -552,7 +553,7 @@ try {
   assert.equal((await db.query("select count(*)::int n from public.guidance_requests where id=$1", [lateRequest])).rows[0].n, 0, "An expired follow-up reserves and charges nothing");
   const sqlLate = (await db.query("select public.reserve_guidance($1,$2,$3,'decode','fixture',$4,false) value", [crypto.randomUUID(), uid, child, g1Done.decode.id])).rows[0].value;
   assert.equal(sqlLate.status, "invalid_refinement", "SQL enforces the same window independently of the route");
-  // Stage B outage: the checked Stage A answer is saved, flagged, and counted exactly once.
+  // Stage B outage: the checked Stage A answer is saved and flagged, and Kahiye's failure is not counted.
   failDetail = true;
   const g2Request = crypto.randomUUID();
   const g2 = await events({ ...ask, scenario: "Bedtime is a battle tonight.", requestId: g2Request });
@@ -562,7 +563,7 @@ try {
   assert.equal(g2Done.decode.analysis.detailUnavailable, true);
   assert.equal(g2Done.decode.analysis.sayThis, "This is hard. I am right here.");
   assert.equal(g2Done.decode.analysis.afterwards, "");
-  assert.equal(g2Done.entitlement.used, g1Done.entitlement.used + 1, "Only one charge for an answer saved without its explanation");
+  assert.equal(g2Done.entitlement.used, g1Done.entitlement.used, "An answer missing its explanation through our failure does not use an Ask turn");
   assert.deepEqual((await db.query("select charged,state from public.guidance_requests where id=$1", [g2Request])).rows[0], { charged: true, state: "complete" });
   assert.equal(await decodeCount(), guidanceBefore + 3);
   // Stage A withheld by review: the Handbook starting point is offered, nothing is saved or charged.

@@ -4,7 +4,8 @@
 export type PlanId = 'free' | 'plus';
 export type BillingInterval = 'monthly' | 'yearly';
 
-export const FREE_DECODES_PER_WEEK = 3;
+// Early access: raised from 3 while paid plans are not open. Revisit when checkout opens.
+export const FREE_DECODES_PER_WEEK = 10;
 export const PLUS_DECODES_PER_DAY = 10;
 /** A chat or practice conversation uses one Ask turn and may continue up to this many messages. */
 export const CONVERSATION_MESSAGE_LIMIT = 10;

@@ -221,17 +221,19 @@ export async function decodeBehavior(
 // lint/repair only touch Stage B's fields, and the review sees the COMBINED answer. Nothing unchecked
 // leaves this module, and a Stage B failure never withdraws or rewrites Stage A.
 
-const IMMEDIATE_FIELDS = ['rightNow', 'sayThis', 'doThis', 'avoid'] as const;
-const DETAIL_FIELDS = ['hypotheses', 'emotionalNeed', 'afterwards', 'watchFor', 'seekHelpIf', 'skillBeingBuilt', 'developmentalContext', 'whyItWorks', 'evidenceIds'] as const;
+// When to seek help is safety-relevant, so it is written and checked with the immediate answer.
+const IMMEDIATE_FIELDS = ['rightNow', 'sayThis', 'doThis', 'avoid', 'seekHelpIf'] as const;
+const DETAIL_FIELDS = ['hypotheses', 'emotionalNeed', 'afterwards', 'watchFor', 'skillBeingBuilt', 'developmentalContext', 'whyItWorks', 'evidenceIds'] as const;
 
 const immediateSchema = z.object({
   rightNow: z.string(),
   sayThis: z.string().min(1),
   doThis: z.array(z.string().min(1)).min(1).max(3),
   avoid: z.string().min(1),
+  seekHelpIf: z.string(),
 });
 const detailSchema = generatedSchema.pick({
-  hypotheses: true, emotionalNeed: true, afterwards: true, watchFor: true, seekHelpIf: true,
+  hypotheses: true, emotionalNeed: true, afterwards: true, watchFor: true,
   skillBeingBuilt: true, developmentalContext: true, whyItWorks: true, evidenceIds: true,
 });
 type Immediate = z.infer<typeof immediateSchema>;
@@ -249,30 +251,31 @@ const IMMEDIATE_JSON_SCHEMA = pickJsonSchema(IMMEDIATE_FIELDS, {
 const DETAIL_JSON_SCHEMA = pickJsonSchema(DETAIL_FIELDS);
 
 const IMMEDIATE_TASK = `<task stage="immediate">
-Write ONLY what the parent needs in the next few minutes: rightNow, sayThis, 2-3 doThis steps and avoid.
+Write ONLY what the parent needs in the next few minutes: rightNow, sayThis, 2-3 doThis steps, avoid, and seekHelpIf (concrete signs that mean talking to a professional; empty for ordinary everyday moments).
 Be brief and concrete. The explanation is written separately, so do not explain here.
 </task>`;
 const DETAIL_TASK = `<task stage="explanation">
 The parent has already been shown the checked immediate answer in <already_shown>. Those words are fixed.
-Write the explanation that sits behind them: hypotheses, developmental context, the need and skill, what to do later, what to watch for, when to seek help, why it works and evidence.
-Stay consistent with the immediate answer and do not repeat it. If anything in the situation means the immediate answer is not enough, say so plainly in seekHelpIf.
+Write the explanation that sits behind them: hypotheses, developmental context, the need and skill, what to do later, what to watch for, why it works and evidence.
+Stay consistent with the immediate answer and do not repeat it. When to seek help is already in the immediate answer; do not contradict or soften it.
 </task>`;
 
 export const IMMEDIATE_MAX_TOKENS = 2500;
 export const DETAIL_MAX_TOKENS = 5000;
 
 function immediateAnalysis(g: Immediate): ImmediateAnalysis {
-  return { rightNow: g.rightNow.trim(), sayThis: g.sayThis, doThis: g.doThis, avoid: g.avoid };
+  return { rightNow: g.rightNow.trim(), sayThis: g.sayThis, doThis: g.doThis, avoid: g.avoid, seekHelpIf: g.seekHelpIf.trim() };
 }
 
 /** Combines a checked immediate answer with an optional checked explanation into the saved shape. */
-export function combineStages(first: ImmediateAnalysis, detail: Detail | null, route: Route): AgentAnalysis {
-  if (detail) return toAnalysis({ ...first, rightNow: first.rightNow ?? '', ...detail }, route);
+// 'failed' is Kahiye's failure (not counted against the allowance); 'cancelled' means the parent left after the words were shown.
+export function combineStages(first: ImmediateAnalysis, detail: Detail | null, route: Route, missing: 'failed' | 'cancelled' = 'failed'): AgentAnalysis {
+  if (detail) return toAnalysis({ ...first, rightNow: first.rightNow ?? '', seekHelpIf: first.seekHelpIf ?? '', ...detail }, route);
   return {
     ...first,
-    hypotheses: [], interpretation: '', emotionalNeed: '', afterwards: '', watchFor: '', seekHelpIf: '',
+    hypotheses: [], interpretation: '', emotionalNeed: '', afterwards: '', watchFor: '',
     skillBeingBuilt: '', developmentalContext: '', whyItWorks: '', evidence: [],
-    clarify: route.clarify, modules: route.modules, detailUnavailable: true,
+    clarify: route.clarify, modules: route.modules, ...(missing === 'cancelled' ? { detailCancelled: true } : { detailUnavailable: true }),
   };
 }
 
@@ -317,7 +320,8 @@ export async function decodeStaged(
   } catch (error) {
     console.warn('[decode] explanation withheld; saving the checked immediate answer', { name: error instanceof Error ? error.name : 'unknown', code: error instanceof DecodeError ? error.code : undefined });
   }
-  return { analysis: combineStages(first, detail, route), first, detailAvailable: !!detail, timings: { firstMs, detailMs: Date.now() - started - firstMs } };
+  const missing = signal?.aborted ? 'cancelled' : 'failed';
+  return { analysis: combineStages(first, detail, route, missing), first, detailAvailable: !!detail, timings: { firstMs, detailMs: Date.now() - started - firstMs } };
 }
 
 // ─── Caregiver sharing ───────────────────────────────────────────────────────
