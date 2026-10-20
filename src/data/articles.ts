@@ -1,4 +1,5 @@
 import { PARENT_GUIDES, GUIDE_UPDATED } from "./parent-guides";
+import { HANDBOOK_SOURCES } from "./handbook";
 export type Article = {
   slug: string;
   category: string;
@@ -7,6 +8,8 @@ export type Article = {
   age: string;
   sections: { heading: string; body: string }[];
   sources: { title: string; url: string }[];
+  /** Handbook card ids for the matching in-app conversations, linked at the end of the article. */
+  handbook?: string[];
 };
 const source = (title: string, url: string) => ({ title, url });
 const section = (heading: string, body: string) => ({ heading, body });
@@ -587,6 +590,196 @@ export const ARTICLES: Article[] = [
         "https://www.nhs.uk/baby/babys-development/teething/looking-after-your-babys-teeth/",
       ),
     ],
+  },
+  {
+    slug: "potty-training-in-india",
+    category: "Toilet Learning",
+    title: "Potty Training in India: Readiness, Indian Toilets, Nights and Nursery",
+    age: "Usually from about 2 to 4 years",
+    summary:
+      "Signs your child may be ready, using Indian-style and Western toilets, dry nights, nursery, and when to see a doctor.",
+    sections: [
+      section(
+        "Look for readiness, not a birthday",
+        "There is no single right age to start. Many children show they are ready somewhere between two and three, and some later. Useful signs include staying dry for an hour or two, telling you or hiding when they wee or poo, showing interest when others use the toilet, being able to pull clothes up and down with a little help, and following a simple two-step request. Pressure from relatives about when other children were trained is common in Indian families. It is fine to say, kindly, that you are waiting until your child is ready. Starting during a big change, such as a new baby, a move or a long trip, usually makes it harder.",
+      ),
+      section(
+        "Indian-style toilets, Western toilets and the potty",
+        "Many homes have both kinds of toilet, and grandparents may have a strong preference. A small potty on the floor is often the easiest start, because feet stay flat and the child feels steady. For a Western toilet, a child seat and a small stool help them feel secure and push comfortably. For an Indian-style toilet, hold their hands or stay close while they squat, since balance takes practice. Keep a mug or lota and soap within reach, and teach washing hands every time. Choose one set of words for wee, poo and the toilet, in the language you speak at home, and ask every caregiver to use the same words.",
+      ),
+      section(
+        "A calm routine, and how to handle accidents",
+        "Offer the potty at the same times each day, such as after waking, after meals and before going out. Short sits of a few minutes are enough. Notice what went well in plain words, such as 'You told me in time', rather than big rewards or sweets. Accidents are part of learning. Clean up without fuss and avoid shaming or punishment, including in front of relatives. Loose clothes that are easy to pull down help a great deal. If your child refuses for weeks, it is usually fine to stop for a while and try again later.",
+      ),
+      section(
+        "Dry nights and nursery",
+        "Staying dry at night often comes months or years after staying dry in the day, and it depends partly on how a child's body develops. Many children still need a nappy or pull-up at night for some time after day training. At nursery or playschool, tell the teacher the words your child uses, pack spare clothes, and ask how often children are taken to the toilet. A child who is shy may hold on all day, so ask them gently how the school toilet feels.",
+      ),
+      section(
+        "When to talk to your doctor",
+        "Talk to your doctor if pooing hurts, poos are hard or come less than three times a week, your child holds on for days, there is blood, they need to wee very often or it stings, or they were dry for months and start having accidents again. Constipation is a common reason for refusal and accidents, and it is easier to treat early.",
+      ),
+    ],
+    sources: [
+      source("AAP: potty training", "https://www.healthychildren.org/English/ages-stages/toddler/toilet-training/Pages/default.aspx"),
+      source("NHS: constipation in children", "https://www.nhs.uk/baby/health/constipation-in-children/"),
+    ],
+    handbook: ["potty-together", "potty-accidents"],
+  },
+  {
+    slug: "tantrums-ages-3-to-5",
+    category: "Behaviour",
+    title: "Tantrums at 3 to 5: Staying Calm at Home and in Public",
+    age: "3 to 5 years",
+    summary:
+      "Why tantrums happen at this age, what to say in the moment, handling the shop or a family function, and what helps afterwards.",
+    sections: [
+      section(
+        "Why tantrums happen",
+        "Between three and five, children want more say than they can manage. Feelings arrive quickly and words come slowly, so frustration spills over as crying, shouting or lying on the floor. Tiredness, hunger, a busy day and too many changes make it more likely. A tantrum is not a sign of a spoilt child or a failed parent. It is a moment when your child needs you to stay steady while their feelings pass.",
+      ),
+      section(
+        "In the moment: say less",
+        "Keep yourself safe and calm first, then your child. Use a few short words, such as 'You really wanted it. The answer is still no. I'm right here.' Stay close, without long explanations, questions or threats. If they hit or throw things, move them or the object gently and say 'I won't let you hit.' Giving in to stop the noise teaches that tantrums work, so keep the limit and offer comfort at the same time. Smacking, shouting back and shaming tend to make tantrums harder, not easier.",
+      ),
+      section(
+        "In the shop, at a wedding or with relatives watching",
+        "Public tantrums feel harder because people are watching and sometimes advising. If you can, move to a quieter corner or step outside. You do not owe onlookers an explanation. Before outings, say what will happen and what you will buy, and give your child a small job. At family functions, plan a quiet spot, a snack and an early exit. If a grandparent steps in with a sweet or a phone, thank them, and later agree on the few words everyone will use.",
+      ),
+      section(
+        "Afterwards, and when to get support",
+        "Once everyone is calm, reconnect with a cuddle or a quiet moment. Later in the day, name the feeling and practise one thing to do instead, such as stamping feet or saying 'I'm cross!'. Notice the times they manage well. Talk to your doctor if tantrums are very frequent, last a long time, include hurting themselves, or come with worries about sleep, speech or development.",
+      ),
+    ],
+    sources: [
+      source("NHS: temper tantrums", "https://www.nhs.uk/baby/babys-development/behaviour/temper-tantrums/"),
+      source(HANDBOOK_SOURCES.parenting.title, HANDBOOK_SOURCES.parenting.url),
+    ],
+    handbook: ["tantrum-shop", "hitting-biting", "feelings-name"],
+  },
+  {
+    slug: "picky-eating-mealtime-pressure",
+    category: "Nutrition",
+    title: "Picky Eating and “Khana Nahi Khata”: Mealtimes Without Pressure",
+    age: "2 to 6 years",
+    summary:
+      "Why young children eat less or refuse foods, how to share the job with your child, and working with grandparents who spoon-feed.",
+    sections: [
+      section(
+        "Eating less is often normal",
+        "After the fast growth of the first year, many children eat less and become choosier. Appetite can change a lot from day to day. A child who eats very little at one meal often makes up for it at another. Many children need to see and taste a new food many times before they accept it. This is ordinary, even when it is worrying to watch, and especially when relatives say a child is too thin.",
+      ),
+      section(
+        "Share the job",
+        "A useful way to think about meals is that adults decide what is served, when and where, and the child decides whether to eat and how much. Serve small portions, with at least one food your child usually eats next to something new. Eat together at the table or on the floor mat, without screens. Let them feed themselves with fingers or a spoon, even if it is messy. Avoid cooking a separate meal after every refusal, and avoid bribes, sweets as rewards, threats and long negotiations. Pressure usually makes refusal stronger.",
+      ),
+      section(
+        "When grandparents spoon-feed",
+        "Many Indian grandparents feed children by hand or chase them with a spoon out of love and worry. Begin by thanking them. Then explain the one change that matters most, such as letting the child decide when they are full. Offer them a role that keeps them close, like sitting and eating together or helping the child serve themselves. Agree a few shared words, such as 'You can stop when your tummy is full.' Avoid arguing about it in front of the child.",
+      ),
+      section(
+        "When to talk to your doctor",
+        "Talk to your doctor if you are worried about weight or growth, if your child eats only a very small number of foods, gags or chokes often, has pain, vomiting or constipation, or if mealtimes are causing a lot of distress. A check of growth on a chart is more reliable than comparing with other children.",
+      ),
+    ],
+    sources: [
+      source("AAP: tips for parents of picky eaters", "https://www.healthychildren.org/English/ages-stages/toddler/nutrition/Pages/Picky-Eaters.aspx"),
+      source(HANDBOOK_SOURCES.parenting.title, HANDBOOK_SOURCES.parenting.url),
+    ],
+    handbook: ["eating-pressure"],
+  },
+  {
+    slug: "screen-time-by-age",
+    category: "Screens",
+    title: "Screen Time by Age, Birth to 8: A Practical Family Guide",
+    age: "Birth to 8 years",
+    summary:
+      "What the WHO under-5 guidance says, how to use screens well from 5 to 8, and how to handle the end of screen time.",
+    sections: [
+      section(
+        "Under two, and two to four",
+        "WHO guidance on physical activity, sedentary behaviour and sleep for children under five suggests no sedentary screen time for children under two, and no more than one hour a day for children aged two to four, with less being better. Video calls with family are different from watching alone, and are often a warm way to stay in touch with grandparents. Young children learn most from people talking, playing and reading with them, and from moving around. If you use screens, watch together, choose slow, simple programmes, and talk about what you see.",
+      ),
+      section(
+        "Five to eight",
+        "There is no single number that suits every family at this age. A useful question is what screens are replacing. Children still need plenty of sleep, active play, time outdoors, homework and time with family. Agree when screens are used, for example after school and not at meals or bedtime, and keep devices out of bedrooms at night. Preview games and videos, turn on child settings, and keep talking about what they watch, including adverts and in-game purchases.",
+      ),
+      section(
+        "Ending screen time without a fight",
+        "Stopping something fun is hard for young children, and crying when a screen goes off is common. Give a warning before the end, and stop at a natural point such as the end of an episode. Switch it off together, rather than taking the device away suddenly. Have the next activity ready. Stay calm if they cry, and keep the limit. Try not to make screens the main reward or punishment, because that makes them feel even more important.",
+      ),
+      section(
+        "Your own screen and the whole family",
+        "Children notice how adults use phones. Small changes, like no phones at meals or during the first few minutes after school, help everyone. Screens at grandparents' homes may follow different rules, so agree a few that matter most and let the rest go. If screen use is affecting sleep, mood, school or friendships, or you are worried about what your child has seen online, talk to your doctor or the school.",
+      ),
+    ],
+    sources: [
+      source("WHO: guidelines on physical activity, sedentary behaviour and sleep for children under 5", "https://www.who.int/publications/i/item/9789241550536"),
+      source(HANDBOOK_SOURCES.digital.title, HANDBOOK_SOURCES.digital.url),
+    ],
+    handbook: ["screen-off", "digital-together", "digital-stop"],
+  },
+  {
+    slug: "bedwetting-in-children",
+    category: "Health",
+    title: "Bedwetting: When It Is Common and When to See a Doctor",
+    age: "Usually 5 years and older",
+    summary:
+      "Why many children wet the bed, practical ways to make nights easier, what to avoid, and signs that need a doctor.",
+    sections: [
+      section(
+        "Bedwetting is common",
+        "Many children under five wet the bed, and plenty of older children still have wet nights. It often runs in families. Staying dry at night depends on a child's body, such as how much urine it makes overnight and how easily the child wakes, not on effort or willpower. Most children grow out of it. It is no one's fault, and a child who wets the bed is not being lazy or naughty.",
+      ),
+      section(
+        "Making nights easier",
+        "Offer drinks regularly through the day, rather than cutting them out, and ease off fizzy and caffeinated drinks such as cola and tea, especially in the evening. Make a toilet trip part of the bedtime routine. A waterproof sheet, a towel and a spare set of clothes by the bed make changes quick and quiet. Let your child help in a matter-of-fact way, such as putting sheets in the wash, without it feeling like a punishment. Notice dry nights calmly, without big prizes that make wet nights feel like failure.",
+      ),
+      section(
+        "What to avoid",
+        "Avoid punishing, teasing or shaming, and ask siblings and relatives not to comment. Keep it private, especially at sleepovers or family trips; you can pack a pull-up discreetly. Waking a child repeatedly at night or stopping all drinks rarely helps and can leave them tired and thirsty. Remind your child that lots of children have the same thing.",
+      ),
+      section(
+        "When to see a doctor",
+        "Talk to your doctor if home steps have not helped and the wetting continues, or if your child starts wetting the bed again after being dry for six months or more. See a doctor sooner if your child also wets in the day, if weeing hurts or stings, if they are very thirsty, if there is constipation, or if they seem unwell. Also ask for help if the wetting is upsetting your child or the family. There are treatments, and a doctor can check for anything that needs care.",
+      ),
+    ],
+    sources: [
+      source("NHS: bedwetting in children", "https://www.nhs.uk/conditions/bedwetting/"),
+      source("NHS: constipation in children", "https://www.nhs.uk/baby/health/constipation-in-children/"),
+    ],
+    handbook: ["bedwetting-nights"],
+  },
+  {
+    slug: "starting-school-drop-off",
+    category: "School",
+    title: "Starting School: Separation, Tears and the Drop-Off",
+    age: "3 to 6 years",
+    summary:
+      "Preparing for nursery or school, a short and truthful goodbye, working with the teacher, and reconnecting after school.",
+    sections: [
+      section(
+        "Before the first day",
+        "Talk about school in simple, true words: who will be there, what they will do and who will collect them. If you can, visit, walk past or look at photos together. Practise small steps that help, such as opening a tiffin box, asking for the toilet and putting on shoes. Read stories about starting school. Keep the days before calm and familiar, with enough sleep.",
+      ),
+      section(
+        "A short, truthful goodbye",
+        "Tears at drop-off are common, and they often settle once the parent has left and the child is busy. Choose a short goodbye ritual, such as a hug, a wave at the gate and the same words each day: 'I'll come after lunch.' Tell the truth about when you will return, using events rather than clock times. Avoid sneaking away, because a child who cannot find you may feel less safe the next day. Hand over to the teacher, then leave without long delays.",
+      ),
+      section(
+        "Working with the teacher",
+        "Tell the teacher what helps your child settle, the words they use for the toilet and any family changes. Ask how they help children who cry, and how you will hear if the day was hard. If one caregiver does the drop-off more calmly, it can help for that person to do it for a while. Agree the same words with grandparents or helpers who collect your child.",
+      ),
+      section(
+        "After school, and when to ask for help",
+        "Many children hold it together at school and fall apart at home. Greet them warmly, offer food and quiet time, and save questions for later. Ask small questions, such as 'Who did you sit with?' rather than 'How was school?'. Talk to the teacher or your doctor if distress stays intense for several weeks, if your child stops eating or sleeping well, or if they seem frightened of someone at school.",
+      ),
+    ],
+    sources: [
+      source("NHS: separation anxiety and support", "https://www.nhs.uk/baby/babys-development/behaviour/separation-anxiety/"),
+      source(HANDBOOK_SOURCES.communication.title, HANDBOOK_SOURCES.communication.url),
+    ],
+    handbook: ["school-goodbye", "morning-rush"],
   },
 ];
 // Editorial byline, related reading and source-link update; not a clinical review date.

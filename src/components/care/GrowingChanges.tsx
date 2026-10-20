@@ -11,7 +11,7 @@ export function GrowingChanges({ child, historyView }: { child: Child; historyVi
   const band = growingBand(child.dateOfBirth);
   const settings = care.data?.settings;
   if (!band) return null;
-  if (history) return <><div className="max-w-4xl mx-auto px-5 pt-6"><button className="text-clay underline" onClick={() => setHistory(false)}>← Back to their current age</button></div>{historyView}</>;
+  if (history) return <><div className="max-w-4xl mx-auto px-5 pt-6"><button className="text-clay underline" onClick={() => setHistory(false)}>← Back to conversation prompts</button></div>{historyView}</>;
   return <CareFrame title="Notice the little changes" intro={`Growing up with ${child.name}: a few invitations to listen, notice and connect. These are conversation starters, not skills they must achieve by a deadline.`}>
     <p className="text-clay mb-6">{band.label}</p>
     <CareError error={care.error} reload={care.reload} />
@@ -32,7 +32,7 @@ export function GrowingChanges({ child, historyView }: { child: Child; historyVi
         </section>;
       })}</div>
       <p className="text-xs text-slate-500 mt-4">Your choices save privately to this child. They are not a developmental assessment or automatically reviewed by a clinician. Bring concerns about changes in wellbeing or daily functioning to a qualified professional.</p>
-      <details className="mt-8 border-t pt-5"><summary className="cursor-pointer text-sm">Earlier years and sources</summary><p className="mt-3 text-sm">Earlier observations are preserved. Open the birth-to-five checklists only when you want to revisit that period.</p><button className="text-clay underline py-3" onClick={() => setHistory(true)}>Revisit early-years observations</button><p><a className="text-clay underline text-sm" href="https://www.cdc.gov/child-development/positive-parenting-tips/index.html" target="_blank" rel="noreferrer">Parenting resources by age ↗</a></p><p className="text-xs mt-3">The prompts here are Kahiye conversation ideas, not an extension of the CDC milestone checklist.</p></details>
+      <details className="mt-8 border-t pt-5"><summary className="cursor-pointer text-sm">{band.id === '3-5' ? 'Milestone checklists and sources' : 'Earlier years and sources'}</summary><p className="mt-3 text-sm">{band.id === '3-5' ? 'The CDC checklists for ages 3, 4 and 5 are still here, with your earlier observations.' : 'Earlier observations are preserved. Open the birth-to-five checklists only when you want to revisit that period.'}</p><button className="text-clay underline py-3" onClick={() => setHistory(true)}>{band.id === '3-5' ? 'Open the milestone checklists' : 'Revisit early-years observations'}</button><p><a className="text-clay underline text-sm" href="https://www.cdc.gov/child-development/positive-parenting-tips/index.html" target="_blank" rel="noreferrer">Parenting resources by age ↗</a></p><p className="text-xs mt-3">The prompts here are Kahiye conversation ideas, not an extension of the CDC milestone checklist.</p></details>
     </>}
   </CareFrame>;
 }

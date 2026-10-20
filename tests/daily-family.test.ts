@@ -6,14 +6,16 @@ import { growingBand, growingBands, observationKey } from '../src/data/growing-c
 import { discoverTools } from '../src/lib/discover-tools';
 import { careSchema } from '../src/lib/family-care';
 
-test('older-child observations cover every month after the early-years window and select the current age', () => {
+test('conversation prompts cover every month from age three and select the current age', () => {
   assert.equal(growingBand(null), null);
-  assert.equal(growingBand('2021-10-18', '2026-10-18'), null);
+  assert.equal(growingBand('2023-11-18', '2026-10-18'), null);
+  assert.equal(growingBand('2023-10-18', '2026-10-18')?.id, '3-5');
+  assert.equal(growingBand('2021-10-18', '2026-10-18')?.id, '3-5');
   assert.equal(growingBand('2021-09-18', '2026-10-18')?.id, '5-8');
   assert.equal(growingBand('2015-09-18', '2026-10-18')?.id, '9-11');
   assert.equal(growingBand('2014-10-18', '2026-10-18')?.id, '12-14');
   assert.equal(growingBand('2011-10-18', '2026-10-18')?.id, '15-plus');
-  for (let months = 61; months <= 240; months++) {
+  for (let months = 36; months <= 240; months++) {
     assert.equal(growingBands.filter(b => months >= b.min && months <= b.max).length, 1);
   }
 });
@@ -24,7 +26,7 @@ test('new observations preserve earlier records and fit the existing validated p
   const parsed = careSchema.parse({ observations, pregnancyNotes: 'Keep my older notes' });
   assert.equal(parsed.observations['60-0'], 'noticed');
   assert.equal(parsed.pregnancyNotes, 'Keep my older notes');
-  assert.equal(Object.keys(parsed.observations).length, 18);
+  assert.equal(Object.keys(parsed.observations).length, 22);
 });
 
 test('Discover includes pregnancy only for an expecting profile, while promoted tools live in main navigation', () => {

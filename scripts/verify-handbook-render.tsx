@@ -6,6 +6,8 @@ import { useAppStore } from "../src/stores/appStore";
 import { childFromRow } from "../src/lib/mappers";
 import { todayDate } from "../src/lib/family-care";
 import { HandbookPage } from "../src/views/HandbookPage";
+import { ShareSheet } from "../src/components/ShareSheet";
+import { HANDBOOK } from "../src/data/handbook";
 import { DashboardPage } from "../src/views/DashboardPage";
 import { AskPage } from "../src/views/AskPage";
 import { SafetyBanner } from "../src/views/AskAIPage";
@@ -33,6 +35,8 @@ try {
     assert.equal(html.includes("Before the first phone or game chat"), years === 11);
     assert.equal(html.includes("AI can sound sure and still be wrong"), years === 16);
     assert.equal(html.includes("Sharing can start with taking turns"), years === 4);
+    assert.equal(html.includes("A meltdown in the shop"), years === 4);
+    assert.equal(html.includes("When a grandparent or a pet dies"), years === 4);
     const nav = renderToStaticMarkup(<BottomNav />);
     assert.equal((nav.match(/<button/g) ?? []).length, 5);
     for (const label of ["Today", "Ask", "Handbook", "Child", "You"]) assert(nav.includes(label));
@@ -49,6 +53,11 @@ try {
       const card = renderToStaticMarkup(<HandbookPage />);
       assert(card.includes("Practise the conversation"));
       assert(card.includes("Keep for later"));
+      assert(card.includes("Send to grandparents or caregivers"), "Every Handbook card can be shared with caregivers");
+      const shared = HANDBOOK.find(c => c.id === "tantrum-shop")!;
+      const sheet = renderToStaticMarkup(<ShareSheet card={shared} childId={child.id} childName={child.name} onClose={() => {}} />);
+      assert(sheet.includes(shared.title) && sheet.includes("Write the message"));
+      assert(sheet.includes("every 30 days") && !sheet.includes("a month"), "The allowance is described as rolling 30 days");
       assert(card.includes("Clinical and safeguarding review pending"));
     }
     Object.assign(initial, { currentPage: "ask-ai", askIntent: { mode: "talk", prompt: "" } });

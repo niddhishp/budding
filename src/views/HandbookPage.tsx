@@ -10,6 +10,7 @@ import { useHandbook } from "@/components/care/useHandbook";
 import { useTodayDate } from "@/components/care/useTodayDate";
 import type { Child } from "@/types";
 import { GuidanceTrust } from "@/components/GuidanceTrust";
+import { ShareSheet } from "@/components/ShareSheet";
 
 export function HandbookPage() {
   const { children, selectedChildId, handbookCardId } = useAppStore();
@@ -20,7 +21,7 @@ function Handbook({ child }: { child: Child }) {
   const { setPage, openAsk, handbookCardId, openHandbook } = useAppStore();
   const date = useTodayDate(), book = useHandbook(child.id);
   const [track, setTrack] = useState<Track | "all">("all"), [search, setSearch] = useState(""), [savedOnly, setSavedOnly] = useState(false);
-  const [followUpDraft, setFollowUp] = useState<string | null>(null), [savedMessage, setSavedMessage] = useState("");
+  const [followUpDraft, setFollowUp] = useState<string | null>(null), [savedMessage, setSavedMessage] = useState(""), [sharing, setSharing] = useState(false);
   const eligible = cardsForChild(child, date), relevance = familyNavigation(child, date);
   const selected = HANDBOOK.find(c => c.id === handbookCardId);
   const progress = book.data?.progress ?? {}, entry = selected ? progress[selected.id] : undefined;
@@ -51,7 +52,9 @@ function Handbook({ child }: { child: Child }) {
       <div className="flex flex-wrap gap-3 py-6">
         <button className={buttonClass} onClick={() => openAsk("rehearse", `I'd like to practise the conversation "${selected.title}". Help me start.`, selected.id)}>Practise the conversation</button>
         <button className="border rounded-full px-5 py-3" onClick={() => openAsk("guidance", `Help me adapt "${selected.title}" for ${child.name}. Here is what is happening: `, selected.id)}>Make it fit our situation</button>
+        <button className="text-clay underline py-3" onClick={() => setSharing(true)}>Send to grandparents or caregivers</button>
       </div>
+      {sharing && <ShareSheet card={selected} childId={child.id} childName={child.name} onClose={() => setSharing(false)} />}
       <details className="py-5 border-y"><summary className="cursor-pointer font-medium">Make it work in your home</summary>
         <p className="mt-4 leading-7">Keep it short, use the language you speak at home, and leave room for silence. A drawing or a side-by-side chat can work better than direct questions. Eye contact is not required. Adapt the activity to what is affordable and accessible.</p>
         <div className="flex flex-wrap gap-3 mt-4">{["Hindi", "Hinglish"].map(language => <button key={language} className="text-clay underline py-2" onClick={() => openAsk("talk", `Help me say the opening for "${selected.title}" in natural ${language}, without jargon.`, selected.id)}>Talk this through in {language}</button>)}</div>

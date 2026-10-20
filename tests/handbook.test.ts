@@ -7,7 +7,7 @@ const child = (dob: string | null, due: string | null = null) => ({ dateOfBirth:
 const today = "2026-10-20";
 
 test("handbook covers every born month to 18 and never invents age or pregnancy", () => {
-  assert.equal(HANDBOOK.length, 67);
+  assert.equal(HANDBOOK.length, 81);
   assert.equal(new Set(HANDBOOK.map(c => c.id)).size, HANDBOOK.length);
   for (let months = 0; months < 216; months++) {
     const date = new Date("2026-10-20T00:00:00Z"); date.setUTCMonth(date.getUTCMonth() - months);
@@ -58,4 +58,36 @@ test("narrower age layers separate early school years from preteens and keep som
   assert.equal(cardAgeLabel(HANDBOOK.find(c => c.id === "baby-sing")!), "Under 1 year");
   assert.equal(cardAgeLabel(HANDBOOK.find(c => c.id === "toddler-stop")!), "1–2 years");
   assert.equal(cardAgeLabel(HANDBOOK.find(c => c.id === "body-babies")!), "6–8 years");
+});
+test("everyday moments for ages 2 to 8 reach the right children and keep every safeguard", () => {
+  const ids = (dob: string) => cardsForChild(child(dob), today).map(c => c.id);
+  const two = ids("2024-10-20"), four = ids("2022-10-20"), seven = ids("2019-10-20");
+  assert(two.includes("potty-together") && two.includes("eating-pressure") && two.includes("new-baby-home"));
+  assert(!two.includes("tantrum-shop") && !two.includes("potty-accidents"));
+  for (const id of ["potty-accidents", "tantrum-shop", "hitting-biting", "siblings-fight", "bedtime-stalling", "dark-fears", "morning-rush", "screen-off", "grief-death"])
+    assert(four.includes(id), `4-year-old should see ${id}`);
+  assert(!four.includes("bedwetting-nights") && !four.includes("potty-together") && four.includes("truth-safe"));
+  assert(ids("2023-04-20").includes("potty-together") && ids("2023-04-20").includes("potty-accidents"));
+  assert(seven.includes("bedwetting-nights") && seven.includes("truth-safe") && seven.includes("siblings-fight") && !seven.includes("potty-together"));
+  const added = HANDBOOK.slice(67);
+  assert.equal(added.length, 14);
+  for (const card of added) {
+    assert(card.avoid.length > 10 && card.words.length > 10, card.id);
+    assert(!/\b(NLP|diagnos\w*|guarantee\w*|smack them|naughty child)\b/i.test(Object.values(card).join(" ")), card.id);
+  }
+  for (const id of ["potty-accidents", "bedwetting-nights"])
+    assert(/talk to your doctor if/i.test(HANDBOOK.find(c => c.id === id)!.activity), `${id} needs a doctor line`);
+});
+test("ages 3 to 8 articles link real Handbook cards and medical topics name when to see a doctor", async () => {
+  const { ARTICLES } = await import("../src/data/articles");
+  const slugs = ["potty-training-in-india", "tantrums-ages-3-to-5", "picky-eating-mealtime-pressure", "screen-time-by-age", "bedwetting-in-children", "starting-school-drop-off"];
+  for (const slug of slugs) {
+    const article = ARTICLES.find(a => a.slug === slug);
+    assert(article, slug);
+    assert(article.handbook?.length && article.handbook.every(id => HANDBOOK.some(c => c.id === id)), `${slug} links Handbook cards`);
+    assert(article.sources.length >= 2 && article.sources.every(s => s.url.startsWith("https://")), slug);
+  }
+  for (const slug of ["potty-training-in-india", "bedwetting-in-children", "picky-eating-mealtime-pressure"])
+    assert(/talk to your doctor if/i.test(ARTICLES.find(a => a.slug === slug)!.sections.map(s => s.body).join(" ")), `${slug} doctor line`);
+  assert(ARTICLES.find(a => a.slug === "screen-time-by-age")!.sources.some(s => s.url.includes("who.int")));
 });
