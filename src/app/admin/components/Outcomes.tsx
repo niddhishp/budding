@@ -1,5 +1,6 @@
 'use client';
-import { CHECKIN_METRICS, COHORT_DEFINITIONS, COHORT_METRICS, METRIC_DEFINITIONS, formatMetric, type OutcomeMetrics, type SummaryMetric } from '@/lib/outcome-metrics';
+import { PROGRAMMES } from '@/data/programmes';
+import { CHECKIN_METRICS, PROGRAMME_METRICS, COHORT_DEFINITIONS, COHORT_METRICS, METRIC_DEFINITIONS, formatMetric, type OutcomeMetrics, type SummaryMetric } from '@/lib/outcome-metrics';
 import { Heading, LoadState, formatTime, useRemote } from './shared';
 
 const GROUPS: { title: string; metrics: SummaryMetric[] }[] = [
@@ -44,6 +45,18 @@ export function ParentOutcomes() {
           <th scope="row" className="py-4 pr-4 text-left font-normal"><span className="block font-semibold">{label}</span><span className="block text-xs text-muted-foreground mt-1 leading-relaxed">{definition}</span></th>
           <td className="py-4 pl-3 text-right tabular-nums whitespace-nowrap">{formatMetric(data.checkins?.[key], format)}</td>
         </tr>)}</tbody></table>
+      </section>
+      <section className="mb-10">
+        <h2 className="font-heading text-2xl mb-2">Programmes</h2>
+        <p className="text-sm text-muted-foreground mb-4 max-w-2xl">Guided programmes parents run with one child. Each start and finish asks the same 1–5 “how hard is this” question, so “Easier at the finish” compares a parent’s own two answers. No family or child is shown.</p>
+        {data.programmes?.length ? <div className="overflow-x-auto"><table className="w-full text-sm border-t border-border min-w-[720px]">
+          <thead><tr className="text-left text-muted-foreground"><th scope="col" className="py-3 pr-4 font-normal">Programme</th>{PROGRAMME_METRICS.map(([key, label, definition]) => <th key={key} scope="col" title={definition} className="py-3 px-3 font-normal text-right">{label}</th>)}</tr></thead>
+          <tbody>{data.programmes.map(row => <tr key={row.programme_id} className="border-t border-border">
+            <th scope="row" className="py-3 pr-4 text-left font-normal">{PROGRAMMES.find(p => p.id === row.programme_id)?.title ?? row.programme_id}</th>
+            {PROGRAMME_METRICS.map(([key, , , format]) => <td key={key} className="py-3 px-3 text-right tabular-nums">{formatMetric(row[key], format)}</td>)}
+          </tr>)}</tbody>
+        </table></div> : <p className="text-sm border-t border-border pt-4">No programme has been started yet.</p>}
+        <dl className="mt-4 text-xs text-muted-foreground grid sm:grid-cols-2 gap-x-6 gap-y-2 max-w-3xl">{PROGRAMME_METRICS.map(([key, label, definition]) => <div key={key}><dt className="inline font-semibold">{label}: </dt><dd className="inline">{definition}</dd></div>)}</dl>
       </section>
       <section className="mb-10">
         <h2 className="font-heading text-2xl mb-2">Weekly cohorts</h2>

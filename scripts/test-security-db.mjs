@@ -46,6 +46,8 @@ try {
   console.log('PASS: a chat or practice conversation uses one Ask turn; included messages are reserved uncharged. Free allowance is 10 and Kahiye’s own failures are not counted. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/family-checkins.sql','utf8'));
   console.log('PASS: check-ins need consent and ownership, are spaced and idempotent, stay private, and aggregate only with five or more families. Fixtures rolled back.');
+  await client.query(readFileSync('tests/sql/guided-programmes.sql','utf8'));
+  console.log('PASS: guided programmes need consent and ownership; starts, ticks and finishes are idempotent and revision-checked; one active enrolment per programme; progress is bounded; families are isolated; metrics are service-only and suppressed below five families. Fixtures rolled back.');
   console.log('PASS: chat/practice cannot create outcome memories, worker memories, or cross-mode continuations. Fixtures rolled back.');
   console.log('PASS: memory revisions, ownership, corrections, stop/rerate, pause, pending extraction and continuity boundaries. Fixtures rolled back.');
   await import('./test-guidance-db.mjs');

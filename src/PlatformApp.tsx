@@ -20,6 +20,9 @@ import { computeAge } from "@/lib/age";
 const ParentGuidesPage = dynamic(() =>
   import("@/views/ParentGuidesPage").then((m) => m.ParentGuidesPage),
 );
+const ProgrammePage = dynamic(() =>
+  import("@/views/ProgrammePage").then((m) => m.ProgrammePage),
+);
 const DiscoverPage = dynamic(() =>
   import("@/views/DiscoverPage").then((m) => m.DiscoverPage),
 );
@@ -117,6 +120,8 @@ function PlatformApp() {
     switch (currentPage) {
       case "handbook":
         return <HandbookPage key={selectedChildId} />;
+      case "programme":
+        return <ProgrammePage key={`${selectedChildId}-${useAppStore.getState().programmeId ?? ""}`} />;
       case "puberty":
         return (
           <ParentGuidesPage

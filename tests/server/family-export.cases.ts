@@ -28,6 +28,7 @@ const rows: Record<string, Record<string, unknown>[]> = {
     { id: 'f2', child_id: null, user_id: me, kind: 'goal', photo_ready: false, revision: 0, value: { title: 'College', date: '2030-01-01', cost: 10, photoHash: null } },
   ],
   shop_records: [{ id: 'p1', child_id: child, user_id: me, kind: 'preferences', revision: 0, value: { materials: [] } }],
+  programme_enrolments: [{ id: 'pe1', child_id: child, user_id: me, programme_id: 'potty-training', status: 'completed', started_on: '2026-10-01', progress: { 1: '2026-10-01' }, baseline: 4, final: 2, revision: 7, created_at: '2026-10-01', updated_at: '2026-10-08' }],
   expert_requests: [{ id: 'x1', child_id: child, user_id: me, concern: 'Sleep', status: 'new', expert_id: 'internal', version: 3, next_follow_up_at: '2026-10-10', created_at: '2026-10-06' }],
 };
 
@@ -67,6 +68,7 @@ test('export reads every family table as the parent, organised by child, without
   assert.deepEqual(signed, [{ bucket: 'family-photos', paths: [`${me}/f1-${hash}.jpg`], seconds: 3600 }, { bucket: 'story-audio', paths: [`${me}/s1.mp3`], seconds: 3600 }]);
   assert.equal(out.family.family_plan[0].title, 'College');
   assert.equal(c.expert_requests[0].concern, 'Sleep');
+  assert.deepEqual(c.programmes, [{ id: 'pe1', programme_id: 'potty-training', status: 'completed', started_on: '2026-10-01', progress: { 1: '2026-10-01' }, baseline: 4, final: 2, created_at: '2026-10-01', updated_at: '2026-10-08' }]);
 });
 
 test('a link outage keeps the export with a plain note; a table outage fails the whole export', async () => {
