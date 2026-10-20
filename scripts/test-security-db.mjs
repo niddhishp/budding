@@ -57,6 +57,8 @@ try {
   await client.query(readFileSync('tests/sql/family-planner.sql','utf8'));
   await client.query(readFileSync('tests/sql/shop.sql','utf8'));
   console.log('PASS: shop isolation, service-only writes, MFA, revisions, audit, discovery limits and erasure.');
+  await client.query(readFileSync('tests/sql/parent-outcome-metrics.sql','utf8'));
+  console.log('PASS: parent outcome metrics: consent scope, activation and second-moment 14-day windows, 30-day return, chat/practice excluded from activation, shares, feedback, Plus, small-cell suppression and service-only access. Fixtures rolled back.');
   console.log('PASS: family planning ownership, revisions/retries, archive/restore, validation, private photos and erasure recovery.');
   console.log('PASS: profile notebooks enforce ownership, consent, revision/retry, date validation, archive/restore and child erasure. Fixtures rolled back.');
   console.log('PASS: provider transport permissions, atomic linking, receipts, leases, STOP/consent, delivery ordering, ambiguous sends and erasure. Fixtures rolled back.');

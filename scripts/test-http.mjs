@@ -16,6 +16,8 @@ const checks = [
   ['/articles/babys-first-shoes','GET',null,200],
   ['/articles/not-a-real-guide','GET',null,404],
   ['/admin/launch','GET',null,307],
+  ['/admin/outcomes','GET',null,307],
+  ['/api/admin/outcomes','GET',null,401],
   ['/api/availability','GET',null,200],
   ['/api/care','GET',null,401],
   ['/api/care','POST',base,401],
