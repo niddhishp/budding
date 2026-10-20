@@ -32,9 +32,26 @@ shop gates and worker freshness. Production build and existing actual-component
 SSR checks for ages 1, 4, 11 and 16 pass. `npm audit --omit=dev` reports zero known
 vulnerabilities at verification time.
 
-Exact-commit CI and production deployment results will be recorded after release.
-The current browser session reaches the authenticator gate; signed-in visual
-verification of the new dashboard is pending. Access controls were not bypassed.
+Application commit: `718814ba45ba8e9fb4df5748efdf82a3270b1e08`.
+Exact branch CI `39435264256` and main CI `39435715495` both passed, including
+fresh SQL/security bootstrap, provider/concurrency tests, actual route tests,
+SSR and production build. Vercel production `dpl_DXZoKyVsyQsdmRUJmhhLVD7DGKhq`
+is READY on `www.kahiye.app` and `kahiye.app`, with the matching commit.
+
+Live checks passed: home, articles and immediate support return 200; anonymous
+admin diagnostics (including plan checks), Handbook and cron return 401.
+Analyze rejects missing Origin with 403 and same-origin anonymous calls with
+401. An initial smoke expectation of 401 without Origin was corrected to match
+the existing origin guard; no application change was needed. Admin diagnostics
+did not expose configuration to anonymous callers.
+
+The signed-in parent dashboard renders the existing selected child, five-item
+navigation, age-specific guidance and saved interests, with no browser errors.
+No parent records were edited. The admin session reaches the authenticator gate;
+signed-in visual verification of the new admin dashboard is pending. Access
+controls were not bypassed. The new deployment's runtime error query returned
+zero records in the immediate post-release window; this is not long-term
+monitoring or proof of provider delivery.
 
 ## Still missing
 
