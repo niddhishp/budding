@@ -11,7 +11,7 @@
 - **Verified:** lint, typecheck, 96 unit and 62 server tests, the render check (ages 2, 4, 11 and 16), the app's safety lint over all new text (0 findings), the build, and branch CI `39894650871`, including the database and route suites.
 - **Next:** the clinical-review queue in [CLINICAL-REVIEW.md](CLINICAL-REVIEW.md#guided-programmes-queue).
 
-**Latest release (21 October): [programmes, partners, sponsors, playbook](LAUNCH-AND-PLAYBOOK.md)**, migrations 031–033.
+**Previous release (21 October): [programmes, partners, sponsors, playbook](LAUNCH-AND-PLAYBOOK.md)**, migrations 031–033.
 - **Five free guided programmes:** potty training, screen-off, first period, and two body-talk programmes.
 - **"What works for {child}":** a playbook on the Child page.
 - **Film slots:** on Handbook cards and programme days, using a Vimeo/YouTube embed.
