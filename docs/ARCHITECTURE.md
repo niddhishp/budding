@@ -32,7 +32,7 @@ This is the two-page map for anyone joining the codebase. `HANDOFF.md` is the re
 5. **Two checked stages** (`decodeStaged`).
    - **Stage A:** Right now, Say this, Do this, Leave out and Seek help if. It is linted and reviewed, then sent as the `first` event.
    - **Stage B:** the explanation. It gets Stage A as fixed input, and is linted and reviewed against the combined answer.
-6. **Save** with `complete_guidance` in SQL, then send the `done` event. Memory extraction runs afterwards and needs parent confirmation before use.
+6. **Save** with `complete_guidance` in SQL, then send the `done` event. Memory extraction runs afterwards and needs parent confirmation before use. A saved moment ("Log a moment") takes the same path through `propose_log_memories`; the raw note is never read by guidance ([SAVED-MOMENTS.md](SAVED-MOMENTS.md)).
 
 ## Invariants: never break these
 

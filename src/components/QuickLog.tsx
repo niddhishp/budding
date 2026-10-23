@@ -82,7 +82,7 @@ export function QuickLog() {
                   </div>
                   <div>
                     <h3 className="font-heading font-semibold text-slate-850">Log a moment</h3>
-                    <p className="text-xs font-medium text-slate-500">Kahiye uses this next time you ask about {selectedChild?.name || 'your child'}</p>
+                    <p className="text-xs font-medium text-slate-500">Goes into {selectedChild?.name || 'your child'}’s weekly report. Anything worth remembering becomes a suggestion for you to review.</p>
                   </div>
                 </div>
                 <button 
@@ -102,7 +102,7 @@ export function QuickLog() {
                       </svg>
                     </div>
                     <h4 className="font-heading font-semibold text-lg text-slate-850 mb-1">Saved</h4>
-                    <p className="text-slate-500 text-sm">Added to {selectedChild?.name}'s history.</p>
+                    <p className="text-slate-500 text-sm">Added to {selectedChild?.name}’s history. If there is something worth remembering, you’ll find a suggestion under “What Kahiye remembers”.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="flex flex-col gap-4">
