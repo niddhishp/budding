@@ -1,13 +1,13 @@
 # Kahiye — engineering handoff (living document)
 
-**In progress (23 October): [saved moments suggest memories](SAVED-MOMENTS.md).** Branch `claude/log-memories`, migration 034.
+**Latest release (23 October): [saved moments suggest memories](SAVED-MOMENTS.md).** Migration 034, applied to production before the merge. Branch CI `39900190249`.
 - **The gap:** "Log a moment" promised "Kahiye uses this next time you ask" and did not. Since migration 014, raw notes are deliberately kept out of guidance so they cannot bypass the parent's memory controls; the only reader was the weekly report.
 - **The fix:** a note now goes through the same write gate as an Ask message and comes out as unconfirmed suggestions in "What Kahiye remembers" (`source: log`, which the panel already labelled "From a saved moment"). Consent and the per-child pause are re-checked at commit. The copy now says what happens. `/api/log` returns 404, not 500, for another family's child.
 - **Verified:** lint, typecheck, 96 unit and 66 server tests, 24 database suites from a fresh pgvector/pg17 bootstrap (including migration 034), 10 route suites (the harness now records `after()` tasks instead of dropping them), and the build.
 - **Deploy order:** apply 034 to production before merging. Without it the worker logs "suggestion skipped" and the note is still saved, so the order is a feature gate, not a safety one.
 
 
-**Latest release (23 October): [guided programmes, waves 2 and 3, and the review gate](GUIDED-PROGRAMMES.md).** No migration.
+**Previous release (23 October): [guided programmes, waves 2 and 3, and the review gate](GUIDED-PROGRAMMES.md).** No migration.
 - **Eight new free programmes, 13 in all:** sibling peace (3–10), starting school (2½–6), staying safe (4–8), bullying (6–14), peer pressure (10–16), sex education (12–17), board exams (13–17) and choosing a stream (13–17).
   - The last two are the editorial part of teen career guidance. They never test aptitude or predict careers.
   - With them, the programme list in "Next waves" is complete. Still open: skill studios and tuition (need partners), Family Circle (no spec yet), venues (partners) and movies (editorial picks from the owner), and diaspora pricing (needs counsel).
