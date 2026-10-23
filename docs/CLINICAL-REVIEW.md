@@ -25,7 +25,7 @@ Programmes live in `src/data/programmes.ts`. Review the four gated programmes fi
 | 2 | `sex-ed` | Safeguarding, then paediatrician for the sexual-health facts | Yes |
 | 3 | `first-period` | Paediatrician | Yes |
 | 4 | `bullying`, `staying-safe` | Safeguarding | No |
-| 5 | `peer-pressure`, `sibling-peace`, `first-school-year`, `screen-off`, `potty-training` | Lead clinician; paediatrician for potty training | No |
+| 5 | `peer-pressure`, `exam-pressure`, `stream-choice`, `sibling-peace`, `first-school-year`, `screen-off`, `potty-training` | Lead clinician; paediatrician for potty training | No |
 
 When a reviewer signs off, record their name, registration, date and the programme's editorial version here, then set `preview: false`.
 
