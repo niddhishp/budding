@@ -129,7 +129,11 @@ try {
   for (const title of ["Starting school", "Staying safe: getting lost, roads, home and tricky people", "Sibling peace, not sibling silence"]) assert(four.includes(title), `A 4-year-old's Handbook offers ${title}`);
   const teen = show(profile(16), "handbook");
   assert(teen.indexOf("Sex, love and respect: the teen talks") > teen.indexOf("In preview.") && teen.indexOf("In preview.") > 0, "Sex education is listed only in preview for a 16-year-old");
+  for (const title of ["Board exams without the pressure cooker", "Choosing a stream and a direction"]) {
+    const at = teen.indexOf(title);
+    assert(at > 0 && at < teen.indexOf("In preview."), `${title} is promoted for a 16-year-old`);
+  }
   const sexEd = show(profile(16), "programme", "sex-ed");
   for (const text of ["Consent", "cybercrime.gov.in", "1098", "In preview."]) assert(sexEd.includes(text), `Sex education programme shows ${text}`);
-  console.log("PASS: guided programmes render for ages 2, 4, 11 and 16, with age-matched lists, coming-up previews, the review gate for sensitive topics, doctor lines, review labels and no paywall.");
+  console.log("PASS: guided programmes render for ages 2, 4, 11 and 16 (including exams and stream choice), with age-matched lists, coming-up previews, the review gate for sensitive topics, doctor lines, review labels and no paywall.");
 } finally { Object.assign(initial, original); }

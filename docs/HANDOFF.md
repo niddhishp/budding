@@ -1,12 +1,17 @@
 # Kahiye — engineering handoff (living document)
 
-**In progress (21 October): [guided programmes, second wave, and the review gate](GUIDED-PROGRAMMES.md).** Branch `claude/programmes-wave-2`, not yet committed or merged. No migration.
-- **Six new free programmes:** sibling peace (3–10), starting school (2½–6), staying safe (4–8), bullying (6–14), peer pressure (10–16) and sex education (12–17). This finishes the programme list in "Next waves", which leaves skill studios and tuition, Family Circle, venues and movies, teen careers and diaspora pricing.
-- **Review gate, now enforced in code:** first period, both body talks and sex education are `preview: true`. They are never promoted in the Handbook list or in "coming up", only under "In preview", and their page explains why. They can still be opened and run. **This changes what parents see today:** first period and body talk move out of the main list.
-- **Verified:** lint, typecheck, 96 unit and 62 server tests, the render check (ages 2, 4, 11, 16), the app's safety lint over the new text (0 findings), and the production build. Not run: the database and route suites, which this change does not touch.
-- **Next:** commit, push, CI, merge to `main` (auto-deploys). Then the clinical-review queue in [CLINICAL-REVIEW.md](CLINICAL-REVIEW.md#guided-programmes-queue).
+**Latest release (23 October): [guided programmes, waves 2 and 3, and the review gate](GUIDED-PROGRAMMES.md).** No migration.
+- **Eight new free programmes, 13 in all:** sibling peace (3–10), starting school (2½–6), staying safe (4–8), bullying (6–14), peer pressure (10–16), sex education (12–17), board exams (13–17) and choosing a stream (13–17).
+  - The last two are the editorial part of teen career guidance. They never test aptitude or predict careers.
+  - With them, the programme list in "Next waves" is complete. Still open: skill studios and tuition (need partners), Family Circle (no spec yet), venues (partners) and movies (editorial picks from the owner), and diaspora pricing (needs counsel).
+- **Review gate, now enforced in code:** first period, both body talks and sex education are `preview: true`.
+  - They are never promoted in the Handbook list or under "coming up"; they appear only under "In preview", and their page explains why.
+  - They can still be opened and run. First period and body talk therefore moved out of the main list for existing families.
+- **Deploy note:** `f0a6295` reached `main` by fast-forward, and Vercel did not start a production build, because the same SHA was already built as a preview. Merge with `--no-ff` so `main` gets a new SHA.
+- **Verified:** lint, typecheck, 96 unit and 62 server tests, the render check (ages 2, 4, 11 and 16), the app's safety lint over all new text (0 findings), the build, and branch CI `39894650871`, including the database and route suites.
+- **Next:** the clinical-review queue in [CLINICAL-REVIEW.md](CLINICAL-REVIEW.md#guided-programmes-queue).
 
-**Latest release (21 October): [programmes, partners, sponsors, playbook](LAUNCH-AND-PLAYBOOK.md)**, migrations 031–033.
+**Previous release (21 October): [programmes, partners, sponsors, playbook](LAUNCH-AND-PLAYBOOK.md)**, migrations 031–033.
 - **Five free guided programmes:** potty training, screen-off, first period, and two body-talk programmes.
 - **"What works for {child}":** a playbook on the Child page.
 - **Film slots:** on Handbook cards and programme days, using a Vimeo/YouTube embed.

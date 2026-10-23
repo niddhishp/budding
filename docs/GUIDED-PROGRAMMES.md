@@ -26,6 +26,10 @@ Status: the first five are live (migration 031, 21 October). The second wave of 
 | `bullying` | When bullying happens | 72–179 | 7 sessions | all |
 | `peer-pressure` | Peer pressure: saying no and staying friends | 120–203 | 7 days | all |
 | `sex-ed` | Sex, love and respect: the teen talks | 144–215 | 7 sessions | all |
+| `exam-pressure` | Board exams without the pressure cooker | 156–215 | 7 days | all |
+| `stream-choice` | Choosing a stream and a direction | 156–215 | 7 sessions | all |
+
+The two teen programmes are the editorial part of "teen career guidance". They never test aptitude or predict careers, and say so; validated assessments wait for a licensed psychometric provider, and counsellor sessions for a cleared partner (OWNER-INPUTS 4).
 
 The second wave (editorial version 2026-10-21) uses only sources the Handbook already cites, and only helplines the app already uses: Child Helpline 1098, 112, cybercrime.gov.in / 1930 and Tele-MANAS 14416. The sex-education programme states one legal fact: in India, making, keeping or forwarding a sexual image of anyone under 18 is a crime, even between teenagers. The lawyer should confirm that wording (OWNER-INPUTS 2.3).
 

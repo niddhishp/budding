@@ -17,7 +17,7 @@ test("programme ids are unique, short and accepted by the database pattern", () 
   const pattern = /programme_id ~ '([^']+)'/.exec(sql)?.[1];
   assert(pattern, "migration declares the programme id pattern");
   for (const p of PROGRAMMES) assert.match(p.id, new RegExp(pattern), `${p.id} would be refused by the database`);
-  for (const id of ["potty-training", "screen-off", "first-period", "body-talk-young", "body-talk-preteen", "sibling-peace", "first-school-year", "staying-safe", "bullying", "peer-pressure", "sex-ed"]) assert(PROGRAMMES.some(p => p.id === id), `${id} exists`);
+  for (const id of ["potty-training", "screen-off", "first-period", "body-talk-young", "body-talk-preteen", "sibling-peace", "first-school-year", "staying-safe", "bullying", "peer-pressure", "sex-ed", "exam-pressure", "stream-choice"]) assert(PROGRAMMES.some(p => p.id === id), `${id} exists`);
 });
 
 test("age ranges are valid and every step is complete", () => {
@@ -49,6 +49,8 @@ test("age ranges are valid and every step is complete", () => {
   assert.deepEqual(range("bullying"), [72, 179, 7]);
   assert.deepEqual(range("peer-pressure"), [120, 203, 7]);
   assert.deepEqual(range("sex-ed"), [144, 215, 7]);
+  assert.deepEqual(range("exam-pressure"), [156, 215, 7]);
+  assert.deepEqual(range("stream-choice"), [156, 215, 7]);
   assert.equal(PROGRAMMES.find(p => p.id === "first-period")!.unit, "session");
   assert.equal(RATING_LABELS.length, 5);
 });
@@ -60,7 +62,9 @@ test("medical and safety programmes say when to get help", () => {
   assert.match(help("first-period"), /doctor/i);
   assert.match(help("first-period"), /heavy|pain/i);
   for (const id of ["body-talk-young", "body-talk-preteen", "staying-safe", "sex-ed", "sibling-peace"]) assert.match(help(id), /1098/);
-  for (const id of ["bullying", "peer-pressure"]) assert.match(help(id), /Tele-MANAS 14416/);
+  for (const id of ["bullying", "peer-pressure", "exam-pressure", "stream-choice"]) assert.match(help(id), /Tele-MANAS 14416/);
+  // Career guidance is editorial: no aptitude testing or career prediction.
+  assert.match(PROGRAMMES.find(p => p.id === "stream-choice")!.before, /does not test aptitude or predict careers/);
   for (const id of ["bullying", "sex-ed"]) assert.match(help(id), /1930/);
   assert.match(help("staying-safe"), /missing, call 112/);
   assert.match(help("first-school-year"), /teacher/);
@@ -103,7 +107,7 @@ test("programmes follow the child's age and the profile's Boy/Girl detail, never
   for (const id of ["bullying", "peer-pressure"]) assert(elevenGirl.current.includes(id), `an 11-year-old is offered ${id}`);
   const sixteen = ids(child("2010-10-21"));
   assert.deepEqual(sixteen.inPreview, ["sex-ed"]);
-  assert.deepEqual(sixteen.current, ["peer-pressure"]);
+  assert.deepEqual(sixteen.current, ["peer-pressure", "exam-pressure", "stream-choice"]);
   for (const dob of [null, "bad", "2027-01-01"]) assert.deepEqual(ids(child(dob)), { current: [], comingUp: [], inPreview: [] });
   assert.deepEqual(programmesForChild({ dateOfBirth: null, dueDate: "2027-02-01", gender: null, pubertyGuide: null }, today), { current: [], comingUp: [], inPreview: [] });
 });
