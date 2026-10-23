@@ -41,6 +41,8 @@ try {
   console.log('PASS: profile Boy/Girl persistence, editing, clearing, constraints, consent and family isolation. Fixtures rolled back.');
   console.log('PASS: guide preference isolation, consent, anonymous denial, validation and unrelated profile preservation. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/memory-continuity.sql','utf8'));
+  await client.query(readFileSync('tests/sql/log-memories.sql','utf8'));
+  console.log('PASS: saved moments suggest memories service-side only, with ownership, consent and pause checked at commit; suggestions are unconfirmed, capped, deduplicated, idempotent on retry, family-isolated and erased with the account. Fixtures rolled back.');
   await client.query(readFileSync('tests/sql/conversation-boundaries.sql','utf8'));
   await client.query(readFileSync('tests/sql/conversation-allowance.sql','utf8'));
   console.log('PASS: a chat or practice conversation uses one Ask turn; included messages are reserved uncharged. Free allowance is 10 and Kahiye’s own failures are not counted. Fixtures rolled back.');

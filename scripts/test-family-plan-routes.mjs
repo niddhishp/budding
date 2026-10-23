@@ -272,6 +272,11 @@ const server = createServer((req, res) => {
                 values,
               )
             ).rows;
+          } else if (req.method === "POST" && table === "context_logs") {
+            // A saved moment, written as the parent: RLS checks ownership of the child.
+            assert.notEqual(token, "synthetic-service-only");
+            const p = JSON.parse(bytes);
+            result = (await db.query("insert into public.context_logs(child_id,user_id,content,log_type) values($1,$2,$3,$4) returning id", [p.child_id, p.user_id, p.content, p.log_type])).rows;
           } else if (req.method === "POST") {
             assert.equal(table, "safety_events"); assert.equal(token, "synthetic-service-only");
             const p = JSON.parse(bytes);
@@ -417,6 +422,8 @@ function cookie(owner) {
     ).toString("base64url")
   );
 }
+/** after() tasks the handlers schedule; the harness records them and never runs them. */
+const scheduled = [];
 async function run(
   module,
   method,
@@ -439,7 +446,7 @@ async function run(
       : {}),
   });
   const response = await workAsyncStorage.run(
-    { route: "/api/test", isStaticGeneration: false, afterContext: { after() { /* Job is durably queued; worker has separate tests. */ } } },
+    { route: "/api/test", isStaticGeneration: false, afterContext: { after(task) { scheduled.push(task); /* Never run here: workers have separate tests. */ } } },
     () =>
       workUnitAsyncStorage.run(
         {
@@ -633,6 +640,19 @@ try {
   const preserved = await (await run(care, "GET", null, 200, uid, "unused", q)).json();
   assert.deepEqual(preserved.settings.favourites, ["existing-play"]);
   console.log("PASS: actual Handbook/care handlers preserve each other's records, reject cross-parent and stale saves, and remove only chosen progress.");
+  // Saved moments: the real /api/log handler stores the note under RLS and schedules one memory-suggestion follow-up, which it never runs inline.
+  const log = await import("../src/app/api/log/route.ts");
+  await run(log, "POST", { childId: child, content: "Settled with a song after the park." }, 401, null);
+  await run(log, "POST", { childId: child, content: "" }, 400);
+  scheduled.length = 0;
+  const note = await (await run(log, "POST", { childId: child, content: "Settled with a song after the park." })).json();
+  assert.equal(scheduled.length, 1, "One follow-up is scheduled after the response");
+  const stored = await db.query("select user_id, child_id, content, log_type from public.context_logs where id=$1", [note.id]);
+  assert.deepEqual(stored.rows, [{ user_id: uid, child_id: child, content: "Settled with a song after the park.", log_type: "observation" }]);
+  scheduled.length = 0;
+  await run(log, "POST", { childId: child, content: "Another family's child" }, 404, other);
+  assert.equal(scheduled.length, 0, "A refused note schedules nothing");
+  console.log("PASS: the real /api/log handler saves the note under RLS, refuses another parent's child, and schedules exactly one memory-suggestion follow-up without running it.");
   const shop = await import("../src/app/api/shop/route.ts");
   const media = await import("../src/app/api/shop/media/route.ts");
   await run(media, "GET", null, 401, null);
