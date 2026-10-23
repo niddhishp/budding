@@ -9,8 +9,8 @@ import type { Child } from "@/types";
 export function ProgrammeShelf({ child, today }: { child: Child; today: string }) {
   const { openProgramme } = useAppStore();
   const plan = useProgrammes(child.id);
-  const { current, comingUp } = programmesForChild(child, today);
-  if (!current.length && !comingUp.length) return null;
+  const { current, comingUp, inPreview } = programmesForChild(child, today);
+  if (!current.length && !comingUp.length && !inPreview.length) return null;
   const active = (p: Programme) => plan.enrolments?.find(e => e.programme_id === p.id && e.status === "active");
   const status = (p: Programme) => {
     const e = active(p);
@@ -31,6 +31,10 @@ export function ProgrammeShelf({ child, today }: { child: Child; today: string }
     {!!comingUp.length && <div className="mt-4">
       <p className="text-sm text-slate-600">Coming up in the next year. A preview, not a timetable.</p>
       <ul>{comingUp.map(p => <li key={p.id}><button className="text-clay underline py-2 text-left" onClick={() => openProgramme(p.id)}>{p.title} <span className="text-slate-600 no-underline">· {programmeAgeLabel(p)}</span></button></li>)}</ul>
+    </div>}
+    {!!inPreview.length && <div className="mt-4">
+      <p className="text-sm text-slate-600">In preview. Sensitive topics waiting for clinical and safeguarding review. You can read and use them now.</p>
+      <ul>{inPreview.map(p => <li key={p.id}><button className="text-clay underline py-2 text-left" onClick={() => openProgramme(p.id)}>{p.title}<span className="text-slate-600 no-underline">{status(p)}</span></button></li>)}</ul>
     </div>}
   </section>;
 }

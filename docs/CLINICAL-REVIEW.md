@@ -15,6 +15,20 @@ Live synthetic model evaluation checks engineering behaviour and sample output q
 
 Before review, record qualifications, applicable registration, clinical scope, age groups, languages and conflicts of interest. A single qualified person can cover more than one role where their expertise supports it. Do not fill names or approvals automatically.
 
+## Guided programmes queue
+
+Programmes live in `src/data/programmes.ts`. Review the four gated programmes first; each stays "In preview" (readable, not promoted) until signed off. See [GUIDED-PROGRAMMES.md](GUIDED-PROGRAMMES.md#review-gate).
+
+| Order | Programme | Reviewer | Gated |
+|---|---|---|---|
+| 1 | `body-talk-young`, `body-talk-preteen` | Safeguarding | Yes |
+| 2 | `sex-ed` | Safeguarding, then paediatrician for the sexual-health facts | Yes |
+| 3 | `first-period` | Paediatrician | Yes |
+| 4 | `bullying`, `staying-safe` | Safeguarding | No |
+| 5 | `peer-pressure`, `sibling-peace`, `first-school-year`, `screen-off`, `potty-training` | Lead clinician; paediatrician for potty training | No |
+
+When a reviewer signs off, record their name, registration, date and the programme's editorial version here, then set `preview: false`.
+
 ## Review packet
 
 Use only synthetic profiles initially. No customer records, screenshots or conversations are required.

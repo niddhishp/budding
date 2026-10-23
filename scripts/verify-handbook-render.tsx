@@ -115,5 +115,21 @@ try {
   const boy = childFromRow({ id: "synthetic-boy", name: "Sample boy", dob: `${Number(today.slice(0, 4)) - 11}${today.slice(4)}`, due_date: null, curiosity: 50, persistence: 50, sensitivity: 50, sociability: 50, emotional_intensity: 50, flexibility: 50, gender: "boy" });
   const boyShelf = show(boy, "handbook");
   assert(!boyShelf.includes("Getting ready for the first period") && boyShelf.includes("The body talk: growing up"), "A Boy profile is not offered the first-period programme");
-  console.log("PASS: guided programmes render for a 2-year-old (potty training) and an 11-year-old girl (first period), with age-matched lists, coming-up previews, doctor lines, review labels and no paywall.");
+  // Review gate: sensitive programmes are listed only under "In preview", never in the promoted list.
+  const previewAt = preteen.indexOf("In preview.");
+  assert(previewAt > 0, "An 11-year-old's Handbook has an In preview group");
+  for (const title of ["Getting ready for the first period", "The body talk: growing up"]) assert(preteen.indexOf(title) > previewAt, `${title} is listed only in preview`);
+  for (const title of ["When bullying happens", "Peer pressure: saying no and staying friends"]) {
+    const at = preteen.indexOf(title);
+    assert(at > 0 && at < previewAt, `${title} is promoted for an 11-year-old`);
+  }
+  assert(period.includes("In preview. This programme covers a sensitive topic"), "A preview programme explains why it is not recommended yet");
+  assert(!potty.includes("In preview."), "Reviewed-path programmes carry no preview notice");
+  const four = show(profile(4), "handbook");
+  for (const title of ["Starting school", "Staying safe: getting lost, roads, home and tricky people", "Sibling peace, not sibling silence"]) assert(four.includes(title), `A 4-year-old's Handbook offers ${title}`);
+  const teen = show(profile(16), "handbook");
+  assert(teen.indexOf("Sex, love and respect: the teen talks") > teen.indexOf("In preview.") && teen.indexOf("In preview.") > 0, "Sex education is listed only in preview for a 16-year-old");
+  const sexEd = show(profile(16), "programme", "sex-ed");
+  for (const text of ["Consent", "cybercrime.gov.in", "1098", "In preview."]) assert(sexEd.includes(text), `Sex education programme shows ${text}`);
+  console.log("PASS: guided programmes render for ages 2, 4, 11 and 16, with age-matched lists, coming-up previews, the review gate for sensitive topics, doctor lines, review labels and no paywall.");
 } finally { Object.assign(initial, original); }

@@ -31,15 +31,27 @@ export function suitsProfile(programme: Programme, child: ProfileForProgrammes) 
   return programme.audience === "all" || pubertyGuideForChild(child) !== "boys";
 }
 
-/** Programmes for the child's age now, and those starting within the next year. Age comes from the DOB only. */
+/**
+ * Programmes for the child's age now, and those starting within the next year. Age comes from the DOB only.
+ * Programmes still behind the review gate are never promoted: they are listed only in `inPreview`
+ * for the child's current age, and never as "coming up".
+ */
 export function programmesForChild(child: ProfileForProgrammes, today = todayDate()) {
   const months = handbookAge(child, today);
-  if (months === null || months < 0) return { current: [] as Programme[], comingUp: [] as Programme[] };
+  if (months === null || months < 0) return { current: [] as Programme[], comingUp: [] as Programme[], inPreview: [] as Programme[] };
   const offered = PROGRAMMES.filter(p => suitsProfile(p, child));
+  const fits = (p: Programme) => months >= p.minMonths && months <= p.maxMonths;
   return {
-    current: offered.filter(p => months >= p.minMonths && months <= p.maxMonths),
-    comingUp: offered.filter(p => p.minMonths > months && p.minMonths <= months + 12),
+    current: offered.filter(p => !p.preview && fits(p)),
+    comingUp: offered.filter(p => !p.preview && p.minMonths > months && p.minMonths <= months + 12),
+    inPreview: offered.filter(p => p.preview && fits(p)),
   };
+}
+
+/** True when the programme is written for the child's current age, whether promoted or in preview. */
+export function fitsChildNow(programme: Programme, child: ProfileForProgrammes, today = todayDate()) {
+  const { current, inPreview } = programmesForChild(child, today);
+  return [...current, ...inPreview].some(p => p.id === programme.id);
 }
 
 export function programmeAgeLabel(programme: Programme) {

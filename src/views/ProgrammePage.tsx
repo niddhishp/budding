@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useAppStore } from "@/stores/appStore";
 import { PROGRAMMES_VERSION, RATING_LABELS, type Programme, type ProgrammeStep } from "@/data/programmes";
 import {
-  doneCount, findProgramme, isDone, lengthLabel, nextStep, programmeAgeLabel, programmesForChild,
+  doneCount, findProgramme, fitsChildNow, isDone, lengthLabel, nextStep, programmeAgeLabel,
   questionFor, ratingChange, stepWord, suitsProfile, type Enrolment,
 } from "@/lib/programmes";
 import { CareFrame, buttonClass } from "@/components/care/CareFrame";
@@ -32,13 +32,14 @@ function ProgrammeView({ child, programme }: { child: Child; programme: Programm
   const mine = (plan.enrolments ?? []).filter(e => e.programme_id === programme.id).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   const active = mine.find(e => e.status === "active"), lastFinished = mine.find(e => e.status === "completed");
   const [justFinished, setJustFinished] = useState<Enrolment | null>(null);
-  const fits = programmesForChild(child, today).current.some(p => p.id === programme.id);
+  const fits = fitsChildNow(programme, child, today);
   const word = stepWord(programme);
 
   return <CareFrame title={programme.title} intro={programme.summary}>
     <p className="text-sm text-clay -mt-4 mb-6">
       {lengthLabel(programme)} · {programmeAgeLabel(programme)} · {programme.included === "free" ? "Free during early access" : "Included with Plus"} · <span className="whitespace-nowrap">Clinical review pending</span>
     </p>
+    {programme.preview && <p className="mb-6 text-sm border border-slate-200 p-4 rounded-xl">In preview. This programme covers a sensitive topic, so Kahiye won’t recommend it until a named clinical and safeguarding reviewer has checked it. You can read it and use it now if it helps.</p>}
     {!suitsProfile(programme, child) ? <p className="mb-6 text-sm bg-paper-deep p-4 rounded-xl">This programme is written for parents of daughters. You can still read it.</p>
       : !fits && <p className="mb-6 text-sm bg-paper-deep p-4 rounded-xl">Written for children aged {programmeAgeLabel(programme)}, based on the birth date in {child.name}’s profile. You can read it now and start whenever it fits. Age is a starting point, not a deadline.</p>}
     {plan.error && <p role="alert" className="text-sm mb-6">{plan.error} <button className="underline" onClick={plan.reload}>Reload</button></p>}
